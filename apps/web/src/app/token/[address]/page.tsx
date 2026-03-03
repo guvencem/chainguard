@@ -305,7 +305,13 @@ export default function TokenPage() {
                 {/* Holder */}
                 <MetricCard
                     title="Holder Analizi"
-                    value={metrics.holders.count.toString()}
+                    value={
+                        metrics.holders.count >= 1000000
+                            ? `${(metrics.holders.count / 1000000).toFixed(1)}M`
+                            : metrics.holders.count >= 1000
+                                ? `${(metrics.holders.count / 1000).toFixed(0)}K+`
+                                : metrics.holders.count.toString()
+                    }
                     score={metrics.holders.score}
                     label={metrics.holders.label_tr}
                     icon={<span>👥</span>}

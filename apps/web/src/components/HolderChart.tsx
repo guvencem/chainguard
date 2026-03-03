@@ -96,7 +96,11 @@ export default function HolderChart({
                     {/* Center text */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <span className="text-2xl font-bold" style={{ color: "var(--cg-text)" }}>
-                            {holderCount}
+                            {holderCount >= 1000000
+                                ? `${(holderCount / 1000000).toFixed(1)}M`
+                                : holderCount >= 1000
+                                    ? `${(holderCount / 1000).toFixed(0)}K+`
+                                    : holderCount}
                         </span>
                         <span className="text-[10px]" style={{ color: "var(--cg-text-dim)" }}>
                             holder

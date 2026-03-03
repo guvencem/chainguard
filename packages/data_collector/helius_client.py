@@ -133,6 +133,7 @@ class HeliusClient:
         """
         Token'ın en büyük hesaplarını (holder'larını) çeker.
         Solana RPC getTokenLargestAccounts kullanır.
+        NOT: Sadece top 20 hesap döner, toplam sayı için get_holder_count kullan.
         """
         client = await self._get_client()
         payload = {
@@ -145,6 +146,68 @@ class HeliusClient:
         resp.raise_for_status()
         data = resp.json()
         return data.get("result", {}).get("value", [])
+
+    async def get_holder_count(self, mint: str) -> int:
+        """
+        Token'ın gerçek toplam holder sayısını çeker.
+        Kaynak 1: Solscan public API (hızlı, tek çağrı)
+        Kaynak 2: Helius getTokenAccounts (fallback)
+        """
+        client = await self._get_client()
+
+        # ── Kaynak 1: Solscan API ──
+        try:
+            url = f"https://pro-api.solscan.io/v2.0/token/meta?address={mint}"
+            resp = await client.get(url, timeout=10, headers={
+                "Accept": "application/json",
+            })
+            if resp.status_code == 200:
+                data = resp.json()
+                holder = data.get("data", {}).get("holder", 0)
+                if holder and holder > 0:
+                    logger.info(f"Holder count (Solscan): {mint[:8]}... = {holder:,}")
+                    return holder
+        except Exception as e:
+            logger.debug(f"Solscan API erişilemedi: {e}")
+
+        # ── Kaynak 1b: Solscan public (eski endpoint) ──
+        try:
+            url = f"https://public-api.solscan.io/token/meta?tokenAddress={mint}"
+            resp = await client.get(url, timeout=10, headers={
+                "Accept": "application/json",
+            })
+            if resp.status_code == 200:
+                data = resp.json()
+                holder = data.get("holder", 0)
+                if holder and holder > 0:
+                    logger.info(f"Holder count (Solscan public): {mint[:8]}... = {holder:,}")
+                    return holder
+        except Exception as e:
+            logger.debug(f"Solscan public API erişilemedi: {e}")
+
+        # ── Kaynak 2: Helius getTokenAccounts (fallback) ──
+        try:
+            payload = {
+                "jsonrpc": "2.0",
+                "id": "hc",
+                "method": "getTokenAccounts",
+                "params": {"mint": mint, "limit": 1000, "page": 1},
+            }
+            resp = await client.post(self.rpc_url, json=payload, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+            accounts = data.get("result", {}).get("token_accounts", [])
+            count = len(accounts)
+            # 1000 ise daha fazla var ama kesin sayıyı bilemiyoruz
+            if count == 1000:
+                count = 1000  # minimum tahmin (arayüzde "1000+" gösterilecek)
+                logger.info(f"Holder count (Helius fallback): {mint[:8]}... = {count}+ (minimum)")
+            else:
+                logger.info(f"Holder count (Helius fallback): {mint[:8]}... = {count}")
+            return count
+        except Exception as e:
+            logger.warning(f"Holder count çekilemedi: {e}")
+            return 0
 
     async def get_token_supply(self, mint: str) -> dict:
         """Token supply bilgisi çeker."""

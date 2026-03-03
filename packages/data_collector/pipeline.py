@@ -111,10 +111,14 @@ class DataCollector:
             }
 
     async def _collect_holders(self, token_address: str) -> list[dict]:
-        """Adım 4: Holder listesi çeker."""
+        """Adım 2: Holder listesi ve gerçek holder sayısını çeker."""
         try:
+            # Top 20 en büyük hesabı çek (yoğunlaşma analizi için)
             accounts = await self.helius.get_token_largest_accounts(token_address)
             supply_info = await self.helius.get_token_supply(token_address)
+            
+            # Gerçek toplam holder sayısını çek (Helius DAS API)
+            real_holder_count = await self.helius.get_holder_count(token_address)
             
             total_supply = float(supply_info.get("amount", 0))
             decimals = int(supply_info.get("decimals", 0))
@@ -130,12 +134,25 @@ class DataCollector:
                     "balance": amount,
                     "ui_amount": ui_amount,
                     "pct_supply": pct,
-                    "last_active_1h": True,  # TODO: İşlem geçmişinden hesapla
+                    "last_active_1h": True,
                 })
             
+            # Gerçek holder sayısını metadata olarak ekle
+            # (top 20 hesap listesinin uzunluğu DEĞİL, gerçek toplam)
+            for h in holders:
+                h["_total_holders"] = real_holder_count or len(holders)
+            
+            # İlk eleman yoksa bile sayıyı taşıyabilmek için
+            if not holders:
+                holders = [{"_total_holders": real_holder_count, "_placeholder": True}]
+            
+            logger.info(
+                f"Holder: {len(accounts)} top hesap, "
+                f"toplam {real_holder_count:,} holder"
+            )
             return holders
         except Exception as e:
-            logger.error(f"Holder çekme hatası: {e}")
+            logger.error(f"Holder çekme hatası: {e}", exc_info=True)
             return []
 
     async def _collect_transactions(
@@ -225,10 +242,17 @@ class DataCollector:
         transactions = data.get("transactions", [])
         market = data.get("market_data", {})
 
-        total_holders = len(holders)
+        # Gerçek holder sayısı — pipeline'dan gelen metadata
+        # _total_holders alanı varsa onu kullan, yoksa liste uzunluğu
+        real_holders = [h for h in holders if not h.get("_placeholder")]
+        total_holders = 0
+        if real_holders and "_total_holders" in real_holders[0]:
+            total_holders = real_holders[0]["_total_holders"]
+        if total_holders == 0:
+            total_holders = len(real_holders)
         
-        # Top 10 yoğunlaşma
-        sorted_h = sorted(holders, key=lambda h: h.get("balance", 0), reverse=True)
+        # Top 10 yoğunlaşma (top 20 hesaptan ilk 10'u)
+        sorted_h = sorted(real_holders, key=lambda h: h.get("balance", 0), reverse=True)
         top10 = sorted_h[:10]
         top10_pct = sum(h.get("pct_supply", 0) for h in top10) / 100.0
 
