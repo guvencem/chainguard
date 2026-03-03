@@ -40,8 +40,12 @@ class AnalysisService:
         self,
         helius_api_key: str,
         redis_url: str = "redis://localhost:6379",
+        solscan_api_key: str = "",
     ):
-        self.helius = HeliusClient(api_key=helius_api_key)
+        self.helius = HeliusClient(
+            api_key=helius_api_key,
+            solscan_api_key=solscan_api_key,
+        )
         self.collector = DataCollector(self.helius)
         self.cache = CacheService(redis_url=redis_url)
 

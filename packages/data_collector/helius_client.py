@@ -23,10 +23,11 @@ logger = logging.getLogger(__name__)
 class HeliusClient:
     """Helius API ile iletişim kuran async istemci."""
 
-    def __init__(self, api_key: str, rpc_url: str = ""):
+    def __init__(self, api_key: str, rpc_url: str = "", solscan_api_key: str = ""):
         self.api_key = api_key
         self.base_url = "https://api.helius.xyz/v0"
         self.rpc_url = rpc_url or f"https://mainnet.helius-rpc.com/?api-key={api_key}"
+        self.solscan_api_key = solscan_api_key
         self._client: Optional[httpx.AsyncClient] = None
 
     async def _get_client(self) -> httpx.AsyncClient:
@@ -155,20 +156,22 @@ class HeliusClient:
         """
         client = await self._get_client()
 
-        # ── Kaynak 1: Solscan API ──
-        try:
-            url = f"https://pro-api.solscan.io/v2.0/token/meta?address={mint}"
-            resp = await client.get(url, timeout=10, headers={
-                "Accept": "application/json",
-            })
-            if resp.status_code == 200:
-                data = resp.json()
-                holder = data.get("data", {}).get("holder", 0)
-                if holder and holder > 0:
-                    logger.info(f"Holder count (Solscan): {mint[:8]}... = {holder:,}")
-                    return holder
-        except Exception as e:
-            logger.debug(f"Solscan API erişilemedi: {e}")
+        # ── Kaynak 1: Solscan Pro API (API key gerekli) ──
+        if self.solscan_api_key:
+            try:
+                url = f"https://pro-api.solscan.io/v2.0/token/meta?address={mint}"
+                resp = await client.get(url, timeout=10, headers={
+                    "Accept": "application/json",
+                    "token": self.solscan_api_key,
+                })
+                if resp.status_code == 200:
+                    data = resp.json()
+                    holder = data.get("data", {}).get("holder", 0)
+                    if holder and holder > 0:
+                        logger.info(f"Holder count (Solscan): {mint[:8]}... = {holder:,}")
+                        return holder
+            except Exception as e:
+                logger.debug(f"Solscan API erişilemedi: {e}")
 
         # ── Kaynak 1b: Solscan public (eski endpoint) ──
         try:

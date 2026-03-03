@@ -44,10 +44,12 @@ async def lifespan(app: FastAPI):
     
     helius_key = os.getenv("HELIUS_API_KEY", "")
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    solscan_key = os.getenv("SOLSCAN_API_KEY", "")
     
     analysis_service = AnalysisService(
         helius_api_key=helius_key,
         redis_url=redis_url,
+        solscan_api_key=solscan_key,
     )
     await analysis_service.startup()
     logger.info("🛡️ ChainGuard API başlatıldı")
