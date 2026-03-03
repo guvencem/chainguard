@@ -112,17 +112,33 @@ class DataCollector:
 
     async def _collect_holders(self, token_address: str) -> list[dict]:
         """Adım 2: Holder listesi ve gerçek holder sayısını çeker."""
+        accounts = []
+        supply_info = {}
+        real_holder_count = 0
+        total_supply = 0
+        decimals = 0
+
+        # En büyük hesapları çek (yoğunlaşma analizi için)
         try:
-            # Top 20 en büyük hesabı çek (yoğunlaşma analizi için)
             accounts = await self.helius.get_token_largest_accounts(token_address)
+        except Exception as e:
+            logger.warning(f"getTokenLargestAccounts hatası: {e}")
+
+        # Supply bilgisini çek
+        try:
             supply_info = await self.helius.get_token_supply(token_address)
-            
-            # Gerçek toplam holder sayısını çek (Helius DAS API)
-            real_holder_count = await self.helius.get_holder_count(token_address)
-            
             total_supply = float(supply_info.get("amount", 0))
             decimals = int(supply_info.get("decimals", 0))
-            
+        except Exception as e:
+            logger.warning(f"getTokenSupply hatası: {e}")
+
+        # Gerçek holder sayısını çek
+        try:
+            real_holder_count = await self.helius.get_holder_count(token_address)
+        except Exception as e:
+            logger.warning(f"get_holder_count hatası: {e}")
+
+        try:
             holders = []
             for acc in accounts:
                 amount = float(acc.get("amount", 0))
@@ -138,7 +154,6 @@ class DataCollector:
                 })
             
             # Gerçek holder sayısını metadata olarak ekle
-            # (top 20 hesap listesinin uzunluğu DEĞİL, gerçek toplam)
             for h in holders:
                 h["_total_holders"] = real_holder_count or len(holders)
             
@@ -152,8 +167,8 @@ class DataCollector:
             )
             return holders
         except Exception as e:
-            logger.error(f"Holder çekme hatası: {e}", exc_info=True)
-            return []
+            logger.error(f"Holder işleme hatası: {e}", exc_info=True)
+            return [{"_total_holders": real_holder_count, "_placeholder": True}]
 
     async def _collect_transactions(
         self, token_address: str, limit: int = 200
@@ -243,11 +258,13 @@ class DataCollector:
         market = data.get("market_data", {})
 
         # Gerçek holder sayısı — pipeline'dan gelen metadata
+        # Gerçek holder sayısı — pipeline'dan gelen metadata
         # _total_holders alanı varsa onu kullan, yoksa liste uzunluğu
-        real_holders = [h for h in holders if not h.get("_placeholder")]
         total_holders = 0
-        if real_holders and "_total_holders" in real_holders[0]:
-            total_holders = real_holders[0]["_total_holders"]
+        if holders and "_total_holders" in holders[0]:
+            total_holders = holders[0]["_total_holders"]
+            
+        real_holders = [h for h in holders if not h.get("_placeholder")]
         if total_holders == 0:
             total_holders = len(real_holders)
         
