@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+:root {
+  --cg-bg: #0B0E17;
+  --cg-bg-card: #12152280;
+  --cg-bg-card-solid: #121522;
+  --cg-surface: #1A1D2E;
+  --cg-surface-hover: #222640;
+  --cg-border: #2A2E42;
+  --cg-text: #E8E9F0;
+  --cg-text-muted: #8B8FA3;
+  --cg-text-dim: #5A5E73;
+  --cg-accent: #E84142;
+  --cg-accent-glow: #E8414240;
+  --cg-green: #14F195;
+  --cg-green-dim: #14F19530;
+  --cg-yellow: #F59E0B;
+  --cg-yellow-dim: #F59E0B30;
+  --cg-orange: #F97316;
+  --cg-red: #EF4444;
+  --cg-red-dim: #EF444430;
+  --cg-gradient-start: #E84142;
+  --cg-gradient-end: #14F195;
+}
+
+@theme inline {
+  --color-background: var(--cg-bg);
+  --color-foreground: var(--cg-text);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--cg-bg);
+  color: var(--cg-text);
+  font-family: var(--font-sans, "Inter", system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Glassmorphism Card ── */
+.glass-card {
+  background: var(--cg-bg-card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--cg-border);
+  border-radius: 16px;
+}
+
+.glass-card-solid {
+  background: var(--cg-bg-card-solid);
+  border: 1px solid var(--cg-border);
+  border-radius: 16px;
+}
+
+/* ── Glow Effect ── */
+.glow-red {
+  box-shadow: 0 0 30px var(--cg-accent-glow), 0 0 60px var(--cg-accent-glow);
+}
+
+.glow-green {
+  box-shadow: 0 0 30px var(--cg-green-dim), 0 0 60px var(--cg-green-dim);
+}
+
+/* ── Gradient Text ── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--cg-gradient-start), var(--cg-gradient-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Pulse Animation ── */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Gauge Animation ── */
+@keyframes gauge-fill {
+  from {
+    stroke-dashoffset: 283;
+  }
+}
+
+.animate-gauge {
+  animation: gauge-fill 1.5s ease-out forwards;
+}
+
+/* ── Shimmer Loading ── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--cg-surface) 25%, var(--cg-surface-hover) 50%, var(--cg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cg-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cg-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cg-text-dim);
+}
+
+/* ── Search Input ── */
+.search-input {
+  background: var(--cg-surface);
+  border: 2px solid var(--cg-border);
+  border-radius: 16px;
+  color: var(--cg-text);
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--cg-accent);
+  box-shadow: 0 0 0 4px var(--cg-accent-glow);
+}
+
+.search-input::placeholder {
+  color: var(--cg-text-dim);
+}
+
+/* ── Warning Banner ── */
+.warning-banner {
+  background: var(--cg-red-dim);
+  border: 1px solid var(--cg-red);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--cg-red);
+  font-size: 14px;
+}
+
+/* ── Floating Particles (background decoration) ── */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.6;
+  }
+}
