@@ -9,7 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Proje dosyalarını kopyala
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
-COPY .env.example ./.env.example
+
+# PYTHONPATH ayarla (packages/ klasörünü bulsun)
+ENV PYTHONPATH=/app/packages
 
 # Çalışma dizini API
 WORKDIR /app/apps/api
@@ -17,5 +19,5 @@ WORKDIR /app/apps/api
 # Port
 EXPOSE 8000
 
-# Başlat — Railway $PORT env verir
-CMD python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Başlat — main.py içinde PORT env okunur
+ENTRYPOINT ["python", "main.py"]

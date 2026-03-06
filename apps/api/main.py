@@ -230,3 +230,11 @@ async def server_error(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Sunucu hatası oluştu. Lütfen tekrar deneyin."},
     )
+
+
+# ── Direct run (Railway için) ──────────────────────────
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
+
