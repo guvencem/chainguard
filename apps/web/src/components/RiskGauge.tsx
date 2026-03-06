@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * RiskGauge — Dairesel risk skoru göstergesi
- *
- * SVG tabanlı, animasyonlu, 0-100 arası skor gösterir.
- * Renk geçişi: yeşil → sarı → turuncu → kırmızı
+ * RiskGauge — Dairesel risk skoru göstergesi (Light Theme)
+ * SVG tabanlı, animasyonlu, canlı renkler.
  */
 
 interface RiskGaugeProps {
-    score: number;      // 0-100
-    label: string;      // "DOLANDIRICILIK", "GÜVENLİ" vb.
-    color: string;      // hex renk
-    size?: number;      // piksel
+    score: number;
+    label: string;
+    color: string;
+    size?: number;
 }
 
 export default function RiskGauge({
@@ -25,20 +23,28 @@ export default function RiskGauge({
     const progress = Math.min(Math.max(score, 0), 100);
     const dashOffset = circumference - (progress / 100) * circumference;
 
-    // Skora göre renk
     const getColor = () => {
-        if (score < 20) return "#22C55E";
+        if (score < 20) return "#06D6A0";
         if (score < 40) return "#84CC16";
-        if (score < 60) return "#F59E0B";
+        if (score < 60) return "#FFB703";
         if (score < 80) return "#F97316";
-        return "#EF4444";
+        return "#FF6B6B";
     };
 
     const gaugeColor = color || getColor();
 
+    const getBgGlow = () => {
+        if (score < 40) return "rgba(6, 214, 160, 0.08)";
+        if (score < 60) return "rgba(255, 183, 3, 0.08)";
+        return "rgba(255, 107, 107, 0.08)";
+    };
+
     return (
-        <div className="flex flex-col items-center gap-3">
-            <div className="relative" style={{ width: size, height: size }}>
+        <div className="flex flex-col items-center gap-4">
+            <div
+                className="relative rounded-full p-3"
+                style={{ width: size + 24, height: size + 24, background: getBgGlow() }}
+            >
                 <svg
                     width={size}
                     height={size}
@@ -51,7 +57,7 @@ export default function RiskGauge({
                         cy="100"
                         r={radius}
                         fill="none"
-                        stroke="var(--cg-surface)"
+                        stroke="#E8EAF3"
                         strokeWidth="12"
                     />
                     {/* Progress circle */}
@@ -67,24 +73,22 @@ export default function RiskGauge({
                         strokeDashoffset={dashOffset}
                         className="animate-gauge"
                         style={{
-                            filter: `drop-shadow(0 0 8px ${gaugeColor}60)`,
+                            filter: `drop-shadow(0 0 10px ${gaugeColor}50)`,
                             transition: "stroke-dashoffset 1.5s ease-out",
                         }}
                     />
-                    {/* Glow effects */}
+                    {/* Outer glow */}
                     <circle
                         cx="100"
                         cy="100"
-                        r={radius}
+                        r={radius + 6}
                         fill="none"
                         stroke={gaugeColor}
-                        strokeWidth="2"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={dashOffset}
-                        opacity="0.3"
-                        style={{
-                            filter: `blur(4px)`,
-                        }}
+                        strokeWidth="1"
+                        strokeDasharray={circumference * 1.07}
+                        strokeDashoffset={circumference * 1.07 - (progress / 100) * circumference * 1.07}
+                        opacity="0.2"
+                        style={{ filter: "blur(3px)" }}
                     />
                 </svg>
 
@@ -107,11 +111,12 @@ export default function RiskGauge({
 
             {/* Label */}
             <div
-                className="px-4 py-2 rounded-full text-sm font-bold tracking-wide"
+                className="px-5 py-2.5 rounded-full text-sm font-bold tracking-wide"
                 style={{
-                    background: `${gaugeColor}20`,
+                    background: `${gaugeColor}15`,
                     color: gaugeColor,
-                    border: `1px solid ${gaugeColor}40`,
+                    border: `2px solid ${gaugeColor}30`,
+                    boxShadow: `0 2px 10px ${gaugeColor}15`,
                 }}
             >
                 {label}

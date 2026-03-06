@@ -1,6 +1,6 @@
 /**
- * ChainGuard — API İstemcisi
- * Backend ile iletişim kuran fonksiyonlar.
+ * ChainGuard — API İstemcisi (Sprint 2)
+ * 9 metrikli skorlama sistemi ile uyumlu tip tanımları.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -41,6 +41,53 @@ export interface HolderMetric {
     label_tr: string;
 }
 
+// Sprint 2 — Yeni Metrik Tipleri
+export interface ClusterMetric {
+    score: number;
+    label_tr: string;
+    cluster_count: number;
+    largest_pct: number;
+    total_wallets: number;
+}
+
+export interface WashMetric {
+    score: number;
+    label_tr: string;
+    cycles_found: number;
+    wash_volume_pct: number;
+    same_amount_pairs: number;
+}
+
+export interface SybilMetric {
+    score: number;
+    label_tr: string;
+    young_wallet_pct: number;
+    single_token_pct: number;
+    similar_balance_pct: number;
+}
+
+export interface BundlerMetric {
+    score: number;
+    label_tr: string;
+    detected: boolean;
+    bundle_count: number;
+    max_recipients: number;
+}
+
+export interface ExitMetric {
+    score: number;
+    label_tr: string;
+    stages_detected: number;
+    total_exit_pct: number;
+}
+
+export interface CurveMetric {
+    score: number;
+    label_tr: string;
+    pump_speed_minutes: number;
+    insider_pct: number;
+}
+
 export interface ScoreResult {
     total: number;
     level: string;
@@ -56,6 +103,13 @@ export interface TokenAnalysis {
         vlr: VLRMetric;
         rls: RLSMetric;
         holders: HolderMetric;
+        // Sprint 2
+        cluster?: ClusterMetric;
+        wash?: WashMetric;
+        sybil?: SybilMetric;
+        bundler?: BundlerMetric;
+        exit?: ExitMetric;
+        curve?: CurveMetric;
     };
     warnings_tr: string[];
     cached: boolean;
@@ -76,9 +130,12 @@ export interface HolderData {
 export interface HealthStatus {
     status: string;
     version: string;
+    scoring: string;
+    metrics_count: number;
     services: {
         api: boolean;
         redis: boolean;
+        postgresql: boolean;
     };
 }
 
@@ -125,6 +182,19 @@ class ChainGuardAPI {
 
         if (!res.ok) {
             throw new APIError(res.status, "Trend verisi çekilemedi.");
+        }
+
+        return res.json();
+    }
+
+    async getHistory(address: string): Promise<{ history: any[] }> {
+        const res = await fetch(
+            `${this.baseUrl}/api/v1/token/${address}/history`,
+            { cache: "no-store" }
+        );
+
+        if (!res.ok) {
+            throw new APIError(res.status, "Geçmiş verisi çekilemedi.");
         }
 
         return res.json();
