@@ -16,6 +16,13 @@ from typing import Optional, Any
 from .helius_client import HeliusClient
 from .dex_provider import DexDataProvider, DexMarketData
 
+# Sprint 2 Analyzer'lar
+import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from analyzer.cluster_analyzer import ClusterAnalyzer
+from analyzer.wash_detector import WashDetector
+from analyzer.sybil_bundler_detector import SybilDetector, BundlerDetector
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +37,11 @@ class DataCollector:
     def __init__(self, helius: HeliusClient, dex_provider: DexDataProvider = None):
         self.helius = helius
         self.dex = dex_provider or DexDataProvider()
+        # Sprint 2 Analyzer'lar
+        self.cluster_analyzer = ClusterAnalyzer()
+        self.wash_detector = WashDetector()
+        self.sybil_detector = SybilDetector()
+        self.bundler_detector = BundlerDetector()
 
     async def collect_full(self, token_address: str) -> dict:
         """
@@ -61,6 +73,50 @@ class DataCollector:
 
         # Adım 5: İstatistik hesaplama
         result["stats"] = self._compute_stats(result)
+
+        # ── Sprint 2: Gelişmiş Analiz ──────────────────
+        creator = result["token_info"].get("creator_wallet", "")
+        supply = float(result["token_info"].get("supply", 0))
+
+        try:
+            result["clusters"] = self.cluster_analyzer.analyze(
+                holders=result["holders"],
+                transactions=result["transactions"],
+                token_address=token_address,
+                creator_wallet=creator,
+            )
+        except Exception as e:
+            logger.error(f"Cluster analiz hatası: {e}")
+            result["clusters"] = []
+
+        try:
+            result["wash_trading"] = self.wash_detector.analyze(
+                transactions=result["transactions"],
+                token_address=token_address,
+            )
+        except Exception as e:
+            logger.error(f"Wash trading analiz hatası: {e}")
+            result["wash_trading"] = {}
+
+        try:
+            result["sybil"] = self.sybil_detector.analyze(
+                holders=result["holders"],
+                transactions=result["transactions"],
+                token_address=token_address,
+            )
+        except Exception as e:
+            logger.error(f"Sybil analiz hatası: {e}")
+            result["sybil"] = {}
+
+        try:
+            result["bundler"] = self.bundler_detector.analyze(
+                transactions=result["transactions"],
+                token_address=token_address,
+                total_supply=supply,
+            )
+        except Exception as e:
+            logger.error(f"Bundler analiz hatası: {e}")
+            result["bundler"] = {}
 
         logger.info(f"Pipeline tamamlandı: {token_address}")
         return result
