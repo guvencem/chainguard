@@ -36,6 +36,7 @@ from analyzer.scoring import (
 from data_collector.helius_client import HeliusClient
 from data_collector.pipeline import DataCollector
 from cache import CacheService
+from database import Database
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,7 @@ class AnalysisService:
         helius_api_key: str,
         redis_url: str = "redis://localhost:6379",
         solscan_api_key: str = "",
+        database_url: str = "",
     ):
         self.helius = HeliusClient(
             api_key=helius_api_key,
@@ -55,16 +57,19 @@ class AnalysisService:
         )
         self.collector = DataCollector(self.helius)
         self.cache = CacheService(redis_url=redis_url)
+        self.db = Database(database_url=database_url)
 
     async def startup(self):
         """Servisi başlat."""
         await self.cache.connect()
+        await self.db.connect()
         logger.info("AnalysisService başlatıldı")
 
     async def shutdown(self):
         """Servisi kapat."""
         await self.helius.close()
         await self.cache.disconnect()
+        await self.db.disconnect()
         logger.info("AnalysisService kapatıldı")
 
     async def analyze_token(self, address: str) -> TokenAnalysis:
@@ -91,9 +96,16 @@ class AnalysisService:
         analysis = self._compute_analysis(address, raw_data)
 
         # 4. Cache'e yaz
-        await self.cache.set_score(address, analysis.model_dump())
+        analysis_data = analysis.model_dump()
+        await self.cache.set_score(address, analysis_data)
         await self.cache.set_metadata(address, raw_data.get("token_info", {}))
         await self.cache.set_holders(address, raw_data.get("holders", []))
+
+        # 5. DB'ye kaydet (async, hata olsa bile analiz döner)
+        try:
+            await self.db.save_analysis(analysis_data)
+        except Exception as e:
+            logger.error(f"DB kayıt hatası (analiz yine döner): {e}")
 
         logger.info(f"Analiz tamamlandı: {address} → skor={analysis.score.total:.1f}")
         return analysis

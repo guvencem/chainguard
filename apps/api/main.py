@@ -1,11 +1,13 @@
 """
 ChainGuard — FastAPI Backend
 
-Sprint 1 API Endpointleri:
-  GET /api/v1/health              → Sistem sağlık kontrolü
-  GET /api/v1/token/{address}     → Token risk analizi
-  GET /api/v1/token/{address}/holders → Holder dağılımı
-  GET /api/v1/trending/risky      → En riskli trend tokenlar
+Sprint 2 API Endpointleri:
+  GET /api/v1/health                    → Sistem sağlık kontrolü
+  GET /api/v1/token/{address}           → Token risk analizi (9 metrik)
+  GET /api/v1/token/{address}/holders   → Holder dağılımı
+  GET /api/v1/token/{address}/history   → Analiz geçmişi
+  GET /api/v1/trending                  → En çok sorgulanan tokenlar
+  GET /api/v1/trending/risky            → En riskli trend tokenlar
 """
 
 import os
@@ -45,11 +47,13 @@ async def lifespan(app: FastAPI):
     helius_key = os.getenv("HELIUS_API_KEY", "")
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
     solscan_key = os.getenv("SOLSCAN_API_KEY", "")
+    database_url = os.getenv("DATABASE_URL", "")
     
     analysis_service = AnalysisService(
         helius_api_key=helius_key,
         redis_url=redis_url,
         solscan_api_key=solscan_key,
+        database_url=database_url,
     )
     await analysis_service.startup()
     logger.info("🛡️ ChainGuard API başlatıldı")
@@ -64,7 +68,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ChainGuard API",
     description="Solana Token Risk Analiz Platformu",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -131,12 +135,16 @@ def validate_address(address: str) -> bool:
 async def health():
     """Sistem sağlık kontrolü."""
     redis_ok = await analysis_service.cache.health_check()
+    db_ok = analysis_service.db.enabled
     return {
         "status": "ok",
-        "version": "1.0.0",
+        "version": "2.0.0",
+        "scoring": "v2",
+        "metrics_count": 9,
         "services": {
             "api": True,
             "redis": redis_ok,
+            "postgresql": db_ok,
         },
     }
 
@@ -202,14 +210,42 @@ async def get_holders(address: str, request: Request):
 @app.get("/api/v1/trending/risky")
 async def trending_risky():
     """En riskli trend tokenlar (Top 20)."""
-    # Sprint 1'de statik/cache — ileride veritabanından çekilecek
+    # Önce DB'den dene
+    db_trending = await analysis_service.db.get_trending(limit=20)
+    if db_trending:
+        return {"tokens": db_trending, "source": "database"}
+
+    # Fallback: Redis cache
     cached = await analysis_service.cache.get_trending()
     if cached:
-        return {"tokens": cached}
+        return {"tokens": cached, "source": "cache"}
     
     return {
         "tokens": [],
         "message": "Henüz yeterli veri toplanmadı. Token analiz ettikçe trend listesi oluşacak.",
+    }
+
+
+@app.get("/api/v1/trending")
+async def trending():
+    """En çok sorgulanan tokenlar (Top 20)."""
+    db_trending = await analysis_service.db.get_trending(limit=20)
+    if db_trending:
+        return {"tokens": db_trending, "source": "database"}
+    return {"tokens": [], "message": "Henüz veri yok."}
+
+
+@app.get("/api/v1/token/{address}/history")
+async def token_history(address: str, request: Request):
+    """Token analiz geçmişi (son 10 analiz)."""
+    if not validate_address(address):
+        raise HTTPException(status_code=400, detail="Geçersiz Solana token adresi.")
+
+    history = await analysis_service.db.get_analysis_history(address, limit=10)
+    return {
+        "token_address": address,
+        "history_count": len(history),
+        "history": history,
     }
 
 
