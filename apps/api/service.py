@@ -16,15 +16,22 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "packages"))
 
 from shared.models import (
-    TokenInfo, TokenAnalysis, ScoreResult, MetricsResult,
+    TokenInfo, TokenAnalysis, ScoreResult, MetricsResultV2,
     VLRMetric, RLSMetric, HolderMetric,
+    ClusterMetric, WashMetric, SybilMetric, BundlerMetric, ExitMetric, CurveMetric,
     get_risk_level, RISK_LABELS,
 )
 from analyzer.scoring import (
     calculate_vlr, vlr_to_score, get_vlr_label,
     rls_to_score, get_rls_label, real_exit_value,
     holder_score as calc_holder_score, get_holder_label,
-    total_score_sprint1, generate_warnings,
+    cluster_score as calc_cluster_score, get_cluster_label,
+    wash_trading_score as calc_wash_score, get_wash_label,
+    sybil_score as calc_sybil_score, get_sybil_label,
+    bundler_score as calc_bundler_score, get_bundler_label,
+    exit_score as calc_exit_score, get_exit_label,
+    curve_score as calc_curve_score, get_curve_label,
+    total_score_sprint2, generate_warnings, score_to_level,
 )
 from data_collector.helius_client import HeliusClient
 from data_collector.pipeline import DataCollector
@@ -152,20 +159,99 @@ class AnalysisService:
             label_tr=holder_label,
         )
 
-        # ── Birleşik Skor ──────────────────────────────
-        total = total_score_sprint1(vlr_s, rls_s, holder_s)
-        level = get_risk_level(total)
-        labels = RISK_LABELS[level]
+        # ── Sprint 2 Yeni Metrikler ─────────────────
+        # Pipeline'dan gelen ham veriler (henüz yoksa boş dict)
+        cluster_data = raw_data.get("clusters", [])
+        wash_data = raw_data.get("wash_trading", {})
+        sybil_data = raw_data.get("sybil", {})
+        bundler_data = raw_data.get("bundler", {})
+        exit_data = raw_data.get("exit", {})
+        curve_data = raw_data.get("curve", {})
+
+        # Cluster
+        cluster_s = calc_cluster_score(cluster_data, supply)
+        cluster_metric = ClusterMetric(
+            cluster_count=len(cluster_data),
+            total_wallets=sum(c.get("wallet_count", 0) for c in cluster_data),
+            largest_pct=max((c.get("pct_supply", 0) for c in cluster_data), default=0),
+            score=round(cluster_s, 2),
+            label_tr=get_cluster_label(cluster_data),
+        )
+
+        # Wash Trading
+        wash_s = calc_wash_score(wash_data)
+        wash_metric = WashMetric(
+            cycles_found=wash_data.get("cycles_found", 0),
+            cycle_volume_usd=wash_data.get("cycle_volume_usd", 0),
+            fake_volume_pct=(
+                wash_data.get("cycle_volume_usd", 0) / max(wash_data.get("total_volume_usd", 1), 1) * 100
+            ) if wash_data else 0,
+            score=round(wash_s, 2),
+            label_tr=get_wash_label(wash_data),
+        )
+
+        # Sybil
+        sybil_s = calc_sybil_score(sybil_data)
+        sybil_metric = SybilMetric(
+            young_wallet_pct=sybil_data.get("young_wallet_pct", 0),
+            single_token_pct=sybil_data.get("single_token_pct", 0),
+            score=round(sybil_s, 2),
+            label_tr=get_sybil_label(sybil_data),
+        )
+
+        # Bundler
+        bundler_s = calc_bundler_score(bundler_data)
+        bundler_metric = BundlerMetric(
+            detected=bundler_data.get("detected", False),
+            bundle_count=bundler_data.get("bundle_count", 0),
+            max_recipients=bundler_data.get("max_recipients_in_slot", 0),
+            score=round(bundler_s, 2),
+            label_tr=get_bundler_label(bundler_data),
+        )
+
+        # Exit
+        exit_s = calc_exit_score(exit_data)
+        exit_metric = ExitMetric(
+            detected=exit_data.get("detected", False),
+            stages=exit_data.get("stages", 0),
+            seller_is_creator=exit_data.get("seller_is_creator", False),
+            score=round(exit_s, 2),
+            label_tr=get_exit_label(exit_data),
+        )
+
+        # Curve
+        curve_s = calc_curve_score(curve_data)
+        curve_metric = CurveMetric(
+            platform=curve_data.get("platform", ""),
+            graduation_time_min=curve_data.get("graduation_time_minutes", 0),
+            score=round(curve_s, 2),
+            label_tr=get_curve_label(curve_data),
+        )
+
+        # ── Birleşik Skor (Sprint 2) ──────────────────
+        total = total_score_sprint2(
+            vlr_score_val=vlr_s,
+            rls_score_val=rls_s,
+            holder_score_val=holder_s,
+            cluster_score_val=cluster_s,
+            wash_score_val=wash_s,
+            sybil_score_val=sybil_s,
+            bundler_score_val=bundler_s,
+            exit_score_val=exit_s,
+            curve_score_val=curve_s,
+            mcap_usd=mcap_usd,
+        )
+        level_info = score_to_level(total)
 
         score = ScoreResult(
             total=round(total, 1),
-            level=level,
-            label_tr=labels["tr"],
-            label_en=labels["en"],
-            color=labels["color"],
+            level=level_info["level"],
+            label_tr=level_info["label_tr"],
+            label_en=level_info["label_en"],
+            color=level_info["color"],
         )
 
-        # ── Uyarılar ───────────────────────────────────
+        # ── Uyarılar (Sprint 2 genişletilmiş) ─────────
         warnings = generate_warnings(
             vlr=vlr_raw,
             vlr_score_val=vlr_s,
@@ -173,6 +259,12 @@ class AnalysisService:
             holder_count=holder_count,
             top10_pct=top10_pct,
             mcap=mcap_usd,
+            cluster_data=cluster_data,
+            wash_data=wash_data,
+            sybil_data=sybil_data,
+            bundler_data=bundler_data,
+            exit_data=exit_data,
+            curve_data=curve_data,
         )
 
         # ── Token bilgisi ──────────────────────────────
@@ -190,7 +282,17 @@ class AnalysisService:
         return TokenAnalysis(
             token=token_info,
             score=score,
-            metrics=MetricsResult(vlr=vlr_metric, rls=rls_metric, holders=holder_metric),
+            metrics=MetricsResultV2(
+                vlr=vlr_metric,
+                rls=rls_metric,
+                holders=holder_metric,
+                cluster=cluster_metric,
+                wash=wash_metric,
+                sybil=sybil_metric,
+                bundler=bundler_metric,
+                exit=exit_metric,
+                curve=curve_metric,
+            ),
             warnings_tr=warnings,
             cached=False,
             analyzed_at=datetime.now(timezone.utc),

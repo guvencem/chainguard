@@ -1,6 +1,8 @@
 """
 ChainGuard — Ortak veri modelleri.
 Pydantic ile tip güvenli veri yapıları.
+
+Sprint 2: 9 metrikli genişletilmiş model.
 """
 
 from datetime import datetime
@@ -21,7 +23,7 @@ class TokenInfo(BaseModel):
     created_at: Optional[datetime] = None
 
 
-# ── Metrik Modelleri ────────────────────────────────────────
+# ── Sprint 1 Metrik Modelleri ──────────────────────────────
 
 class VLRMetric(BaseModel):
     """Hacim/Likidite Oranı (Volume-to-Liquidity Ratio)"""
@@ -51,10 +53,77 @@ class HolderMetric(BaseModel):
     label_tr: str = ""
 
 
+# ── Sprint 2 Yeni Metrik Modelleri ─────────────────────────
+
+class ClusterMetric(BaseModel):
+    """Cüzdan Kümeleme Analizi"""
+    cluster_count: int = 0
+    total_wallets: int = 0
+    largest_pct: float = 0.0
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+class WashMetric(BaseModel):
+    """Wash Trading Pattern Tespiti"""
+    cycles_found: int = 0
+    cycle_volume_usd: float = 0.0
+    fake_volume_pct: float = 0.0
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+class SybilMetric(BaseModel):
+    """Sybil Attack Tespiti"""
+    young_wallet_pct: float = 0.0
+    single_token_pct: float = 0.0
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+class BundlerMetric(BaseModel):
+    """Bundler Tespiti"""
+    detected: bool = False
+    bundle_count: int = 0
+    max_recipients: int = 0
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+class ExitMetric(BaseModel):
+    """Kademeli Çıkış Tespiti"""
+    detected: bool = False
+    stages: int = 0
+    seller_is_creator: bool = False
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+class CurveMetric(BaseModel):
+    """Bonding Curve Anomali Analizi"""
+    platform: str = ""
+    graduation_time_min: float = 0.0
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = ""
+
+
+# ── Birleşik Metrikler ──────────────────────────────────────
+
 class MetricsResult(BaseModel):
+    """Sprint 1 temel metrikler (geriye uyumluluk)"""
     vlr: VLRMetric
     rls: RLSMetric
     holders: HolderMetric
+
+
+class MetricsResultV2(MetricsResult):
+    """Sprint 2 genişletilmiş metrikler (9 metrik)"""
+    cluster: ClusterMetric = Field(default_factory=ClusterMetric)
+    wash: WashMetric = Field(default_factory=WashMetric)
+    sybil: SybilMetric = Field(default_factory=SybilMetric)
+    bundler: BundlerMetric = Field(default_factory=BundlerMetric)
+    exit: ExitMetric = Field(default_factory=ExitMetric)
+    curve: CurveMetric = Field(default_factory=CurveMetric)
 
 
 # ── Skor Modelleri ──────────────────────────────────────────
@@ -101,7 +170,7 @@ class TokenAnalysis(BaseModel):
     """Ana API response modeli — /api/v1/token/{address}"""
     token: TokenInfo
     score: ScoreResult
-    metrics: MetricsResult
+    metrics: MetricsResultV2
     warnings_tr: list[str] = []
     cached: bool = False
     analyzed_at: datetime = Field(default_factory=datetime.utcnow)
