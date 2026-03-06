@@ -117,7 +117,8 @@ export default function TokenPage() {
         );
     }
 
-    const { token, score, metrics, warnings_tr } = data;
+    const { token, score, metrics } = data;
+    const warnings_tr = data.warnings_tr || [];
 
     // Sprint 2 metrik ağırlıkları
     const scoreBreakdown = [
@@ -187,10 +188,7 @@ export default function TokenPage() {
                             )}
                         </div>
                         <div className="flex items-center gap-3">
-                            <span
-                                className="text-xs font-mono"
-                                style={{ color: "var(--cg-text-dim)" }}
-                            >
+                            <span className="text-xs font-mono" style={{ color: "var(--cg-text-dim)" }}>
                                 {address.slice(0, 8)}...{address.slice(-6)}
                             </span>
                             <a
@@ -206,10 +204,7 @@ export default function TokenPage() {
                     </div>
                     <div className="flex items-center gap-3 text-xs" style={{ color: "var(--cg-text-dim)" }}>
                         {data.cached && (
-                            <span
-                                className="px-2 py-1 rounded-full font-medium"
-                                style={{ background: "var(--cg-surface)" }}
-                            >
+                            <span className="px-2 py-1 rounded-full font-medium" style={{ background: "var(--cg-surface)" }}>
                                 📦 Cache
                             </span>
                         )}
@@ -221,18 +216,13 @@ export default function TokenPage() {
             {/* Risk Gauge + Warnings */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div className="glass-card p-8 flex items-center justify-center lg:col-span-1 animate-bounce-in">
-                    <RiskGauge
-                        score={score.total}
-                        label={score.label_tr}
-                        color={score.color}
-                    />
+                    <RiskGauge score={score.total} label={score.label_tr} color={score.color} />
                 </div>
 
                 <div className="lg:col-span-2 space-y-4">
-                    {/* Warnings */}
                     {warnings_tr.length > 0 && (
                         <div className="space-y-2">
-                            {warnings_tr.map((w, i) => (
+                            {warnings_tr.map((w: string, i: number) => (
                                 <div key={i} className="warning-banner animate-slide-up" style={{ animationDelay: `${i * 0.05}s` }}>
                                     ⚠️ {w}
                                 </div>
@@ -240,7 +230,6 @@ export default function TokenPage() {
                         </div>
                     )}
 
-                    {/* Token Info */}
                     <div className="glass-card p-5">
                         <h3 className="text-sm font-semibold mb-3" style={{ color: "var(--cg-text)" }}>
                             📋 Token Bilgileri
@@ -278,7 +267,7 @@ export default function TokenPage() {
                 </div>
             </div>
 
-            {/* ── Sprint 1 Metric Cards (3) ── */}
+            {/* Sprint 1 Metric Cards */}
             <h2 className="text-lg font-bold mb-4" style={{ color: "var(--cg-text)" }}>
                 📈 Temel Metrikler
             </h2>
@@ -324,16 +313,19 @@ export default function TokenPage() {
                 />
             </div>
 
-            {/* ── Sprint 2 Metric Cards (6 new) ── */}
+            {/* Sprint 2 Metric Cards */}
             <h2 className="text-lg font-bold mb-4" style={{ color: "var(--cg-text)" }}>
-                🔬 Gelişmiş Analiz <span className="text-xs font-normal ml-2 px-2 py-1 rounded-full" style={{ background: "var(--cg-accent-light)", color: "var(--cg-accent)" }}>Sprint 2</span>
+                🔬 Gelişmiş Analiz
+                <span className="text-xs font-normal ml-2 px-2 py-1 rounded-full" style={{ background: "var(--cg-accent-light)", color: "var(--cg-accent)" }}>
+                    Sprint 2
+                </span>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <MetricCard
                     title="Cüzdan Kümeleme"
                     value={`${metrics.cluster?.cluster_count ?? 0}`}
                     score={metrics.cluster?.score ?? 0}
-                    label={metrics.cluster?.label_tr ?? "Veri bekleniyor"}
+                    label={metrics.cluster?.label_tr || "Küme tespit edilmedi"}
                     icon={<span>🔗</span>}
                     details={[
                         { label: "En Büyük Küme", value: `%${((metrics.cluster?.largest_pct ?? 0) * 100).toFixed(1)}` },
@@ -344,29 +336,28 @@ export default function TokenPage() {
                     title="Wash Trading"
                     value={`${metrics.wash?.cycles_found ?? 0}`}
                     score={metrics.wash?.score ?? 0}
-                    label={metrics.wash?.label_tr ?? "Veri bekleniyor"}
+                    label={metrics.wash?.label_tr || "Döngü tespit edilmedi"}
                     icon={<span>🔄</span>}
                     details={[
-                        { label: "Sahte Hacim", value: `%${((metrics.wash?.wash_volume_pct ?? 0) * 100).toFixed(1)}` },
-                        { label: "Eş Miktar Çifti", value: (metrics.wash?.same_amount_pairs ?? 0).toString() },
+                        { label: "Sahte Hacim", value: `%${(metrics.wash?.fake_volume_pct ?? 0).toFixed(1)}` },
+                        { label: "Döngü Hacmi", value: `$${(metrics.wash?.cycle_volume_usd ?? 0).toLocaleString("tr-TR")}` },
                     ]}
                 />
                 <MetricCard
                     title="Sybil Attack"
                     value={`%${((metrics.sybil?.young_wallet_pct ?? 0) * 100).toFixed(0)}`}
                     score={metrics.sybil?.score ?? 0}
-                    label={metrics.sybil?.label_tr ?? "Veri bekleniyor"}
+                    label={metrics.sybil?.label_tr || "Sybil tespit edilmedi"}
                     icon={<span>🤖</span>}
                     details={[
-                        { label: "Tek Token", value: `%${((metrics.sybil?.single_token_pct ?? 0) * 100).toFixed(0)}` },
-                        { label: "Benzer Bakiye", value: `%${((metrics.sybil?.similar_balance_pct ?? 0) * 100).toFixed(0)}` },
+                        { label: "Tek Token Cüzdan", value: `%${((metrics.sybil?.single_token_pct ?? 0) * 100).toFixed(0)}` },
                     ]}
                 />
                 <MetricCard
                     title="Bundler Tespiti"
                     value={metrics.bundler?.detected ? "EVET" : "Hayır"}
                     score={metrics.bundler?.score ?? 0}
-                    label={metrics.bundler?.label_tr ?? "Veri bekleniyor"}
+                    label={metrics.bundler?.label_tr || "Bundler tespit edilmedi"}
                     icon={<span>📦</span>}
                     details={[
                         { label: "Bundle Sayısı", value: (metrics.bundler?.bundle_count ?? 0).toString() },
@@ -375,22 +366,22 @@ export default function TokenPage() {
                 />
                 <MetricCard
                     title="Kademeli Çıkış"
-                    value={`${metrics.exit?.stages_detected ?? 0}`}
+                    value={`${metrics.exit?.stages ?? 0}`}
                     score={metrics.exit?.score ?? 0}
-                    label={metrics.exit?.label_tr ?? "Pipeline verisi bekleniyor"}
+                    label={metrics.exit?.label_tr || "Çıkış paterni yok"}
                     icon={<span>📉</span>}
                     details={[
-                        { label: "Çıkış Oranı", value: `%${((metrics.exit?.total_exit_pct ?? 0) * 100).toFixed(1)}` },
+                        { label: "Satıcı = Kurucu?", value: metrics.exit?.seller_is_creator ? "Evet ⚠️" : "Hayır" },
                     ]}
                 />
                 <MetricCard
                     title="Bonding Curve"
-                    value={metrics.curve?.pump_speed_minutes ? `${metrics.curve.pump_speed_minutes}dk` : "—"}
+                    value={metrics.curve?.graduation_time_min ? `${metrics.curve.graduation_time_min}dk` : "—"}
                     score={metrics.curve?.score ?? 0}
-                    label={metrics.curve?.label_tr ?? "Pump.fun verisi bekleniyor"}
+                    label={metrics.curve?.label_tr || "Pump.fun verisi yok"}
                     icon={<span>📐</span>}
                     details={[
-                        { label: "Insider Oranı", value: `%${((metrics.curve?.insider_pct ?? 0) * 100).toFixed(0)}` },
+                        { label: "Platform", value: metrics.curve?.platform || "—" },
                     ]}
                 />
             </div>
@@ -402,7 +393,6 @@ export default function TokenPage() {
                     holderCount={metrics.holders.count}
                 />
 
-                {/* Score Breakdown */}
                 <div className="glass-card p-5 animate-slide-up">
                     <h3 className="text-sm font-semibold mb-4" style={{ color: "var(--cg-text)" }}>
                         ⚖️ Skor Dağılımı (Sprint 2 Ağırlıkları)
@@ -441,10 +431,7 @@ export default function TokenPage() {
                             <span className="text-sm font-semibold" style={{ color: "var(--cg-text)" }}>
                                 Toplam Skor
                             </span>
-                            <span
-                                className="text-2xl font-bold"
-                                style={{ color: score.color }}
-                            >
+                            <span className="text-2xl font-bold" style={{ color: score.color }}>
                                 {Math.round(score.total)}
                             </span>
                         </div>

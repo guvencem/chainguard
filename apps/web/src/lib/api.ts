@@ -1,6 +1,6 @@
 /**
  * ChainGuard — API İstemcisi (Sprint 2)
- * 9 metrikli skorlama sistemi ile uyumlu tip tanımları.
+ * Backend Pydantic modelleriyle birebir uyumlu tip tanımları.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -41,51 +41,51 @@ export interface HolderMetric {
     label_tr: string;
 }
 
-// Sprint 2 — Yeni Metrik Tipleri
+// Sprint 2 — Backend models.py ile birebir uyumlu
 export interface ClusterMetric {
+    cluster_count: number;
+    total_wallets: number;
+    largest_pct: number;
     score: number;
     label_tr: string;
-    cluster_count: number;
-    largest_pct: number;
-    total_wallets: number;
 }
 
 export interface WashMetric {
+    cycles_found: number;
+    cycle_volume_usd: number;
+    fake_volume_pct: number;
     score: number;
     label_tr: string;
-    cycles_found: number;
-    wash_volume_pct: number;
-    same_amount_pairs: number;
 }
 
 export interface SybilMetric {
-    score: number;
-    label_tr: string;
     young_wallet_pct: number;
     single_token_pct: number;
-    similar_balance_pct: number;
+    score: number;
+    label_tr: string;
 }
 
 export interface BundlerMetric {
-    score: number;
-    label_tr: string;
     detected: boolean;
     bundle_count: number;
     max_recipients: number;
+    score: number;
+    label_tr: string;
 }
 
 export interface ExitMetric {
+    detected: boolean;
+    stages: number;
+    seller_is_creator: boolean;
     score: number;
     label_tr: string;
-    stages_detected: number;
-    total_exit_pct: number;
 }
 
 export interface CurveMetric {
+    platform: string;
+    graduation_time_min: number;
     score: number;
     label_tr: string;
-    pump_speed_minutes: number;
-    insider_pct: number;
 }
 
 export interface ScoreResult {
@@ -103,13 +103,13 @@ export interface TokenAnalysis {
         vlr: VLRMetric;
         rls: RLSMetric;
         holders: HolderMetric;
-        // Sprint 2
-        cluster?: ClusterMetric;
-        wash?: WashMetric;
-        sybil?: SybilMetric;
-        bundler?: BundlerMetric;
-        exit?: ExitMetric;
-        curve?: CurveMetric;
+        // Sprint 2 — MetricsResultV2'den geliyor, her zaman var
+        cluster: ClusterMetric;
+        wash: WashMetric;
+        sybil: SybilMetric;
+        bundler: BundlerMetric;
+        exit: ExitMetric;
+        curve: CurveMetric;
     };
     warnings_tr: string[];
     cached: boolean;
