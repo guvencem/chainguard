@@ -78,12 +78,33 @@ class DataCollector:
         creator = result["token_info"].get("creator_wallet", "")
         supply = float(result["token_info"].get("supply", 0))
 
+        # Gelişmiş kümeleme için genişletilmiş holder listesi çek (max 500)
+        extended_holders = []
+        try:
+            raw_ext = await self.helius.get_token_accounts_paginated(token_address, max_holders=500)
+            # Normalize — getTokenAccounts formatını holder formatına çevir
+            supply_info = await self.helius.get_token_supply(token_address)
+            total_supply = float(supply_info.get("amount", 0))
+            decimals = int(supply_info.get("decimals", 0))
+            for acc in raw_ext:
+                amount = float(acc.get("amount", 0))
+                pct = (amount / total_supply * 100) if total_supply > 0 else 0
+                extended_holders.append({
+                    "address": acc.get("owner", acc.get("address", "")),
+                    "balance": amount,
+                    "ui_amount": amount / (10 ** decimals) if decimals else amount,
+                    "pct_supply": pct,
+                })
+        except Exception as e:
+            logger.warning(f"Genişletilmiş holder listesi çekilemedi: {e}")
+
         try:
             result["clusters"] = self.cluster_analyzer.analyze(
                 holders=result["holders"],
                 transactions=result["transactions"],
                 token_address=token_address,
                 creator_wallet=creator,
+                extended_holders=extended_holders if extended_holders else None,
             )
         except Exception as e:
             logger.error(f"Cluster analiz hatası: {e}")

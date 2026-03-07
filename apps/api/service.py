@@ -100,6 +100,10 @@ class AnalysisService:
         await self.cache.set_score(address, analysis_data)
         await self.cache.set_metadata(address, raw_data.get("token_info", {}))
         await self.cache.set_holders(address, raw_data.get("holders", []))
+        # Raw cluster verisi (cüzdan listeleriyle) ayrıca cache'le
+        raw_clusters = raw_data.get("clusters", [])
+        if raw_clusters:
+            await self.cache.set_clusters(address, raw_clusters)
 
         # 5. DB'ye kaydet (async, hata olsa bile analiz döner)
         try:
@@ -309,6 +313,10 @@ class AnalysisService:
             cached=False,
             analyzed_at=datetime.now(timezone.utc),
         )
+
+    async def get_clusters(self, address: str) -> Optional[list]:
+        """Token küme verisini döner (cache'li, cüzdan listeleriyle)."""
+        return await self.cache.get_clusters(address)
 
     async def get_holders(self, address: str) -> Optional[list]:
         """Token holder listesini döner (cache'li)."""

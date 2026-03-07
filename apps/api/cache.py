@@ -148,6 +148,36 @@ class CacheService:
         except Exception:
             pass
 
+    # ── Cluster Cache ────────────────────────────────
+
+    TTL_CLUSTERS = 120  # 2 dakika
+
+    def _clusters_key(self, address: str) -> str:
+        return f"chainguard:clusters:{address}"
+
+    async def get_clusters(self, address: str) -> Optional[list]:
+        if not self._available:
+            return None
+        try:
+            data = await self._redis.get(self._clusters_key(address))
+            if data:
+                return json.loads(data)
+        except Exception:
+            pass
+        return None
+
+    async def set_clusters(self, address: str, clusters: list):
+        if not self._available:
+            return
+        try:
+            await self._redis.setex(
+                self._clusters_key(address),
+                self.TTL_CLUSTERS,
+                json.dumps(clusters, default=str),
+            )
+        except Exception:
+            pass
+
     # ── Trending Cache ───────────────────────────────
 
     async def get_trending(self) -> Optional[list]:

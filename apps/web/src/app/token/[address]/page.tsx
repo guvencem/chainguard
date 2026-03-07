@@ -7,7 +7,7 @@ import MetricCard from "@/components/MetricCard";
 import HolderChart from "@/components/HolderChart";
 import PriceChart from "@/components/PriceChart";
 import ClusterGraph from "@/components/ClusterGraph";
-import { api, TokenAnalysis, APIError } from "@/lib/api";
+import { api, TokenAnalysis, ClustersData, APIError } from "@/lib/api";
 
 // ── SVG Icon Library ──
 
@@ -166,6 +166,7 @@ export default function TokenPage() {
   const address = params.address as string;
 
   const [data, setData] = useState<TokenAnalysis | null>(null);
+  const [clustersData, setClustersData] = useState<ClustersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -177,6 +178,10 @@ export default function TokenPage() {
       try {
         const result = await api.analyzeToken(address);
         setData(result);
+        // Küme detaylarını paralel olarak çek (analiz tamamlandıktan sonra cache'de olur)
+        api.getClusters(address).then((cd) => {
+          if (cd) setClustersData(cd);
+        });
       } catch (err) {
         if (err instanceof APIError) {
           setError(err.message);
@@ -617,6 +622,7 @@ export default function TokenPage() {
           totalWallets={metrics.cluster?.total_wallets ?? 0}
           largestPct={metrics.cluster?.largest_pct ?? 0}
           score={metrics.cluster?.score ?? 0}
+          clusters={clustersData?.clusters}
         />
       </div>
 

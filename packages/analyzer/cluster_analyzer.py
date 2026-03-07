@@ -47,6 +47,7 @@ class ClusterAnalyzer:
         transactions: list[dict],
         token_address: str,
         creator_wallet: str = "",
+        extended_holders: list[dict] | None = None,
     ) -> list[dict]:
         """
         Ana analiz fonksiyonu.
@@ -64,7 +65,16 @@ class ClusterAnalyzer:
             return []
 
         # Adım 1: Cüzdan ve transfer verisi çıkar
-        wallet_data = self._extract_wallet_data(holders, transactions, token_address)
+        # extended_holders varsa daha zengin cüzdan havuzu kullan
+        all_holders = extended_holders if extended_holders else holders
+        wallet_data = self._extract_wallet_data(all_holders, transactions, token_address)
+        # Top-20 holder'ların pct_supply bilgisini koru
+        for h in holders:
+            if h.get("_placeholder"):
+                continue
+            addr = h.get("address", "")
+            if addr and addr in wallet_data:
+                wallet_data[addr]["pct_supply"] = h.get("pct_supply", 0) / 100.0
 
         if len(wallet_data) < 3:
             return []
@@ -78,8 +88,11 @@ class ClusterAnalyzer:
         # Adım 4: Davranış benzerliği
         behavior_edges = self._build_behavior_edges(wallet_data, transactions, token_address)
 
-        # Adım 5: Tüm edge'leri birleştir ve kümeleri bul
-        all_edges = funding_edges + timing_edges + behavior_edges
+        # Adım 5: Round-amount SOL funding tespiti (bot kalıbı)
+        roundamount_edges = self._build_roundamount_edges(transactions)
+
+        # Adım 6: Tüm edge'leri birleştir ve kümeleri bul
+        all_edges = funding_edges + timing_edges + behavior_edges + roundamount_edges
 
         if not all_edges:
             return []
@@ -264,6 +277,45 @@ class ClusterAnalyzer:
 
         return edges
 
+    def _build_roundamount_edges(self, transactions: list[dict]) -> list[tuple[str, str, float]]:
+        """
+        Aynı miktarda (±%1) SOL alan cüzdanları birbirine bağlar.
+        Bot dağıtımlarında standart miktarlar (ör: 0.01 SOL) kullanılır.
+        Güçlü sinyal: farklı kaynaklardan gelen aynı miktar = koordinasyon.
+        """
+        # amount_bucket → [wallet] mapping
+        # Lamport miktarlarını %1 hassasiyetle grupluyoruz
+        amount_buckets: dict[int, list[str]] = defaultdict(list)
+
+        for tx in transactions:
+            for nt in tx.get("native_transfers", []):
+                to_w = nt.get("toUserAccount", "")
+                amount = nt.get("amount", 0)
+
+                if not to_w or amount <= 0:
+                    continue
+                # 0.001–0.5 SOL arası (1M–500M lamport) küçük round miktarlar
+                if not (1_000_000 <= amount <= 500_000_000):
+                    continue
+
+                # %1 hassasiyet bucket: miktarı %1 yuvarlıyoruz
+                bucket = round(amount / (amount * 0.01 + 1)) * round(amount * 0.01 + 1)
+                # Daha basit: 5% granülariteyle bucketla
+                granularity = max(1, int(amount * 0.05))
+                bucket_key = (amount // granularity) * granularity
+
+                amount_buckets[bucket_key].append(to_w)
+
+        edges = []
+        for bucket_key, wallets in amount_buckets.items():
+            unique_wallets = list(set(wallets))
+            if len(unique_wallets) >= 3:  # En az 3 cüzdan aynı miktarı almış
+                for i in range(len(unique_wallets)):
+                    for j in range(i + 1, min(i + 15, len(unique_wallets))):
+                        edges.append((unique_wallets[i], unique_wallets[j], 0.75))
+
+        return edges
+
     def _find_clusters(
         self,
         edges: list[tuple[str, str, float]],
@@ -287,7 +339,7 @@ class ClusterAnalyzer:
 
         clusters = []
         for i, component in enumerate(nx.connected_components(G)):
-            if len(component) < 3:
+            if len(component) < 2:
                 continue
 
             wallets = list(component)
@@ -329,7 +381,7 @@ class ClusterAnalyzer:
 
         clusters = []
         for i, (root, wallets) in enumerate(groups.items()):
-            if len(wallets) < 3:
+            if len(wallets) < 2:
                 continue
 
             cluster = self._build_cluster_data(

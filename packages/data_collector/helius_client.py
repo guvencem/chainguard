@@ -212,6 +212,51 @@ class HeliusClient:
             logger.warning(f"Holder count çekilemedi: {e}")
             return 0
 
+    async def get_token_accounts_paginated(
+        self, mint: str, max_holders: int = 1000
+    ) -> list[dict]:
+        """
+        Token'ın tüm holder'larını sayfalandırılmış şekilde çeker.
+        getTokenAccounts kullanır — getTokenLargestAccounts'ın top-20 sınırı yok.
+        Kümeleme analizi için zengin cüzdan havuzu sağlar.
+        """
+        client = await self._get_client()
+        all_accounts: list[dict] = []
+        page = 1
+
+        while len(all_accounts) < max_holders:
+            try:
+                payload = {
+                    "jsonrpc": "2.0",
+                    "id": "hc",
+                    "method": "getTokenAccounts",
+                    "params": {
+                        "mint": mint,
+                        "limit": min(1000, max_holders - len(all_accounts)),
+                        "page": page,
+                    },
+                }
+                resp = await client.post(self.rpc_url, json=payload, timeout=20)
+                resp.raise_for_status()
+                data = resp.json()
+                accounts = data.get("result", {}).get("token_accounts", [])
+
+                if not accounts:
+                    break
+
+                all_accounts.extend(accounts)
+
+                if len(accounts) < 1000:
+                    break  # Son sayfa
+
+                page += 1
+            except Exception as e:
+                logger.warning(f"getTokenAccounts sayfa {page} hatası: {e}")
+                break
+
+        logger.info(f"getTokenAccounts: {mint[:8]}... → {len(all_accounts)} holder")
+        return all_accounts
+
     async def get_token_supply(self, mint: str) -> dict:
         """Token supply bilgisi çeker."""
         client = await self._get_client()

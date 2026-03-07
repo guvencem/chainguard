@@ -186,6 +186,42 @@ async def analyze_token(address: str, request: Request):
         )
 
 
+@app.get("/api/v1/token/{address}/clusters")
+async def get_clusters(address: str, request: Request):
+    """
+    Token küme verisi — cüzdan listeleriyle birlikte.
+    Önce analiz yapılmış olmalı (cache'de veri yoksa 404 döner).
+    """
+    if not validate_address(address):
+        raise HTTPException(status_code=400, detail="Geçersiz Solana token adresi.")
+
+    clusters = await analysis_service.get_clusters(address)
+    if clusters is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Küme verisi bulunamadı. Önce token analizi yapın.",
+        )
+
+    return {
+        "token_address": address,
+        "cluster_count": len(clusters),
+        "total_wallets": sum(c.get("wallet_count", 0) for c in clusters),
+        "clusters": [
+            {
+                "cluster_id": c.get("cluster_id"),
+                "wallet_count": c.get("wallet_count", 0),
+                "pct_supply": round(c.get("pct_supply", 0), 4),
+                "root_wallet": c.get("root_wallet", ""),
+                "avg_wallet_age_hrs": round(c.get("avg_wallet_age_hrs", 0), 1),
+                "behavioral_similarity": round(c.get("behavioral_similarity", 0), 3),
+                "funding_source_count": c.get("funding_source_count", 0),
+                "wallets": c.get("wallets", [])[:20],  # ilk 20 cüzdan
+            }
+            for c in clusters
+        ],
+    }
+
+
 @app.get("/api/v1/token/{address}/holders")
 async def get_holders(address: str, request: Request):
     """Token holder dağılımı."""

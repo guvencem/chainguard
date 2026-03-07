@@ -116,6 +116,24 @@ export interface TokenAnalysis {
     analyzed_at: string;
 }
 
+export interface ClusterDetail {
+    cluster_id: string;
+    wallet_count: number;
+    pct_supply: number;
+    root_wallet: string;
+    avg_wallet_age_hrs: number;
+    behavioral_similarity: number;
+    funding_source_count: number;
+    wallets: string[];
+}
+
+export interface ClustersData {
+    token_address: string;
+    cluster_count: number;
+    total_wallets: number;
+    clusters: ClusterDetail[];
+}
+
 export interface HolderData {
     token_address: string;
     holder_count: number;
@@ -185,6 +203,19 @@ class ChainGuardAPI {
         }
 
         return res.json();
+    }
+
+    async getClusters(address: string): Promise<ClustersData | null> {
+        try {
+            const res = await fetch(
+                `${this.baseUrl}/api/v1/token/${address}/clusters`,
+                { cache: "no-store" }
+            );
+            if (!res.ok) return null;
+            return res.json();
+        } catch {
+            return null;
+        }
     }
 
     async getHistory(address: string): Promise<{ history: any[] }> {

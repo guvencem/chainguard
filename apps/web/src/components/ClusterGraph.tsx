@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { ClusterDetail } from "@/lib/api";
 
 interface ClusterGraphProps {
   clusterCount: number;
   totalWallets: number;
   largestPct: number;
   score: number;
+  clusters?: ClusterDetail[];
 }
 
 interface ClusterNode {
@@ -16,6 +18,9 @@ interface ClusterNode {
   x: number;
   y: number;
   r: number;
+  rootWallet?: string;
+  avgAge?: number;
+  similarity?: number;
 }
 
 function getScoreColor(score: number): string {
@@ -26,14 +31,19 @@ function getScoreColor(score: number): string {
   return "#EF4444";
 }
 
-function generateClusters(
+function truncateAddress(addr: string): string {
+  if (!addr || addr.length < 10) return addr;
+  return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
+}
+
+function generateSyntheticClusters(
   clusterCount: number,
   totalWallets: number,
   largestPct: number
 ): { id: number; size: number; pct: number }[] {
   if (clusterCount === 0 || totalWallets === 0) return [];
 
-  const count = Math.min(clusterCount, 12); // max 12 nodes for clarity
+  const count = Math.min(clusterCount, 12);
   const largest = Math.round(largestPct * totalWallets);
   const clusters: { id: number; size: number; pct: number }[] = [
     { id: 0, size: largest, pct: largestPct },
@@ -56,18 +66,16 @@ function generateClusters(
 }
 
 function positionClusters(
-  clusters: { id: number; size: number; pct: number }[],
+  clusters: { id: number; size: number; pct: number; rootWallet?: string; avgAge?: number; similarity?: number }[],
   cx: number,
   cy: number
 ): ClusterNode[] {
   return clusters.map((c, i) => {
-    // Largest cluster positioned prominently
     if (i === 0) {
       const r = Math.max(22, Math.min(46, c.pct * 180 + 12));
       return { ...c, x: cx - 70, y: cy - 55, r };
     }
 
-    // Others in a radial layout
     const total = clusters.length - 1;
     const angle = (i / total) * Math.PI * 2 - Math.PI / 2.2;
     const dist = 95 + (i % 3) * 18;
@@ -87,11 +95,24 @@ export default function ClusterGraph({
   totalWallets,
   largestPct,
   score,
+  clusters: realClusters,
 }: ClusterGraphProps) {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   const color = getScoreColor(score);
-  const rawClusters = generateClusters(clusterCount, totalWallets, largestPct);
+
+  // Gerçek veri varsa kullan, yoksa sentetik oluştur
+  const rawClusters: { id: number; size: number; pct: number; rootWallet?: string; avgAge?: number; similarity?: number }[] =
+    realClusters && realClusters.length > 0
+      ? realClusters.slice(0, 12).map((c, i) => ({
+          id: i,
+          size: c.wallet_count,
+          pct: c.pct_supply,
+          rootWallet: c.root_wallet,
+          avgAge: c.avg_wallet_age_hrs,
+          similarity: c.behavioral_similarity,
+        }))
+      : generateSyntheticClusters(clusterCount, totalWallets, largestPct);
 
   const SVG_W = 400;
   const SVG_H = 300;
@@ -100,12 +121,12 @@ export default function ClusterGraph({
 
   const nodes = positionClusters(rawClusters, CX, CY);
 
-  // Token center node
   const tokenR = 18;
   const TX = CX;
   const TY = CY;
 
   const isEmpty = clusterCount === 0 || nodes.length === 0;
+  const hasRealData = realClusters && realClusters.length > 0;
 
   return (
     <div className="card-flat p-6 animate-slide-up">
@@ -120,9 +141,16 @@ export default function ClusterGraph({
           </h3>
           <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
             {clusterCount} küme &middot; {totalWallets.toLocaleString("tr-TR")} cüzdan
+            {hasRealData && (
+              <span
+                className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                style={{ background: "rgba(59,130,246,0.12)", color: "#3B82F6" }}
+              >
+                Canlı
+              </span>
+            )}
           </p>
         </div>
-        {/* Risk indicator */}
         <div
           className="px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-widest"
           style={{
@@ -180,23 +208,13 @@ export default function ClusterGraph({
             {/* Connection lines */}
             {nodes.map((n) => (
               <g key={`line-${n.id}`}>
-                {/* Outer glow line */}
                 <line
-                  x1={TX}
-                  y1={TY}
-                  x2={n.x}
-                  y2={n.y}
-                  stroke={`${color}10`}
-                  strokeWidth="3"
+                  x1={TX} y1={TY} x2={n.x} y2={n.y}
+                  stroke={`${color}10`} strokeWidth="3"
                 />
-                {/* Main line */}
                 <line
-                  x1={TX}
-                  y1={TY}
-                  x2={n.x}
-                  y2={n.y}
-                  stroke={`${color}25`}
-                  strokeWidth="1"
+                  x1={TX} y1={TY} x2={n.x} y2={n.y}
+                  stroke={`${color}25`} strokeWidth="1"
                   strokeDasharray="4 4"
                 />
               </g>
@@ -218,35 +236,24 @@ export default function ClusterGraph({
                   onMouseEnter={() => setHoveredId(n.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
-                  {/* Outer ambient glow */}
                   <circle
-                    cx={0}
-                    cy={0}
-                    r={n.r + 8}
+                    cx={0} cy={0} r={n.r + 8}
                     fill={`url(#clusterGrad-${color.replace("#", "")})`}
                   />
-                  {/* Main circle */}
                   <circle
-                    cx={0}
-                    cy={0}
-                    r={n.r}
+                    cx={0} cy={0} r={n.r}
                     fill={`${color}12`}
                     stroke={color}
                     strokeWidth={isHovered ? 1.5 : 1}
                     strokeOpacity={isHovered ? 0.7 : 0.35}
                     filter={isHovered ? "url(#glow)" : undefined}
                   />
-                  {/* Percentage label */}
                   {n.r >= 10 && (
                     <text
-                      x={0}
-                      y={0}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
+                      x={0} y={0}
+                      textAnchor="middle" dominantBaseline="middle"
                       fontSize={n.r >= 18 ? 9 : 7}
-                      fill={color}
-                      fontWeight="700"
-                      opacity="0.9"
+                      fill={color} fontWeight="700" opacity="0.9"
                     >
                       {(n.pct * 100).toFixed(n.pct < 0.01 ? 1 : 0)}%
                     </text>
@@ -256,35 +263,37 @@ export default function ClusterGraph({
                   {isHovered && (
                     <g>
                       <rect
-                        x={n.r + 4}
-                        y={-14}
-                        width={72}
-                        height={28}
+                        x={n.r + 4} y={-22}
+                        width={hasRealData ? 96 : 72}
+                        height={hasRealData ? 44 : 28}
                         rx={6}
                         fill="#111827"
                         stroke="rgba(148,163,184,0.15)"
                         strokeWidth="1"
                       />
                       <text
-                        x={n.r + 40}
-                        y={-3}
-                        textAnchor="middle"
-                        fontSize="8"
-                        fill="#94A3B8"
-                        fontWeight="600"
+                        x={n.r + (hasRealData ? 52 : 40)} y={hasRealData ? -11 : -3}
+                        textAnchor="middle" fontSize="8"
+                        fill="#94A3B8" fontWeight="600"
                       >
                         {n.size.toLocaleString("tr-TR")} cüzdan
                       </text>
                       <text
-                        x={n.r + 40}
-                        y={8}
-                        textAnchor="middle"
-                        fontSize="8"
-                        fill={color}
-                        fontWeight="700"
+                        x={n.r + (hasRealData ? 52 : 40)} y={hasRealData ? 1 : 8}
+                        textAnchor="middle" fontSize="8"
+                        fill={color} fontWeight="700"
                       >
                         %{(n.pct * 100).toFixed(2)} supply
                       </text>
+                      {hasRealData && n.rootWallet && (
+                        <text
+                          x={n.r + 52} y={13}
+                          textAnchor="middle" fontSize="7"
+                          fill="rgba(148,163,184,0.6)" fontWeight="500"
+                        >
+                          {truncateAddress(n.rootWallet)}
+                        </text>
+                      )}
                     </g>
                   )}
                 </g>
@@ -293,42 +302,23 @@ export default function ClusterGraph({
 
             {/* Token center node */}
             <g>
-              {/* Ambient ring */}
+              <circle cx={TX} cy={TY} r={tokenR + 10} fill="url(#tokenGrad)" />
               <circle
-                cx={TX}
-                cy={TY}
-                r={tokenR + 10}
-                fill="url(#tokenGrad)"
+                cx={TX} cy={TY} r={tokenR + 4}
+                fill="none" stroke="#3B82F6"
+                strokeWidth="0.5" strokeOpacity="0.3"
               />
-              {/* Pulsing outer ring */}
               <circle
-                cx={TX}
-                cy={TY}
-                r={tokenR + 4}
-                fill="none"
-                stroke="#3B82F6"
-                strokeWidth="0.5"
-                strokeOpacity="0.3"
-              />
-              {/* Main circle */}
-              <circle
-                cx={TX}
-                cy={TY}
-                r={tokenR}
+                cx={TX} cy={TY} r={tokenR}
                 fill="rgba(59,130,246,0.15)"
-                stroke="#3B82F6"
-                strokeWidth="1.5"
+                stroke="#3B82F6" strokeWidth="1.5"
                 filter="url(#glow)"
               />
               <text
-                x={TX}
-                y={TY}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="7"
-                fill="#3B82F6"
-                fontWeight="800"
-                letterSpacing="0.5"
+                x={TX} y={TY}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize="7" fill="#3B82F6"
+                fontWeight="800" letterSpacing="0.5"
               >
                 TOKEN
               </text>
@@ -367,7 +357,7 @@ export default function ClusterGraph({
           </span>
         </div>
         <div className="ml-auto text-[10px] font-mono" style={{ color: "var(--cg-text-dim)" }}>
-          Büyük = Daha Fazla Supply
+          {hasRealData ? "Zincir Üstü Veri" : "Büyük = Daha Fazla Supply"}
         </div>
       </div>
     </div>
