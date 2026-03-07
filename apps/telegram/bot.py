@@ -27,7 +27,7 @@ from telegram.constants import ParseMode
 
 # ── Config ──────────────────────────────────────────────
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-API_URL = os.getenv("API_URL", "https://chainguard-api-production.up.railway.app")
+API_URL = os.getenv("API_URL", "https://web-production-b704c.up.railway.app")
 WEB_URL = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
 
 FREE_LIMIT = 5
@@ -81,14 +81,21 @@ def format_number(n: float) -> str:
 
 async def fetch_analysis(address: str) -> dict | None:
     """Backend API'den token analizi çek."""
+    url = f"{API_URL}/api/v1/token/{address}"
+    logger.info(f"API isteği: {url}")
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.get(f"{API_URL}/api/v1/token/{address}")
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.get(url)
+            logger.info(f"API yanıt: status={resp.status_code}, url={url}")
             if resp.status_code == 200:
                 return resp.json()
+            logger.error(f"API hata kodu: {resp.status_code}, body={resp.text[:200]}")
             return None
+    except httpx.TimeoutException:
+        logger.error(f"API timeout (60s): {url}")
+        return None
     except Exception as e:
-        logger.error(f"API hatası: {e}")
+        logger.error(f"API hatası ({type(e).__name__}): {e}")
         return None
 
 
