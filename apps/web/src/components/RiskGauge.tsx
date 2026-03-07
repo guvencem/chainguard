@@ -8,11 +8,11 @@ interface RiskGaugeProps {
 }
 
 function getScoreColor(score: number): string {
-  if (score < 20) return "#059669";
-  if (score < 40) return "#10B981";
-  if (score < 60) return "#D97706";
-  if (score < 80) return "#EA580C";
-  return "#DC2626";
+  if (score < 20) return "#34D399";
+  if (score < 40) return "#34D399";
+  if (score < 60) return "#FBBF24";
+  if (score < 80) return "#FB923C";
+  return "#F87171";
 }
 
 export default function RiskGauge({ score, label, color, size = 200 }: RiskGaugeProps) {
@@ -27,36 +27,31 @@ export default function RiskGauge({ score, label, color, size = 200 }: RiskGauge
       <div className="relative" style={{ width: size, height: size }}>
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at center, ${gaugeColor}18 0%, transparent 70%)`,
-            transform: "scale(1.2)",
-          }}
+          style={{ background: `radial-gradient(circle at center, ${gaugeColor}12 0%, transparent 70%)`, transform: "scale(1.2)" }}
         />
         <svg width={size} height={size} viewBox="0 0 200 200" className="transform -rotate-90">
-          <circle cx="100" cy="100" r="95" fill="none" stroke="rgba(99,102,241,0.08)" strokeWidth="1" />
-          <circle cx="100" cy="100" r={radius} fill="none" stroke="rgba(99,102,241,0.1)" strokeWidth="14" />
-          <circle cx="100" cy="100" r={radius} fill="none" stroke={`${gaugeColor}18`} strokeWidth="22" />
+          <circle cx="100" cy="100" r="95" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+          <circle cx="100" cy="100" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="14" />
+          <circle cx="100" cy="100" r={radius} fill="none" stroke={`${gaugeColor}15`} strokeWidth="22" />
           <circle
             cx="100" cy="100" r={radius} fill="none"
             stroke={gaugeColor} strokeWidth="14" strokeLinecap="round"
             strokeDasharray={circumference} strokeDashoffset={dashOffset}
             className="animate-gauge"
-            style={{ filter: `drop-shadow(0 0 12px ${gaugeColor}70)`, transition: "stroke-dashoffset 1.6s cubic-bezier(0.4, 0, 0.2, 1)" }}
+            style={{ filter: `drop-shadow(0 0 14px ${gaugeColor}80)`, transition: "stroke-dashoffset 1.6s cubic-bezier(0.4,0,0.2,1)" }}
           />
-          <circle cx="100" cy="100" r={radius - 12} fill="none" stroke="rgba(99,102,241,0.06)" strokeWidth="1" />
+          <circle cx="100" cy="100" r={radius - 12} fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-5xl font-bold tabular-nums" style={{ color: gaugeColor, textShadow: `0 2px 16px ${gaugeColor}40` }}>
+          <span className="text-5xl font-black tabular-nums" style={{ color: gaugeColor, textShadow: `0 0 32px ${gaugeColor}50` }}>
             {Math.round(score)}
           </span>
-          <span className="text-xs font-semibold tracking-widest uppercase mt-1" style={{ color: "var(--cg-text-dim)" }}>
-            / 100
-          </span>
+          <span className="text-xs font-semibold tracking-widest uppercase mt-1" style={{ color: "var(--cg-text-dim)" }}>/ 100</span>
         </div>
       </div>
       <div
-        className="px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase"
-        style={{ background: `${gaugeColor}12`, color: gaugeColor, border: `1.5px solid ${gaugeColor}35`, boxShadow: `0 2px 16px ${gaugeColor}20` }}
+        className="px-5 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase"
+        style={{ background: `${gaugeColor}12`, color: gaugeColor, border: `1.5px solid ${gaugeColor}30`, boxShadow: `0 2px 20px ${gaugeColor}20` }}
       >
         {label}
       </div>

@@ -6,10 +6,10 @@ interface HolderChartProps {
 }
 
 function getConcentrationColor(pct: number): string {
-  if (pct < 30) return "#059669";
-  if (pct < 50) return "#D97706";
-  if (pct < 70) return "#EA580C";
-  return "#DC2626";
+  if (pct < 30) return "#34D399";
+  if (pct < 50) return "#FBBF24";
+  if (pct < 70) return "#FB923C";
+  return "#F87171";
 }
 
 function formatCount(n: number): string {
@@ -22,22 +22,20 @@ export default function HolderChart({ top10Concentration, holderCount }: HolderC
   const top10Pct = Math.round(top10Concentration * 100);
   const otherPct = 100 - top10Pct;
   const color = getConcentrationColor(top10Pct);
-
   const radius = 70;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference - (top10Pct / 100) * circumference;
 
   return (
     <div className="card-flat p-6 animate-slide-up">
-      <h3 className="text-xs font-semibold mb-5 uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
+      <h3 className="text-xs font-bold mb-5 uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
         Holder Dağılımı
       </h3>
-
       <div className="flex items-center gap-8">
         <div className="relative flex-shrink-0" style={{ width: 160, height: 160 }}>
           <svg width="160" height="160" viewBox="0 0 160 160" className="transform -rotate-90">
-            <circle cx="80" cy="80" r={radius} fill="none" stroke={`${color}15`} strokeWidth="28" />
-            <circle cx="80" cy="80" r={radius} fill="none" stroke="rgba(99,102,241,0.08)" strokeWidth="18" />
+            <circle cx="80" cy="80" r={radius} fill="none" stroke={`${color}12`} strokeWidth="28" />
+            <circle cx="80" cy="80" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="18" />
             <circle
               cx="80" cy="80" r={radius} fill="none"
               stroke={color} strokeWidth="18" strokeLinecap="round"
@@ -47,13 +45,10 @@ export default function HolderChart({ top10Concentration, holderCount }: HolderC
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold tabular-nums" style={{ color }}>%{top10Pct}</span>
-            <span className="text-[10px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: "var(--cg-text-dim)" }}>
-              Top 10
-            </span>
+            <span className="text-2xl font-black tabular-nums" style={{ color }}>%{top10Pct}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: "var(--cg-text-dim)" }}>Top 10</span>
           </div>
         </div>
-
         <div className="flex-1 space-y-4">
           <div>
             <div className="flex justify-between items-center mb-1.5">
@@ -64,24 +59,18 @@ export default function HolderChart({ top10Concentration, holderCount }: HolderC
               <div className="score-bar-fill animate-score-fill" style={{ width: `${top10Pct}%`, background: color, boxShadow: `0 0 8px ${color}50` }} />
             </div>
           </div>
-
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-xs font-medium" style={{ color: "var(--cg-text-muted)" }}>Diğer</span>
               <span className="text-xs font-bold font-mono" style={{ color: "var(--cg-text-dim)" }}>%{otherPct}</span>
             </div>
             <div className="score-bar">
-              <div className="score-bar-fill animate-score-fill" style={{ width: `${otherPct}%`, background: "rgba(99,102,241,0.15)" }} />
+              <div className="score-bar-fill animate-score-fill" style={{ width: `${otherPct}%`, background: "rgba(255,255,255,0.08)" }} />
             </div>
           </div>
-
           <div className="pt-3 flex items-center justify-between" style={{ borderTop: "1px solid var(--cg-border)" }}>
-            <span className="text-xs uppercase tracking-widest font-semibold" style={{ color: "var(--cg-text-dim)" }}>
-              Toplam Holder
-            </span>
-            <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
-              {formatCount(holderCount)}
-            </span>
+            <span className="text-xs uppercase tracking-widest font-bold" style={{ color: "var(--cg-text-dim)" }}>Toplam Holder</span>
+            <span className="text-sm font-black font-mono" style={{ color: "var(--cg-text)" }}>{formatCount(holderCount)}</span>
           </div>
         </div>
       </div>
