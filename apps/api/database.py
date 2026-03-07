@@ -297,3 +297,33 @@ class Database:
         except Exception as e:
             # Log hatası sessizce geçilir — ana akışı bozmamalı
             pass
+
+    # ─── Affiliate Tracking ────────────────────────────────
+
+    async def log_affiliate_click(
+        self,
+        exchange: str,
+        token_address: str = "",
+        click_source: str = "web",
+        ip_address: str = "",
+        user_agent: str = "",
+    ):
+        """Affiliate tıklamasını kaydeder."""
+        if not self.pool:
+            return
+
+        try:
+            async with self.pool.acquire() as conn:
+                await conn.execute("""
+                    INSERT INTO affiliate_events (exchange, ref_code, click_source, token_address, ip_address, user_agent)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                """,
+                    exchange,
+                    f"CHAINGUARD_{exchange.upper()}",
+                    click_source,
+                    token_address or None,
+                    ip_address,
+                    user_agent,
+                )
+        except Exception as e:
+            logger.error(f"Affiliate log hatası: {e}")

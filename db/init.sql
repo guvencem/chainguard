@@ -249,3 +249,57 @@ SELECT
 FROM trending_tokens
 ORDER BY query_count DESC
 LIMIT 50;
+
+
+-- ─── 10. Kullanıcı Tablosu (Telegram Bot) ────────────────
+CREATE TABLE IF NOT EXISTS users (
+    id              SERIAL PRIMARY KEY,
+    telegram_id     BIGINT UNIQUE,
+    username        VARCHAR(50),
+    tier            VARCHAR(10) DEFAULT 'free',    -- free, pro, trader
+    watchlist       VARCHAR(64)[] DEFAULT '{}',
+    daily_queries   INTEGER DEFAULT 0,
+    last_query_date DATE DEFAULT CURRENT_DATE,
+    api_key         VARCHAR(64),
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_telegram ON users(telegram_id);
+CREATE INDEX IF NOT EXISTS idx_users_tier ON users(tier);
+
+
+-- ─── 11. Affiliate Tıklama Takibi ────────────────────────
+CREATE TABLE IF NOT EXISTS affiliate_events (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id         INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    telegram_id     BIGINT,
+    exchange        VARCHAR(20) NOT NULL,          -- binance, okx, bybit, gate
+    ref_code        VARCHAR(50),
+    click_source    VARCHAR(20) DEFAULT 'web',     -- web, telegram, api
+    token_address   VARCHAR(64),                    -- hangi token analizinden geldi
+    ip_address      VARCHAR(45),
+    user_agent      VARCHAR(256),
+    clicked_at      TIMESTAMPTZ DEFAULT NOW(),
+    converted       BOOLEAN DEFAULT FALSE,
+    conversion_at   TIMESTAMPTZ,
+    commission      NUMERIC(10, 2) DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_affiliate_exchange ON affiliate_events(exchange);
+CREATE INDEX IF NOT EXISTS idx_affiliate_source ON affiliate_events(click_source);
+CREATE INDEX IF NOT EXISTS idx_affiliate_token ON affiliate_events(token_address);
+CREATE INDEX IF NOT EXISTS idx_affiliate_time ON affiliate_events(clicked_at DESC);
+
+-- Affiliate özet view
+CREATE OR REPLACE VIEW v_affiliate_summary AS
+SELECT
+    exchange,
+    click_source,
+    COUNT(*) AS total_clicks,
+    SUM(CASE WHEN converted THEN 1 ELSE 0 END) AS conversions,
+    ROUND(SUM(CASE WHEN converted THEN 1 ELSE 0 END)::NUMERIC / NULLIF(COUNT(*), 0) * 100, 2) AS conversion_rate,
+    SUM(commission) AS total_commission
+FROM affiliate_events
+GROUP BY exchange, click_source
+ORDER BY total_clicks DESC;

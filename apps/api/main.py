@@ -249,7 +249,46 @@ async def token_history(address: str, request: Request):
     }
 
 
-# ── Hata yakalama ──────────────────────────────────────
+# ── Affiliate Linkleri ─────────────────────────────────
+AFFILIATE_LINKS = {
+    "binance": "https://www.binance.com/tr/register?ref=CHAINGUARD",
+    "okx": "https://www.okx.com/join/CHAINGUARD",
+    "bybit": "https://www.bybit.com/register?affiliate_id=CHAINGUARD",
+    "gate": "https://www.gate.io/signup?ref=CHAINGUARD",
+}
+
+
+@app.get("/api/v1/affiliate/click")
+async def affiliate_click(exchange: str, request: Request, token_address: str = "", source: str = "web"):
+    """Affiliate tıklama kaydı ve yönlendirme."""
+    exchange_lower = exchange.lower()
+    if exchange_lower not in AFFILIATE_LINKS:
+        raise HTTPException(status_code=400, detail="Geçersiz borsa.")
+
+    # DB'ye kaydet (hata olsa bile link döner)
+    try:
+        await analysis_service.db.log_affiliate_click(
+            exchange=exchange_lower,
+            token_address=token_address,
+            click_source=source,
+            ip_address=request.client.host if request.client else "",
+            user_agent=request.headers.get("user-agent", ""),
+        )
+    except Exception as e:
+        logger.error(f"Affiliate log hatası: {e}")
+
+    return {
+        "exchange": exchange_lower,
+        "url": AFFILIATE_LINKS[exchange_lower],
+        "tracked": True,
+    }
+
+
+@app.get("/api/v1/affiliate/links")
+async def affiliate_links():
+    """Mevcut affiliate linkleri."""
+    return {"links": AFFILIATE_LINKS}
+
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc: HTTPException):

@@ -48,42 +48,16 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body
-        className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen`}
+        className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`}
       >
-        {/* Background decorative blobs */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          {/* Top-left purple blob */}
-          <div
-            className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.06] animate-float"
-            style={{
-              background: "radial-gradient(circle, #7C3AED 0%, transparent 70%)",
-            }}
-          />
-          {/* Top-right coral blob */}
-          <div
-            className="absolute -top-20 -right-20 w-[500px] h-[500px] rounded-full opacity-[0.05]"
-            style={{
-              background: "radial-gradient(circle, #FF6B6B 0%, transparent 70%)",
-              animationDelay: "2s",
-            }}
-          />
-          {/* Bottom teal blob */}
-          <div
-            className="absolute -bottom-40 left-1/3 w-[700px] h-[500px] rounded-full opacity-[0.04] animate-float"
-            style={{
-              background: "radial-gradient(circle, #06D6A0 0%, transparent 70%)",
-              animationDelay: "4s",
-            }}
-          />
-          {/* Center amber glow */}
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full opacity-[0.03]"
-            style={{
-              background: "radial-gradient(ellipse, #FFB703 0%, transparent 70%)",
-            }}
-          />
-        </div>
-
+        {/* Subtle radial accent glow at top */}
+        <div
+          className="fixed inset-0 -z-10 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 40% at 50% -5%, rgba(59, 130, 246, 0.07) 0%, transparent 70%)",
+          }}
+        />
         {children}
       </body>
     </html>
