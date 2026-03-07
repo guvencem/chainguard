@@ -55,7 +55,7 @@ export default function RootLayout({
           className="fixed inset-0 -z-10 pointer-events-none"
           style={{
             background:
-              "radial-gradient(ellipse 80% 40% at 50% -5%, rgba(59, 130, 246, 0.07) 0%, transparent 70%)",
+              "radial-gradient(ellipse 90% 55% at 50% -5%, rgba(99, 102, 241, 0.13) 0%, rgba(236, 72, 153, 0.06) 55%, transparent 75%)",
           }}
         />
         {children}

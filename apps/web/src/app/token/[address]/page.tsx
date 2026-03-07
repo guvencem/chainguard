@@ -7,6 +7,7 @@ import MetricCard from "@/components/MetricCard";
 import HolderChart from "@/components/HolderChart";
 import PriceChart from "@/components/PriceChart";
 import ClusterGraph from "@/components/ClusterGraph";
+import AffiliateBanner from "@/components/AffiliateBanner";
 import { api, TokenAnalysis, ClustersData, APIError } from "@/lib/api";
 
 // ── SVG Icon Library ──
@@ -701,38 +702,10 @@ export default function TokenPage() {
         </div>
       </div>
 
-      {/* Safe exchange CTA */}
-      {score.total > 50 && (
-        <div
-          className="card-flat p-6 text-center mb-8 animate-slide-up"
-          style={{
-            borderTop: "1px solid rgba(16, 185, 129, 0.2)",
-            animationDelay: "0.22s",
-          }}
-        >
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-4"
-            style={{ color: "var(--cg-text-dim)" }}
-          >
-            Güvenli işlem için tanınmış borsaları tercih edin
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            {["Binance", "OKX", "Bybit"].map((exchange) => (
-              <span
-                key={exchange}
-                className="px-5 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all hover:scale-105"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  color: "var(--cg-text-muted)",
-                  border: "1px solid var(--cg-border-strong)",
-                }}
-              >
-                {exchange}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Affiliate Banner */}
+      <div className="mb-8">
+        <AffiliateBanner tokenAddress={address} score={score.total} />
+      </div>
 
       {/* Footer */}
       <footer className="text-center py-8" style={{ borderTop: "1px solid var(--cg-border)" }}>
