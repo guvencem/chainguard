@@ -120,7 +120,7 @@ export default function HomePage() {
         </div>
 
         <div className="hidden md:flex items-center gap-8">
-          {[["Nasıl Çalışır?", "#how"], ["Trending", "/trending"], ["Eğitim", "/learn"], ["Telegram", "https://t.me/chainguard8_bot"]].map(([label, href]) => (
+          {[["Nasıl Çalışır?", "#how"], ["Trending", "/trending"], ["Eğitim", "/learn"], ["API", "/keys"], ["Telegram", "https://t.me/chainguard8_bot"]].map(([label, href]) => (
             <a
               key={label}
               href={href}
@@ -366,12 +366,17 @@ export default function HomePage() {
             © 2026 ChainGuard — Yatırım tavsiyesi değildir. DYOR.
           </p>
           <div className="flex items-center gap-6">
-            {["Telegram", "Gizlilik", "Şartlar"].map(l => (
-              <a key={l} href="#" className="text-xs font-medium transition-colors" style={{ color: "var(--cg-text-dim)" }}
+            {[
+              { label: "Telegram", href: "https://t.me/chainguard8_bot" },
+              { label: "Eğitim", href: "/learn" },
+              { label: "API", href: "/keys" },
+              { label: "Hakkımızda", href: "/about" },
+            ].map(l => (
+              <a key={l.label} href={l.href} className="text-xs font-medium transition-colors" style={{ color: "var(--cg-text-dim)" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "var(--cg-text-muted)")}
                 onMouseLeave={e => (e.currentTarget.style.color = "var(--cg-text-dim)")}
               >
-                {l}
+                {l.label}
               </a>
             ))}
           </div>

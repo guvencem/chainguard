@@ -716,6 +716,38 @@ export default function TokenPage() {
         <AffiliateBanner tokenAddress={address} score={score.total} />
       </div>
 
+      {/* Share */}
+      <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
+          Bu analizi paylaş:
+        </span>
+        <a
+          href={`https://t.me/share/url?url=${encodeURIComponent(`https://chainguard-beryl.vercel.app/token/${address}`)}&text=${encodeURIComponent(`${token?.symbol ? `$${token.symbol}` : "Token"} risk skoru: ${Math.round(score.total)}/100 — ChainGuard analizi`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
+          style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)", padding: "6px 14px" }}
+        >
+          Telegram'da Paylaş
+        </a>
+        <a
+          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`$${token?.symbol || "Token"} risk skoru: ${Math.round(score.total)}/100 ${score.total >= 60 ? "⚠️ Yüksek risk!" : "✅ Düşük risk"} — ChainGuard analizi:`)}&url=${encodeURIComponent(`https://chainguard-beryl.vercel.app/token/${address}`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
+          style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)", padding: "6px 14px" }}
+        >
+          X'te Paylaş
+        </a>
+        <a
+          href={`/learn`}
+          className="metric-badge hover:opacity-80 transition-opacity"
+          style={{ background: "rgba(99,102,241,0.1)", color: "#818CF8", border: "1px solid rgba(99,102,241,0.2)", padding: "6px 14px" }}
+        >
+          Metrikleri Öğren
+        </a>
+      </div>
+
       {/* Footer */}
       <footer className="text-center py-8" style={{ borderTop: "1px solid var(--cg-border)" }}>
         <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
