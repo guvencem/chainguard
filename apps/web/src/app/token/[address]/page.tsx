@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import RiskGauge from "@/components/RiskGauge";
 import MetricCard from "@/components/MetricCard";
 import HolderChart from "@/components/HolderChart";
+import PriceChart from "@/components/PriceChart";
+import ClusterGraph from "@/components/ClusterGraph";
 import { api, TokenAnalysis, APIError } from "@/lib/api";
 
 // ── SVG Icon Library ──
@@ -385,6 +387,11 @@ export default function TokenPage() {
         </div>
       </div>
 
+      {/* Price Chart */}
+      <div className="mb-6 animate-slide-up" style={{ animationDelay: "0.03s" }}>
+        <PriceChart tokenAddress={address} tokenSymbol={token.symbol} />
+      </div>
+
       {/* Risk Gauge + Warnings + Token Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div
@@ -600,6 +607,16 @@ export default function TokenPage() {
           details={[
             { label: "Platform", value: metrics.curve?.platform || "—" },
           ]}
+        />
+      </div>
+
+      {/* Cluster Graph */}
+      <div className="mb-6 animate-slide-up" style={{ animationDelay: "0.18s" }}>
+        <ClusterGraph
+          clusterCount={metrics.cluster?.cluster_count ?? 0}
+          totalWallets={metrics.cluster?.total_wallets ?? 0}
+          largestPct={metrics.cluster?.largest_pct ?? 0}
+          score={metrics.cluster?.score ?? 0}
         />
       </div>
 
