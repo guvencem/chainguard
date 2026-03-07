@@ -88,6 +88,16 @@ export interface CurveMetric {
     label_tr: string;
 }
 
+export interface CreatorMetric {
+    creator_wallet: string;
+    total_tokens: number;
+    rug_count: number;
+    rug_ratio: number;
+    score: number;
+    label_tr: string;
+    known: boolean;
+}
+
 export interface ScoreResult {
     total: number;
     level: string;
@@ -110,6 +120,7 @@ export interface TokenAnalysis {
         bundler: BundlerMetric;
         exit: ExitMetric;
         curve: CurveMetric;
+        creator: CreatorMetric;
     };
     warnings_tr: string[];
     report_tr: string;

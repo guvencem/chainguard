@@ -273,6 +273,36 @@ class Database:
             logger.error(f"Trending sorgulama hatası: {e}")
             return []
 
+    # ─── Creator Profiling (Sprint 4) ──────────────────────
+
+    async def get_creator_history(self, creator_wallet: str) -> list[dict]:
+        """
+        Bir creator wallet'ın geçmiş token analizlerini döner.
+        tokens tablosu + analyses tablosunu join eder.
+        """
+        if not self.pool or not creator_wallet:
+            return []
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT
+                        t.address,
+                        t.name,
+                        t.symbol,
+                        a.total_score,
+                        a.risk_level,
+                        a.analyzed_at
+                    FROM tokens t
+                    JOIN analyses a ON a.token_address = t.address
+                    WHERE t.creator_wallet = $1
+                    ORDER BY a.analyzed_at DESC
+                    LIMIT 50
+                """, creator_wallet)
+            return [dict(r) for r in rows]
+        except Exception as e:
+            logger.error(f"Creator history hatası: {e}")
+            return []
+
     # ─── API Log ───────────────────────────────────────────
 
     async def log_request(

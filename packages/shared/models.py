@@ -116,6 +116,17 @@ class MetricsResult(BaseModel):
     holders: HolderMetric
 
 
+class CreatorMetric(BaseModel):
+    """Sprint 4 — Token yaratıcısının geçmiş rug pull geçmişi"""
+    creator_wallet: str = ""
+    total_tokens: int = 0
+    rug_count: int = 0       # score > 70 olan geçmiş tokenlar
+    rug_ratio: float = 0.0   # rug_count / total_tokens
+    score: float = Field(ge=0, le=100, default=0)
+    label_tr: str = "Bilinmiyor"
+    known: bool = False      # Creator daha önce token açmış mı
+
+
 class MetricsResultV2(MetricsResult):
     """Sprint 2 genişletilmiş metrikler (9 metrik)"""
     cluster: ClusterMetric = Field(default_factory=ClusterMetric)
@@ -124,6 +135,7 @@ class MetricsResultV2(MetricsResult):
     bundler: BundlerMetric = Field(default_factory=BundlerMetric)
     exit: ExitMetric = Field(default_factory=ExitMetric)
     curve: CurveMetric = Field(default_factory=CurveMetric)
+    creator: CreatorMetric = Field(default_factory=CreatorMetric)
 
 
 # ── Skor Modelleri ──────────────────────────────────────────

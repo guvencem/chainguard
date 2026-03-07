@@ -19,6 +19,7 @@ from shared.models import (
     TokenInfo, TokenAnalysis, ScoreResult, MetricsResultV2,
     VLRMetric, RLSMetric, HolderMetric,
     ClusterMetric, WashMetric, SybilMetric, BundlerMetric, ExitMetric, CurveMetric,
+    CreatorMetric,
     get_risk_level, RISK_LABELS,
 )
 from analyzer.scoring import (
@@ -93,8 +94,16 @@ class AnalysisService:
         logger.info(f"Analiz başlıyor: {address}")
         raw_data = await self.collector.collect_full(address)
 
-        # 3. Skorla
-        analysis = self._compute_analysis(address, raw_data)
+        # 3. Skorla — creator geçmişini DB'den çek
+        creator_wallet = raw_data.get("token_info", {}).get("creator_wallet", "")
+        creator_history = []
+        if creator_wallet:
+            try:
+                creator_history = await self.db.get_creator_history(creator_wallet)
+            except Exception as e:
+                logger.warning(f"Creator history çekilemedi: {e}")
+
+        analysis = self._compute_analysis(address, raw_data, creator_history)
 
         # 4. Cache'e yaz
         analysis_data = analysis.model_dump()
@@ -115,7 +124,51 @@ class AnalysisService:
         logger.info(f"Analiz tamamlandı: {address} → skor={analysis.score.total:.1f}")
         return analysis
 
-    def _compute_analysis(self, address: str, raw_data: dict) -> TokenAnalysis:
+    def _compute_creator_metric(self, creator_wallet: str, history: list[dict]) -> CreatorMetric:
+        """Yaratıcının geçmiş token geçmişine göre risk metriği hesapla."""
+        if not creator_wallet:
+            return CreatorMetric()
+
+        # Aynı tokenı sayma (kendi kendini hariç tut)
+        total = len(history)
+        if total == 0:
+            return CreatorMetric(
+                creator_wallet=creator_wallet,
+                total_tokens=0,
+                rug_count=0,
+                rug_ratio=0.0,
+                score=50.0,  # bilinmiyor → nötr
+                label_tr="Bilinmiyor",
+                known=False,
+            )
+
+        rug_count = sum(1 for t in history if (t.get("total_score") or 0) >= 70)
+        rug_ratio = rug_count / total
+
+        # Skor hesapla: rug oranı + token sayısı bonusu
+        raw_score = rug_ratio * 80 + min(total * 2, 20)
+        score = min(100.0, raw_score)
+
+        if rug_ratio >= 0.7:
+            label = f"Tehlikeli — {total} tokenden {rug_count} rug pull"
+        elif rug_ratio >= 0.3:
+            label = f"Şüpheli — {total} tokenden {rug_count} riskli"
+        elif total >= 3:
+            label = f"Temiz geçmiş — {total} token, {rug_count} rug"
+        else:
+            label = f"{total} önceki token tespit edildi"
+
+        return CreatorMetric(
+            creator_wallet=creator_wallet,
+            total_tokens=total,
+            rug_count=rug_count,
+            rug_ratio=round(rug_ratio, 4),
+            score=round(score, 2),
+            label_tr=label,
+            known=True,
+        )
+
+    def _compute_analysis(self, address: str, raw_data: dict, creator_history: list[dict] = None) -> TokenAnalysis:
         """Ham verileri alıp analiz sonuci oluşturur."""
         info = raw_data.get("token_info", {})
         holders_data = raw_data.get("holders", [])
@@ -296,6 +349,13 @@ class AnalysisService:
             created_at=info.get("created_at"),
         )
 
+        # ── Creator Profiling (Sprint 4) ──────────────
+        creator_wallet = info.get("creator_wallet", "")
+        creator_metric = self._compute_creator_metric(
+            creator_wallet=creator_wallet,
+            history=creator_history or [],
+        )
+
         metrics_v2 = MetricsResultV2(
             vlr=vlr_metric,
             rls=rls_metric,
@@ -306,6 +366,7 @@ class AnalysisService:
             bundler=bundler_metric,
             exit=exit_metric,
             curve=curve_metric,
+            creator=creator_metric,
         )
 
         # ── AI Türkçe Rapor (Sprint 4) ────────────────

@@ -712,6 +712,72 @@ export default function TokenPage() {
         </div>
       </div>
 
+      {/* Creator Profiling */}
+      {metrics.creator?.known && (
+        <div
+          className="mb-6 p-5 rounded-2xl animate-slide-up"
+          style={{
+            background: metrics.creator.score >= 60
+              ? "rgba(239,68,68,0.05)"
+              : metrics.creator.score >= 30
+              ? "rgba(251,146,60,0.05)"
+              : "rgba(52,211,153,0.05)",
+            border: `1px solid ${
+              metrics.creator.score >= 60
+                ? "rgba(239,68,68,0.2)"
+                : metrics.creator.score >= 30
+                ? "rgba(251,146,60,0.2)"
+                : "rgba(52,211,153,0.2)"
+            }`,
+          }}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md"
+                  style={{
+                    background: metrics.creator.score >= 60
+                      ? "rgba(239,68,68,0.12)"
+                      : "rgba(255,255,255,0.06)",
+                    color: metrics.creator.score >= 60
+                      ? "#F87171"
+                      : metrics.creator.score >= 30
+                      ? "#FB923C"
+                      : "#34D399",
+                  }}
+                >
+                  Yaratıcı Geçmişi
+                </span>
+              </div>
+              <p className="text-sm font-semibold mb-1" style={{ color: "var(--cg-text)" }}>
+                {metrics.creator.label_tr}
+              </p>
+              <p className="text-xs font-mono" style={{ color: "var(--cg-text-dim)" }}>
+                {metrics.creator.creator_wallet.slice(0, 8)}...{metrics.creator.creator_wallet.slice(-6)}
+              </p>
+            </div>
+            <div className="text-right flex-shrink-0">
+              <div
+                className="text-2xl font-black"
+                style={{
+                  color: metrics.creator.score >= 60
+                    ? "#F87171"
+                    : metrics.creator.score >= 30
+                    ? "#FB923C"
+                    : "#34D399",
+                }}
+              >
+                {metrics.creator.rug_count}/{metrics.creator.total_tokens}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
+                rug / toplam
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* AI Türkçe Rapor */}
       {report_tr && (
         <div
