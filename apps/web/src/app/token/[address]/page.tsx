@@ -300,6 +300,7 @@ export default function TokenPage() {
 
   const { token, score, metrics } = data;
   const warnings_tr = data.warnings_tr || [];
+  const report_tr = data.report_tr || "";
 
   const scoreBreakdown = [
     { label: "VLR (Hacim/Likidite)", weight: 25, score: metrics.vlr.score, color: "#3B82F6" },
@@ -710,6 +711,29 @@ export default function TokenPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Türkçe Rapor */}
+      {report_tr && (
+        <div
+          className="mb-6 p-5 rounded-2xl animate-slide-up"
+          style={{
+            background: "rgba(99,102,241,0.05)",
+            border: "1px solid rgba(99,102,241,0.15)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span
+              className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md"
+              style={{ background: "rgba(99,102,241,0.12)", color: "#818CF8" }}
+            >
+              AI Analiz Özeti
+            </span>
+          </div>
+          <p className="text-sm leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
+            {report_tr}
+          </p>
+        </div>
+      )}
 
       {/* Affiliate Banner */}
       <div className="mb-8">

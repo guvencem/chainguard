@@ -37,6 +37,7 @@ from data_collector.helius_client import HeliusClient
 from data_collector.pipeline import DataCollector
 from cache import CacheService
 from database import Database
+from report_generator import generate_report
 
 logger = logging.getLogger(__name__)
 
@@ -295,21 +296,32 @@ class AnalysisService:
             created_at=info.get("created_at"),
         )
 
+        metrics_v2 = MetricsResultV2(
+            vlr=vlr_metric,
+            rls=rls_metric,
+            holders=holder_metric,
+            cluster=cluster_metric,
+            wash=wash_metric,
+            sybil=sybil_metric,
+            bundler=bundler_metric,
+            exit=exit_metric,
+            curve=curve_metric,
+        )
+
+        # ── AI Türkçe Rapor (Sprint 4) ────────────────
+        report = generate_report(
+            token_name=info.get("name"),
+            token_symbol=info.get("symbol"),
+            score_total=total,
+            metrics=metrics_v2.model_dump(),
+        )
+
         return TokenAnalysis(
             token=token_info,
             score=score,
-            metrics=MetricsResultV2(
-                vlr=vlr_metric,
-                rls=rls_metric,
-                holders=holder_metric,
-                cluster=cluster_metric,
-                wash=wash_metric,
-                sybil=sybil_metric,
-                bundler=bundler_metric,
-                exit=exit_metric,
-                curve=curve_metric,
-            ),
+            metrics=metrics_v2,
             warnings_tr=warnings,
+            report_tr=report,
             cached=False,
             analyzed_at=datetime.now(timezone.utc),
         )

@@ -172,5 +172,6 @@ class TokenAnalysis(BaseModel):
     score: ScoreResult
     metrics: MetricsResultV2
     warnings_tr: list[str] = []
+    report_tr: str = ""
     cached: bool = False
     analyzed_at: datetime = Field(default_factory=datetime.utcnow)

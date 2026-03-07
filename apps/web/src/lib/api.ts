@@ -112,6 +112,7 @@ export interface TokenAnalysis {
         curve: CurveMetric;
     };
     warnings_tr: string[];
+    report_tr: string;
     cached: boolean;
     analyzed_at: string;
 }
