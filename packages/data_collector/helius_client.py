@@ -173,32 +173,32 @@ class HeliusClient:
             except Exception as e:
                 logger.debug(f"Solscan API erişilemedi: {e}")
 
-        # ── Kaynak 2: Helius getTokenAccounts — total alanını oku ──
-        # Helius DAS getTokenAccounts response'u {"result": {"total": N, "token_accounts": [...]}}
-        # döndürür. total alanı gerçek holder sayısını verir, liste uzunluğu değil.
+        # ── Kaynak 2: Helius getTokenAccounts (tüm sayfaları say) ──
+        # total alanı sadece o sayfadaki kayıt sayısını veriyor, toplam değil.
+        # Gerçek sayı için tüm sayfalar sayılır (max 10 sayfa = 10K holder).
         try:
-            payload = {
-                "jsonrpc": "2.0",
-                "id": "hc",
-                "method": "getTokenAccounts",
-                "params": {"mint": mint, "limit": 1, "page": 1},
-            }
-            resp = await client.post(self.rpc_url, json=payload, timeout=15)
-            resp.raise_for_status()
-            data = resp.json()
-            result = data.get("result", {})
+            total_count = 0
+            page = 1
+            while page <= 10:  # Max 10K holder sayılır, sonrası için "10K+" gösterilir
+                payload = {
+                    "jsonrpc": "2.0",
+                    "id": "hc",
+                    "method": "getTokenAccounts",
+                    "params": {"mint": mint, "limit": 1000, "page": page},
+                }
+                resp = await client.post(self.rpc_url, json=payload, timeout=15)
+                resp.raise_for_status()
+                data = resp.json()
+                accounts = data.get("result", {}).get("token_accounts", [])
+                total_count += len(accounts)
 
-            # total alanı varsa gerçek sayıyı kullan
-            total = result.get("total", 0)
-            if total and total > 0:
-                logger.info(f"Holder count (Helius total): {mint[:8]}... = {total:,}")
-                return int(total)
+                if len(accounts) < 1000:
+                    break  # Son sayfa
 
-            # total yoksa dönen liste uzunluğuna fallback
-            accounts = result.get("token_accounts", [])
-            count = len(accounts)
-            logger.info(f"Holder count (Helius list): {mint[:8]}... = {count}")
-            return count
+                page += 1
+
+            logger.info(f"Holder count (Helius paginated): {mint[:8]}... = {total_count:,}")
+            return total_count
         except Exception as e:
             logger.warning(f"Holder count çekilemedi: {e}")
             return 0
