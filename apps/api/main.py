@@ -14,12 +14,14 @@ import os
 import sys
 import re
 import time
+import secrets
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # .env yükle ve path ayarla
@@ -324,6 +326,155 @@ async def affiliate_click(exchange: str, request: Request, token_address: str = 
 async def affiliate_links():
     """Mevcut affiliate linkleri."""
     return {"links": AFFILIATE_LINKS}
+
+
+# ── Referral Sistemi ───────────────────────────────────
+
+WEB_URL = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "chainguardbot")
+
+
+@app.get("/api/v1/referral/{telegram_id}")
+async def get_referral(telegram_id: int):
+    """Kullanıcının referral kodunu ve istatistiklerini döner. Kod yoksa oluşturur."""
+    ref_code = await analysis_service.db.get_or_create_ref_code(telegram_id)
+    if not ref_code:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı. Önce botta /start yazın.")
+
+    stats = await analysis_service.db.get_referral_stats(telegram_id)
+    return {
+        "ref_code": ref_code,
+        "web_link": f"{WEB_URL}/?ref={ref_code}",
+        "bot_link": f"https://t.me/{BOT_USERNAME}?start={ref_code}",
+        "total_referrals": stats.get("total_referrals", 0) if stats else 0,
+        "bonus_until": stats.get("bonus_until") if stats else None,
+        "bonus_active": analysis_service.db.is_bonus_active(stats.get("bonus_until") if stats else None),
+        "reward": {
+            "referrer": "7 gün artırılmış sorgu limiti",
+            "referred": "3 gün artırılmış sorgu limiti",
+        },
+    }
+
+
+class UseReferralRequest(BaseModel):
+    ref_code: str
+    telegram_id: int
+
+
+@app.post("/api/v1/referral/use")
+async def use_referral(body: UseReferralRequest):
+    """Referral kodu kullan."""
+    result = await analysis_service.db.use_referral_code(
+        ref_code=body.ref_code.strip().upper(),
+        new_telegram_id=body.telegram_id,
+    )
+    if not result["ok"]:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return {"success": True, "bonus_days": 3}
+
+
+# ── API Key Yönetimi ───────────────────────────────────
+
+class CreateKeyRequest(BaseModel):
+    telegram_id: int
+    name: str = "API Key"
+
+
+def _generate_api_key() -> str:
+    return f"cg_live_{secrets.token_hex(24)}"
+
+
+def _mask_key(key: str) -> str:
+    """İlk 12 ve son 4 karakteri göster, ortayı maskele."""
+    if len(key) <= 16:
+        return key
+    return f"{key[:12]}...{key[-4:]}"
+
+
+@app.post("/api/v1/keys")
+async def create_api_key(body: CreateKeyRequest):
+    """Yeni API anahtarı oluştur. Anahtar sadece bir kez tam gösterilir."""
+    if not body.telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id gerekli.")
+    if not body.name or len(body.name) > 50:
+        raise HTTPException(status_code=400, detail="İsim 1-50 karakter olmalı.")
+
+    # Mevcut anahtar sayısını kontrol et (maks 5)
+    existing = await analysis_service.db.list_api_keys(body.telegram_id)
+    if len(existing) >= 5:
+        raise HTTPException(status_code=400, detail="Maksimum 5 API anahtarı oluşturabilirsiniz.")
+
+    key = _generate_api_key()
+    success = await analysis_service.db.create_api_key(
+        telegram_id=body.telegram_id,
+        name=body.name,
+        key_id=key,
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Anahtar oluşturulamadı.")
+
+    return {
+        "key": key,  # TAM anahtar — sadece bir kez gösterilir
+        "name": body.name,
+        "tier": "free",
+        "daily_limit": 100,
+        "warning": "Bu anahtarı güvenli bir yerde saklayın. Tekrar gösterilmeyecek.",
+    }
+
+
+@app.get("/api/v1/keys")
+async def list_api_keys(telegram_id: int):
+    """Kullanıcının API anahtarlarını listele (maskeli)."""
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id gerekli.")
+
+    keys = await analysis_service.db.list_api_keys(telegram_id)
+    return {
+        "keys": [
+            {
+                **{k: v for k, v in key.items() if k != "key_id"},
+                "key_id": _mask_key(key["key_id"]),
+                "key_prefix": key["key_id"][:16],  # ilk 16 karakter — tanımlama için
+                "last_used_at": key["last_used_at"].isoformat() if key.get("last_used_at") else None,
+                "created_at": key["created_at"].isoformat() if key.get("created_at") else None,
+            }
+            for key in keys
+        ],
+        "count": len(keys),
+        "max": 5,
+    }
+
+
+@app.delete("/api/v1/keys/{key_prefix}")
+async def delete_api_key(key_prefix: str, telegram_id: int):
+    """API anahtarını sil. key_prefix = ilk 16 karakter."""
+    if not telegram_id:
+        raise HTTPException(status_code=400, detail="telegram_id gerekli.")
+
+    # Prefix ile gerçek key_id'yi bul
+    keys = await analysis_service.db.list_api_keys(telegram_id)
+    target = next((k for k in keys if k["key_id"].startswith(key_prefix)), None)
+    if not target:
+        raise HTTPException(status_code=404, detail="Anahtar bulunamadı.")
+
+    success = await analysis_service.db.delete_api_key(target["key_id"], telegram_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Anahtar silinemedi.")
+
+    return {"deleted": True, "name": target["name"]}
+
+
+@app.get("/api/v1/keys/validate")
+async def validate_api_key(x_cg_api_key: str = Header(None, alias="X-CG-API-Key")):
+    """API anahtarını doğrula (harici servisler için)."""
+    if not x_cg_api_key:
+        raise HTTPException(status_code=401, detail="X-CG-API-Key header gerekli.")
+
+    info = await analysis_service.db.validate_api_key(x_cg_api_key)
+    if not info:
+        raise HTTPException(status_code=401, detail="Geçersiz veya limitini doldurmuş API anahtarı.")
+
+    return {"valid": True, **info}
 
 
 @app.exception_handler(404)

@@ -257,11 +257,87 @@ def _build_result_text(data: dict, remaining: int) -> str:
     return text
 
 
+# ── Referral Yardımcıları ────────────────────────────────
+
+async def _get_ref_code(telegram_id: int) -> str | None:
+    """DB'den kullanıcının referral kodunu al veya oluştur."""
+    if not db_pool:
+        return None
+    try:
+        import secrets, string
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT ref_code FROM users WHERE telegram_id = $1", telegram_id)
+            if not row:
+                return None
+            if row["ref_code"]:
+                return row["ref_code"]
+            # Oluştur
+            alpha = string.ascii_uppercase + string.digits
+            for _ in range(10):
+                code = "CG" + "".join(secrets.choice(alpha) for _ in range(6))
+                exists = await conn.fetchrow("SELECT 1 FROM users WHERE ref_code = $1", code)
+                if not exists:
+                    await conn.execute("UPDATE users SET ref_code = $1 WHERE telegram_id = $2", code, telegram_id)
+                    return code
+    except Exception as e:
+        logger.error(f"Ref code hatasi: {e}")
+    return None
+
+
+async def _apply_referral(ref_code: str, new_telegram_id: int) -> bool:
+    """Referral kodu uygula, her iki tarafa bonus ver."""
+    if not db_pool:
+        return False
+    try:
+        from datetime import date, timedelta
+        async with db_pool.acquire() as conn:
+            referrer = await conn.fetchrow("SELECT id, telegram_id FROM users WHERE ref_code = $1", ref_code)
+            if not referrer:
+                return False
+            if referrer["telegram_id"] == new_telegram_id:
+                return False
+            new_user = await conn.fetchrow("SELECT id, referred_by FROM users WHERE telegram_id = $1", new_telegram_id)
+            if not new_user or new_user["referred_by"]:
+                return False
+
+            today = date.today()
+            await conn.execute("""
+                INSERT INTO referrals (referrer_id, referred_id, ref_code, converted, reward_given)
+                VALUES ($1, $2, $3, TRUE, TRUE)
+            """, referrer["id"], new_user["id"], ref_code)
+            await conn.execute("""
+                UPDATE users SET bonus_until = GREATEST(COALESCE(bonus_until, $1), $1),
+                total_referrals = total_referrals + 1 WHERE id = $2
+            """, today + timedelta(days=7), referrer["id"])
+            await conn.execute("""
+                UPDATE users SET bonus_until = $1, referred_by = $2 WHERE id = $3
+            """, today + timedelta(days=3), ref_code, new_user["id"])
+
+        logger.info(f"Referral uygulandi: {ref_code} -> {new_telegram_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Referral uygulama hatasi: {e}")
+        return False
+
+
 # ── /start ──────────────────────────────────────────────
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     await get_or_create_user(user.id, user.username or "")
+
+    # Referral kodu kontrolü: /start REF_CODE
+    if context.args:
+        ref_code = context.args[0].strip().upper()
+        if ref_code.startswith("CG") and len(ref_code) == 8:
+            applied = await _apply_referral(ref_code, user.id)
+            if applied:
+                await update.message.reply_text(
+                    "🎁 *Referral kodu uygulandı\\!*\n\n"
+                    "✅ 3 gün artırılmış sorgu limiti kazandın\\.\n"
+                    "Seni davet eden de 7 gün bonus kazandı\\.",
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
 
     welcome = (
         f"👋 Merhaba, *{_escape(user.first_name)}*\\!\n\n"
@@ -273,8 +349,11 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/watch list` — Watchlist goruntule\n"
         "• `/watch remove <adres>` — Watchlist'ten cikar\n"
         "• `/trending` — En cok sorgulanan tokenlar\n"
+        "• `/stats` — Kullanim istatistiklerin\n"
+        "• `/referral` — Arkadaslarini davet et, bonus kazan\n"
         "• `/help` — Yardim\n\n"
-        f"🔗 [Web Arayuzu]({WEB_URL})\n\n"
+        f"🔗 [Web Arayuzu]({WEB_URL})\n"
+        f"🔑 [API Anahtarlari]({WEB_URL}/keys)\n\n"
         f"📊 Gunluk sorgu hakkin: *{FREE_LIMIT}* \\(Free\\)\n"
         "_Pro'ya gecmek icin /pro yazin\\._"
     )
@@ -282,6 +361,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🌐 Web Arayuzu", url=WEB_URL)],
         [InlineKeyboardButton("📊 Ornek: BONK Analizi", callback_data="analyze_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263")],
+        [InlineKeyboardButton("🎁 Arkadaslarini Davet Et", callback_data="referral")],
     ]
 
     await update.message.reply_text(
@@ -305,6 +385,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/watch remove <adres>` — Takipten cikar\n\n"
         "*Diger:*\n"
         "• `/trending` — En cok sorgulanan tokenlar\n"
+        "• `/stats` — Kullanim istatistiklerin\n"
         "• `/pro` — Pro plan bilgisi\n\n"
         "*Abonelik:*\n"
         f"• Free: gunluk {FREE_LIMIT} sorgu\n"
@@ -354,6 +435,7 @@ async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     result_text = _build_result_text(data, remaining)
+    total_score = data.get("score", {}).get("total", 0)
     keyboard = [
         [InlineKeyboardButton("🌐 Detayli Analiz", url=f"{WEB_URL}/token/{address}")],
         [
@@ -361,6 +443,13 @@ async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("🔄 Yenile", callback_data=f"analyze_{address}"),
         ],
     ]
+    # Riski olan tokenlarda guvenli borsa linkleri ekle
+    if total_score >= 30:
+        keyboard.append([
+            InlineKeyboardButton("🟡 Binance", url=f"{API_URL}/api/v1/affiliate/click?exchange=binance&source=telegram&token_address={address}"),
+            InlineKeyboardButton("🔵 OKX", url=f"{API_URL}/api/v1/affiliate/click?exchange=okx&source=telegram&token_address={address}"),
+            InlineKeyboardButton("🟠 Bybit", url=f"{API_URL}/api/v1/affiliate/click?exchange=bybit&source=telegram&token_address={address}"),
+        ])
 
     await loading_msg.edit_text(
         result_text,
@@ -481,6 +570,101 @@ async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await loading.edit_text(text, parse_mode=ParseMode.MARKDOWN_V2)
 
 
+# ── /referral ───────────────────────────────────────────
+
+async def referral_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    ref_code = await _get_ref_code(user.id)
+
+    if not ref_code:
+        await update.message.reply_text(
+            "❌ Referral kodun olusturulamadi\\. Lutfen once /start yaz\\.",
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+        return
+
+    bot_username = context.bot.username or "chainguardbot"
+    bot_link = f"https://t\\.me/{bot_username}?start={ref_code}"
+    web_link = f"{WEB_URL}/?ref={ref_code}"
+
+    # Davet istatistikleri
+    invite_count = 0
+    bonus_text = "_Bonus yok_"
+    if db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT total_referrals, bonus_until FROM users WHERE telegram_id = $1", user.id
+                )
+                if row:
+                    invite_count = row["total_referrals"] or 0
+                    if row["bonus_until"]:
+                        from datetime import date
+                        if row["bonus_until"] >= date.today():
+                            bonus_text = f"✅ Bonus aktif \\({row['bonus_until'].strftime('%d\\.%m\\.%Y')}'e kadar\\)"
+                        else:
+                            bonus_text = "Bonus süresi doldu"
+        except Exception:
+            pass
+
+    text = (
+        "🎁 *Referral Programı*\n\n"
+        f"Senin referral kodun: `{ref_code}`\n\n"
+        "📤 *Davet linkin:*\n"
+        f"`{bot_link}`\n\n"
+        "*Kazanımlar:*\n"
+        "• Davet ettiğin kişi: 3 gün bonus sorgu hakkı\n"
+        "• Sen: her davet için 7 gün bonus sorgu hakkı\n\n"
+        f"👥 Toplam davet: *{invite_count}* kişi\n"
+        f"⭐ Bonus durumu: {bonus_text}\n\n"
+        "_Linki Telegram gruplarında, Twitter'da paylaş\\!_"
+    )
+
+    keyboard = [[
+        InlineKeyboardButton("📤 Linki Kopyala", switch_inline_query=f"ChainGuard ile {invite_count} kişiyi güvende tut! t.me/{bot_username}?start={ref_code}"),
+    ]]
+
+    await update.message.reply_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        disable_web_page_preview=True,
+    )
+
+
+# ── /stats ───────────────────────────────────────────────
+
+async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if db_pool:
+        async with db_pool.acquire() as conn:
+            row = await conn.fetchrow("SELECT * FROM users WHERE telegram_id = $1", user.id)
+    else:
+        row = None
+
+    if row:
+        tier = row["tier"] or "free"
+        daily = row["daily_queries"] or 0
+        wl_count = len(row["watchlist"] or [])
+        created = row["created_at"].strftime("%d.%m.%Y") if row.get("created_at") else "?"
+        limit = PRO_LIMIT if tier == "pro" else FREE_LIMIT
+        text = (
+            f"📊 *Kullanim Istatistiklerin*\n\n"
+            f"👤 Kullanici: *{_escape(user.first_name)}*\n"
+            f"⭐ Plan: *{_escape(tier.upper())}*\n"
+            f"📅 Uye: {_escape(created)}\n\n"
+            f"🔢 Bugunki sorgu: `{daily}/{limit}`\n"
+            f"📋 Watchlist: `{wl_count}/10` token\n\n"
+            f"_Daha fazla analiz icin /pro yazin\\._"
+        )
+    else:
+        text = (
+            f"📊 *Kullanim Istatistiklerin*\n\n"
+            f"Henuz kayit bulunamadi\\. /start ile baslat\\."
+        )
+    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN_V2)
+
+
 # ── /pro ─────────────────────────────────────────────────
 
 async def pro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -598,6 +782,15 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
 
+    elif data == "referral":
+        ref_code = await _get_ref_code(user.id)
+        if ref_code:
+            bot_username = context.bot.username or "chainguardbot"
+            link = f"https://t.me/{bot_username}?start={ref_code}"
+            await query.answer(f"Referral kodun: {ref_code}", show_alert=True)
+        else:
+            await query.answer("Referral kodu oluşturulamadı.", show_alert=True)
+
     elif data.startswith("watch_add_"):
         address = data.replace("watch_add_", "")
         watchlist = await get_watchlist_db(user.id)
@@ -628,6 +821,8 @@ def main():
     app.add_handler(CommandHandler("analyze",  analyze_command))
     app.add_handler(CommandHandler("watch",    watch_command))
     app.add_handler(CommandHandler("trending", trending_command))
+    app.add_handler(CommandHandler("stats",    stats_command))
+    app.add_handler(CommandHandler("referral", referral_command))
     app.add_handler(CommandHandler("pro",      pro_command))
     app.add_handler(CallbackQueryHandler(button_callback))
 

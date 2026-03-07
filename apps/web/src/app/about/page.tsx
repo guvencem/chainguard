@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
     return (
-        <main className="min-h-screen p-4 md:p-8 max-w-4xl mx-auto">
+        <main className="min-h-screen grid-bg p-4 md:p-8 max-w-4xl mx-auto">
             {/* ── Navbar ── */}
-            <nav className="flex items-center justify-between mb-10">
+            <nav className="nav-glass sticky top-0 -mx-4 md:-mx-8 px-4 md:px-8 mb-10 h-16 flex items-center justify-between rounded-none">
                 <a
                     href="/"
                     className="text-sm flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -23,14 +23,12 @@ export default function AboutPage() {
                 </a>
                 <div className="flex items-center gap-2">
                     <div
-                        className="w-6 h-6 rounded-md flex items-center justify-center"
-                        style={{
-                            background: "linear-gradient(135deg, var(--cg-accent), var(--cg-green))",
-                        }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center"
+                        style={{ background: "linear-gradient(135deg, #6366F1, #EC4899)", color: "white" }}
                     >
-                        <span className="text-white font-bold text-[10px]">CG</span>
+                        <span className="font-bold text-[10px]">CG</span>
                     </div>
-                    <span className="font-bold text-sm" style={{ color: "var(--cg-text)" }}>
+                    <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>
                         ChainGuard
                     </span>
                 </div>
@@ -40,7 +38,7 @@ export default function AboutPage() {
             <div className="space-y-10">
                 {/* Hero */}
                 <div>
-                    <h1 className="text-4xl font-bold mb-4 gradient-text">
+                    <h1 className="text-4xl font-bold mb-4" style={{ background: "var(--cg-gradient-brand)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                         ChainGuard Nedir?
                     </h1>
                     <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
@@ -54,7 +52,7 @@ export default function AboutPage() {
                 </div>
 
                 {/* Nasıl Çalışır */}
-                <div className="glass-card p-6">
+                <div className="card-flat p-6">
                     <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--cg-text)" }}>
                         🔍 Nasıl Çalışır?
                     </h2>
@@ -127,7 +125,7 @@ export default function AboutPage() {
                                 color: "#14F195",
                             },
                         ].map((metric) => (
-                            <div key={metric.title} className="glass-card p-5">
+                            <div key={metric.title} className="card-flat p-5">
                                 <div className="flex items-center justify-between mb-2">
                                     <h3 className="font-semibold" style={{ color: "var(--cg-text)" }}>
                                         {metric.title}
@@ -148,7 +146,7 @@ export default function AboutPage() {
                 </div>
 
                 {/* Risk Seviyeleri */}
-                <div className="glass-card p-6">
+                <div className="card-flat p-6">
                     <h2 className="text-2xl font-bold mb-4" style={{ color: "var(--cg-text)" }}>
                         🚦 Risk Seviyeleri
                     </h2>
@@ -180,11 +178,11 @@ export default function AboutPage() {
                 <div
                     className="p-5 rounded-xl"
                     style={{
-                        background: "var(--cg-yellow)" + "10",
-                        border: "1px solid " + "var(--cg-yellow)" + "30",
+                        background: "rgba(251,191,36,0.08)",
+                        border: "1px solid rgba(251,191,36,0.25)",
                     }}
                 >
-                    <h2 className="text-lg font-bold mb-2" style={{ color: "var(--cg-yellow)" }}>
+                    <h2 className="text-lg font-bold mb-2" style={{ color: "#FBBF24" }}>
                         ⚠️ Yasal Uyarı (Disclaimer)
                     </h2>
                     <div className="space-y-2 text-sm" style={{ color: "var(--cg-text-muted)" }}>

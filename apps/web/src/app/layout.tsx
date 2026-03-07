@@ -14,29 +14,50 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+const WEB_URL = "https://chainguard-beryl.vercel.app";
+
 export const metadata: Metadata = {
   title: "ChainGuard — Solana Token Risk Analizi",
   description:
     "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Wash trading, cüzdan kümeleme, Sybil attack ve manipülasyon tespiti.",
   keywords: [
-    "solana",
-    "token",
-    "risk analizi",
-    "kripto",
+    "solana token risk analizi",
+    "memecoin dolandırıcılık",
+    "rug pull tespit",
     "wash trading",
-    "rug pull",
-    "scam",
+    "kripto güvenlik",
     "chainguard",
+    "solana scam",
     "cüzdan kümeleme",
-    "sybil",
+    "sybil attack",
+    "token analiz",
   ],
+  metadataBase: new URL(WEB_URL),
   openGraph: {
     title: "ChainGuard — Solana Token Risk Analizi",
     description:
       "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Manipülasyon tespiti.",
     type: "website",
     locale: "tr_TR",
-    url: "https://chainguard.app",
+    url: WEB_URL,
+    siteName: "ChainGuard",
+    images: [
+      {
+        url: `${WEB_URL}/api/og`,
+        width: 1200,
+        height: 630,
+        alt: "ChainGuard — Solana Token Risk Analizi",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChainGuard — Solana Token Risk Analizi",
+    description: "Solana tokenlarını 9 metrikle analiz et. Rug pull'lardan korun.",
+    images: [`${WEB_URL}/api/og`],
+  },
+  alternates: {
+    canonical: WEB_URL,
   },
 };
 
@@ -45,8 +66,38 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const schemaOrg = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ChainGuard",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "url": WEB_URL,
+    "description": "Solana tokenlarını 9 metrikle gerçek zamanlı analiz eden risk değerlendirme platformu.",
+    "inLanguage": "tr",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD",
+    },
+    "featureList": [
+      "Wash Trading Tespiti",
+      "Cüzdan Kümeleme Analizi",
+      "Sybil Attack Skoru",
+      "Bundler Tespiti",
+      "Kademeli Çıkış Analizi",
+      "Bonding Curve Analizi",
+    ],
+  };
+
   return (
     <html lang="tr">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`}
       >

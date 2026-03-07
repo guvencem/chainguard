@@ -298,6 +298,238 @@ class Database:
             # Log hatası sessizce geçilir — ana akışı bozmamalı
             pass
 
+    # ─── Referral Sistemi ──────────────────────────────────
+
+    async def get_or_create_ref_code(self, telegram_id: int) -> Optional[str]:
+        """Kullanıcının referral kodunu döner, yoksa oluşturur."""
+        if not self.pool:
+            return None
+        import secrets, string
+        try:
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT ref_code FROM users WHERE telegram_id = $1", telegram_id
+                )
+                if not row:
+                    return None
+                if row["ref_code"]:
+                    return row["ref_code"]
+                # Oluştur
+                alphabet = string.ascii_uppercase + string.digits
+                for _ in range(10):
+                    code = "CG" + "".join(secrets.choice(alphabet) for _ in range(6))
+                    existing = await conn.fetchrow("SELECT 1 FROM users WHERE ref_code = $1", code)
+                    if not existing:
+                        await conn.execute(
+                            "UPDATE users SET ref_code = $1 WHERE telegram_id = $2",
+                            code, telegram_id
+                        )
+                        return code
+            return None
+        except Exception as e:
+            logger.error(f"Ref code oluşturma hatası: {e}")
+            return None
+
+    async def use_referral_code(self, ref_code: str, new_telegram_id: int) -> dict:
+        """
+        Referral kodu kullan.
+        Döner: {'ok': bool, 'referrer_telegram_id': int | None, 'error': str}
+        """
+        if not self.pool:
+            return {"ok": False, "error": "DB bağlantısı yok"}
+        try:
+            async with self.pool.acquire() as conn:
+                # Kodu sahibini bul
+                referrer = await conn.fetchrow(
+                    "SELECT id, telegram_id FROM users WHERE ref_code = $1", ref_code
+                )
+                if not referrer:
+                    return {"ok": False, "error": "Geçersiz referral kodu"}
+
+                # Yeni kullanıcı zaten referred mı?
+                new_user = await conn.fetchrow(
+                    "SELECT id, referred_by FROM users WHERE telegram_id = $1", new_telegram_id
+                )
+                if not new_user:
+                    return {"ok": False, "error": "Kullanıcı bulunamadı"}
+                if new_user["referred_by"]:
+                    return {"ok": False, "error": "Zaten bir referral kodu kullanmış"}
+                if referrer["telegram_id"] == new_telegram_id:
+                    return {"ok": False, "error": "Kendi referral kodunu kullanamazsın"}
+
+                from datetime import date, timedelta
+                today = date.today()
+                bonus_7 = today + timedelta(days=7)
+                bonus_3 = today + timedelta(days=3)
+
+                # Referral kaydı oluştur
+                await conn.execute("""
+                    INSERT INTO referrals (referrer_id, referred_id, ref_code, converted, reward_given)
+                    VALUES ($1, $2, $3, TRUE, TRUE)
+                """, referrer["id"], new_user["id"], ref_code)
+
+                # Referrer'a 7 gün bonus + referral sayısını artır
+                await conn.execute("""
+                    UPDATE users
+                    SET bonus_until = GREATEST(COALESCE(bonus_until, $1), $1),
+                        total_referrals = total_referrals + 1
+                    WHERE id = $2
+                """, bonus_7, referrer["id"])
+
+                # Yeni kullanıcıya 3 gün bonus + referred_by kaydet
+                await conn.execute("""
+                    UPDATE users
+                    SET bonus_until = $1, referred_by = $2
+                    WHERE id = $3
+                """, bonus_3, ref_code, new_user["id"])
+
+            logger.info(f"Referral kullanıldı: {ref_code} → {new_telegram_id}")
+            return {"ok": True, "referrer_telegram_id": referrer["telegram_id"]}
+        except Exception as e:
+            logger.error(f"Referral kullanma hatası: {e}")
+            return {"ok": False, "error": str(e)}
+
+    async def get_referral_stats(self, telegram_id: int) -> Optional[dict]:
+        """Kullanıcının referral istatistiklerini döner."""
+        if not self.pool:
+            return None
+        try:
+            async with self.pool.acquire() as conn:
+                user = await conn.fetchrow("""
+                    SELECT ref_code, total_referrals, bonus_until, tier
+                    FROM users WHERE telegram_id = $1
+                """, telegram_id)
+                if not user:
+                    return None
+
+                # Kaç kişiyi davet etti
+                count = await conn.fetchval(
+                    "SELECT COUNT(*) FROM referrals WHERE referrer_id = (SELECT id FROM users WHERE telegram_id = $1)",
+                    telegram_id
+                )
+                return {
+                    "ref_code": user["ref_code"],
+                    "total_referrals": int(count or 0),
+                    "bonus_until": user["bonus_until"].isoformat() if user["bonus_until"] else None,
+                    "tier": user["tier"],
+                }
+        except Exception as e:
+            logger.error(f"Referral stats hatası: {e}")
+            return None
+
+    def is_bonus_active(self, bonus_until_str: Optional[str]) -> bool:
+        """bonus_until tarihi bugünden sonra mı?"""
+        if not bonus_until_str:
+            return False
+        from datetime import date
+        try:
+            bonus_until = date.fromisoformat(bonus_until_str)
+            return bonus_until >= date.today()
+        except Exception:
+            return False
+
+    # ─── API Key Yönetimi ──────────────────────────────────
+
+    async def create_api_key(self, telegram_id: int, name: str, key_id: str, tier: str = "free") -> bool:
+        """Yeni API anahtarı oluşturur."""
+        if not self.pool:
+            return False
+        daily_limit = {"free": 100, "pro": 1000, "trader": 10000}.get(tier, 100)
+        try:
+            async with self.pool.acquire() as conn:
+                # Kullanıcı id'sini al
+                user_row = await conn.fetchrow("SELECT id, tier FROM users WHERE telegram_id = $1", telegram_id)
+                user_id = user_row["id"] if user_row else None
+                user_tier = user_row["tier"] if user_row else tier
+
+                await conn.execute("""
+                    INSERT INTO api_keys (key_id, user_id, telegram_id, name, tier, daily_limit)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                """, key_id, user_id, telegram_id, name, user_tier, daily_limit)
+            return True
+        except Exception as e:
+            logger.error(f"API key oluşturma hatası: {e}")
+            return False
+
+    async def list_api_keys(self, telegram_id: int) -> list[dict]:
+        """Kullanıcının API anahtarlarını listeler (masked)."""
+        if not self.pool:
+            return []
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT key_id, name, tier, daily_limit, daily_used,
+                           last_used_at, is_active, created_at
+                    FROM api_keys
+                    WHERE telegram_id = $1
+                    ORDER BY created_at DESC
+                """, telegram_id)
+            return [dict(r) for r in rows]
+        except Exception as e:
+            logger.error(f"API key listeleme hatası: {e}")
+            return []
+
+    async def delete_api_key(self, key_id: str, telegram_id: int) -> bool:
+        """API anahtarını siler (sahiplik kontrolü ile)."""
+        if not self.pool:
+            return False
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    "DELETE FROM api_keys WHERE key_id = $1 AND telegram_id = $2",
+                    key_id, telegram_id
+                )
+            return result == "DELETE 1"
+        except Exception as e:
+            logger.error(f"API key silme hatası: {e}")
+            return False
+
+    async def validate_api_key(self, key_id: str) -> Optional[dict]:
+        """API anahtarını doğrular ve kullanım sayacını artırır."""
+        if not self.pool:
+            return None
+        try:
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchrow("""
+                    SELECT key_id, telegram_id, tier, daily_limit, daily_used,
+                           last_reset, is_active
+                    FROM api_keys WHERE key_id = $1
+                """, key_id)
+
+                if not row or not row["is_active"]:
+                    return None
+
+                today = datetime.now(timezone.utc).date()
+
+                # Günlük sayacı sıfırla
+                if row["last_reset"] != today:
+                    await conn.execute(
+                        "UPDATE api_keys SET daily_used = 0, last_reset = $1 WHERE key_id = $2",
+                        today, key_id
+                    )
+                    daily_used = 0
+                else:
+                    daily_used = row["daily_used"]
+
+                if daily_used >= row["daily_limit"]:
+                    return None  # Limit doldu
+
+                await conn.execute("""
+                    UPDATE api_keys
+                    SET daily_used = daily_used + 1, last_used_at = NOW()
+                    WHERE key_id = $1
+                """, key_id)
+
+                return {
+                    "telegram_id": row["telegram_id"],
+                    "tier": row["tier"],
+                    "daily_limit": row["daily_limit"],
+                    "daily_used": daily_used + 1,
+                }
+        except Exception as e:
+            logger.error(f"API key doğrulama hatası: {e}")
+            return None
+
     # ─── Affiliate Tracking ────────────────────────────────
 
     async def log_affiliate_click(

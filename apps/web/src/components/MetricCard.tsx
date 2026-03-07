@@ -1,5 +1,7 @@
 "use client";
 
+import ExplainModal from "./ExplainModal";
+
 interface MetricCardProps {
   title: string;
   value: string;
@@ -8,6 +10,7 @@ interface MetricCardProps {
   icon: React.ReactNode;
   details?: { label: string; value: string }[];
   compact?: boolean;
+  metricKey?: string;
 }
 
 function getScoreColor(score: number): string {
@@ -26,7 +29,7 @@ function getScoreTag(score: number): string {
   return "Kritik";
 }
 
-export default function MetricCard({ title, value, score, label, icon, details, compact = false }: MetricCardProps) {
+export default function MetricCard({ title, value, score, label, icon, details, compact = false, metricKey }: MetricCardProps) {
   const color = getScoreColor(score);
 
   return (
@@ -59,6 +62,12 @@ export default function MetricCard({ title, value, score, label, icon, details, 
       </div>
 
       <p className="text-xs leading-relaxed font-medium" style={{ color: "var(--cg-text-muted)" }}>{label}</p>
+
+      {metricKey && (
+        <div className="mt-2">
+          <ExplainModal metricKey={metricKey} score={score} />
+        </div>
+      )}
 
       {details && details.length > 0 && !compact && (
         <div className="mt-4 pt-3.5 space-y-2.5" style={{ borderTop: "1px solid var(--cg-border)" }}>

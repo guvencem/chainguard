@@ -501,6 +501,7 @@ export default function TokenPage() {
           score={metrics.vlr.score}
           label={metrics.vlr.label_tr}
           icon={<BarChartIcon />}
+          metricKey="vlr"
           details={[
             { label: "24s Hacim", value: `$${metrics.vlr.volume_24h.toLocaleString("tr-TR")}` },
             { label: "Likidite", value: `$${metrics.vlr.liquidity.toLocaleString("tr-TR")}` },
@@ -512,6 +513,7 @@ export default function TokenPage() {
           score={metrics.rls.score}
           label={metrics.rls.label_tr}
           icon={<DropletIcon />}
+          metricKey="rls"
           details={[
             { label: "Market Cap", value: `$${metrics.rls.mcap.toLocaleString("tr-TR")}` },
             { label: "Gerçek Çıkış", value: `$${metrics.rls.real_exit_value.toLocaleString("tr-TR")}` },
@@ -529,6 +531,7 @@ export default function TokenPage() {
           score={metrics.holders.score}
           label={metrics.holders.label_tr}
           icon={<UsersIcon />}
+          metricKey="holders"
           details={[
             { label: "Aktif (1s)", value: metrics.holders.active_1h.toString() },
             { label: "Top 10", value: `%${(metrics.holders.top10_concentration * 100).toFixed(1)}` },
@@ -557,6 +560,7 @@ export default function TokenPage() {
           score={metrics.cluster?.score ?? 0}
           label={metrics.cluster?.label_tr || "Küme tespit edilmedi"}
           icon={<NetworkIcon />}
+          metricKey="cluster"
           details={[
             { label: "En Büyük Küme", value: `%${((metrics.cluster?.largest_pct ?? 0) * 100).toFixed(1)}` },
             { label: "Bağlantılı Cüzdan", value: (metrics.cluster?.total_wallets ?? 0).toString() },
@@ -568,6 +572,7 @@ export default function TokenPage() {
           score={metrics.wash?.score ?? 0}
           label={metrics.wash?.label_tr || "Döngü tespit edilmedi"}
           icon={<CycleIcon />}
+          metricKey="wash"
           details={[
             { label: "Sahte Hacim", value: `%${(metrics.wash?.fake_volume_pct ?? 0).toFixed(1)}` },
             { label: "Döngü Hacmi", value: `$${(metrics.wash?.cycle_volume_usd ?? 0).toLocaleString("tr-TR")}` },
@@ -579,6 +584,7 @@ export default function TokenPage() {
           score={metrics.sybil?.score ?? 0}
           label={metrics.sybil?.label_tr || "Sybil tespit edilmedi"}
           icon={<BotIcon />}
+          metricKey="sybil"
           details={[
             { label: "Tek Token Cüzdan", value: `%${((metrics.sybil?.single_token_pct ?? 0) * 100).toFixed(0)}` },
           ]}
@@ -589,6 +595,7 @@ export default function TokenPage() {
           score={metrics.bundler?.score ?? 0}
           label={metrics.bundler?.label_tr || "Bundler tespit edilmedi"}
           icon={<PackageIcon />}
+          metricKey="bundler"
           details={[
             { label: "Bundle Sayısı", value: (metrics.bundler?.bundle_count ?? 0).toString() },
             { label: "Max Alıcı/Slot", value: (metrics.bundler?.max_recipients ?? 0).toString() },
@@ -600,6 +607,7 @@ export default function TokenPage() {
           score={metrics.exit?.score ?? 0}
           label={metrics.exit?.label_tr || "Çıkış paterni yok"}
           icon={<TrendDownIcon />}
+          metricKey="exit"
           details={[
             { label: "Satıcı = Kurucu", value: metrics.exit?.seller_is_creator ? "Evet" : "Hayır" },
           ]}
@@ -610,6 +618,7 @@ export default function TokenPage() {
           score={metrics.curve?.score ?? 0}
           label={metrics.curve?.label_tr || "Pump.fun verisi yok"}
           icon={<CurveIcon />}
+          metricKey="curve"
           details={[
             { label: "Platform", value: metrics.curve?.platform || "—" },
           ]}

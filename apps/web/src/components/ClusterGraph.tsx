@@ -223,39 +223,63 @@ export default function ClusterGraph({
             {/* Cluster nodes */}
             {nodes.map((n) => {
               const isHovered = hoveredId === n.id;
-              const scale = isHovered ? 1.12 : 1;
+              // SVG-safe scale: translate to center, scale, translate back
+              const s = isHovered ? 1.12 : 1;
+              const transform = `translate(${n.x}, ${n.y}) scale(${s})`;
+              // Mini wallet dots inside cluster circle
+              const dotCount = Math.min(n.size, 7);
+              const dots = Array.from({ length: dotCount }, (_, di) => {
+                const da = (di / dotCount) * Math.PI * 2;
+                const dr = n.r * 0.55;
+                return { dx: Math.cos(da) * dr, dy: Math.sin(da) * dr };
+              });
+              // Tooltip direction: flip left if near right edge
+              const tipRight = n.x < SVG_W * 0.65;
+              const tipW = hasRealData ? 100 : 78;
+              const tipH = hasRealData ? (n.rootWallet ? 50 : 38) : 32;
+              const tipX = tipRight ? n.r + 5 : -(n.r + 5 + tipW);
               return (
                 <g
                   key={`node-${n.id}`}
-                  transform={`translate(${n.x}, ${n.y}) scale(${scale})`}
-                  style={{
-                    transformOrigin: `${n.x}px ${n.y}px`,
-                    transition: "transform 0.2s ease",
-                    cursor: "pointer",
-                  }}
+                  transform={transform}
+                  style={{ cursor: "pointer" }}
                   onMouseEnter={() => setHoveredId(n.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
                   <circle
-                    cx={0} cy={0} r={n.r + 8}
+                    cx={0} cy={0} r={n.r + 9}
                     fill={`url(#clusterGrad-${color.replace("#", "")})`}
                   />
                   <circle
                     cx={0} cy={0} r={n.r}
-                    fill={`${color}12`}
+                    fill={`${color}10`}
                     stroke={color}
-                    strokeWidth={isHovered ? 1.5 : 1}
-                    strokeOpacity={isHovered ? 0.7 : 0.35}
+                    strokeWidth={isHovered ? 1.5 : 0.8}
+                    strokeOpacity={isHovered ? 0.8 : 0.35}
                     filter={isHovered ? "url(#glow)" : undefined}
                   />
+                  {/* Mini wallet dots */}
+                  {dots.map((d, di) => (
+                    <circle key={di} cx={d.dx} cy={d.dy} r={1.6}
+                      fill={color} opacity={0.5} />
+                  ))}
                   {n.r >= 10 && (
                     <text
-                      x={0} y={0}
+                      x={0} y={n.size > 0 ? -2 : 0}
                       textAnchor="middle" dominantBaseline="middle"
-                      fontSize={n.r >= 18 ? 9 : 7}
-                      fill={color} fontWeight="700" opacity="0.9"
+                      fontSize={n.r >= 18 ? 8.5 : 6.5}
+                      fill={color} fontWeight="800" opacity="0.95"
                     >
                       {(n.pct * 100).toFixed(n.pct < 0.01 ? 1 : 0)}%
+                    </text>
+                  )}
+                  {n.r >= 14 && (
+                    <text
+                      x={0} y={8}
+                      textAnchor="middle" dominantBaseline="middle"
+                      fontSize={6} fill={color} opacity="0.5" fontWeight="600"
+                    >
+                      {n.size}w
                     </text>
                   )}
 
@@ -263,33 +287,32 @@ export default function ClusterGraph({
                   {isHovered && (
                     <g>
                       <rect
-                        x={n.r + 4} y={-22}
-                        width={hasRealData ? 96 : 72}
-                        height={hasRealData ? 44 : 28}
+                        x={tipX} y={-tipH / 2 - 2}
+                        width={tipW} height={tipH}
                         rx={6}
-                        fill="#111827"
-                        stroke="rgba(148,163,184,0.15)"
+                        fill="#0D1117"
+                        stroke="rgba(148,163,184,0.18)"
                         strokeWidth="1"
                       />
                       <text
-                        x={n.r + (hasRealData ? 52 : 40)} y={hasRealData ? -11 : -3}
-                        textAnchor="middle" fontSize="8"
+                        x={tipX + tipW / 2} y={-tipH / 2 + 11}
+                        textAnchor="middle" fontSize="8.5"
                         fill="#94A3B8" fontWeight="600"
                       >
                         {n.size.toLocaleString("tr-TR")} cüzdan
                       </text>
                       <text
-                        x={n.r + (hasRealData ? 52 : 40)} y={hasRealData ? 1 : 8}
-                        textAnchor="middle" fontSize="8"
+                        x={tipX + tipW / 2} y={-tipH / 2 + 23}
+                        textAnchor="middle" fontSize="8.5"
                         fill={color} fontWeight="700"
                       >
                         %{(n.pct * 100).toFixed(2)} supply
                       </text>
                       {hasRealData && n.rootWallet && (
                         <text
-                          x={n.r + 52} y={13}
+                          x={tipX + tipW / 2} y={-tipH / 2 + 37}
                           textAnchor="middle" fontSize="7"
-                          fill="rgba(148,163,184,0.6)" fontWeight="500"
+                          fill="rgba(148,163,184,0.55)" fontWeight="500"
                         >
                           {truncateAddress(n.rootWallet)}
                         </text>
