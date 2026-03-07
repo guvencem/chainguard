@@ -36,15 +36,16 @@ export async function GET(req: NextRequest) {
   const nameParam = searchParams.get("name") || "";
   const symbolParam = searchParams.get("symbol") || "";
 
-  let score = scoreParam ? parseFloat(scoreParam) : null;
+  let score = scoreParam ? parseFloat(scoreParam) : 50;
   let name = nameParam;
   let symbol = symbolParam;
 
-  // Score parametresi yoksa API'den çek
-  if (score === null && address) {
+  // Score parametresi varsa API çağrısına gerek yok
+  // Yoksa hızlı bir deneme yap (3s timeout), başarısız olursa 50 ile devam
+  if (!scoreParam && address) {
     try {
       const res = await fetch(`${API_URL}/api/v1/token/${address}`, {
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(3000),
       });
       if (res.ok) {
         const data = await res.json();
@@ -53,11 +54,9 @@ export async function GET(req: NextRequest) {
         symbol = symbol || data?.token?.symbol || "";
       }
     } catch {
-      score = 50;
+      // fallback score=50 kullan
     }
   }
-
-  score = score ?? 50;
   const color = getRiskColor(score);
   const label = getRiskLabel(score);
   const emoji = getRiskEmoji(score);

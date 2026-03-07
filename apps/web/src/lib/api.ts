@@ -3,7 +3,7 @@
  * Backend Pydantic modelleriyle birebir uyumlu tip tanımları.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://web-production-b704c.up.railway.app";
 
 export interface TokenInfo {
     address: string;
