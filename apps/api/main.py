@@ -121,12 +121,14 @@ def check_rate_limit(client_ip: str) -> bool:
     return True
 
 
-# ── Solana adres doğrulama ──────────────────────────────
+# ── Adres doğrulama (Solana + EVM) ─────────────────────
 SOLANA_ADDRESS_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+EVM_ADDRESS_RE = re.compile(r"^0x[0-9a-fA-F]{40}$")
 
 
 def validate_address(address: str) -> bool:
-    return bool(SOLANA_ADDRESS_RE.match(address))
+    """Solana (base58) veya EVM (0x...) adresini doğrular."""
+    return bool(SOLANA_ADDRESS_RE.match(address)) or bool(EVM_ADDRESS_RE.match(address))
 
 
 # ═══════════════════════════════════════════════════════════

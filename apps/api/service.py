@@ -36,6 +36,7 @@ from analyzer.scoring import (
 )
 from data_collector.helius_client import HeliusClient
 from data_collector.pipeline import DataCollector
+from data_collector.evm_pipeline import EVMDataCollector, detect_chain_from_address
 from cache import CacheService
 from database import Database
 from report_generator import generate_report
@@ -58,6 +59,7 @@ class AnalysisService:
             solscan_api_key=solscan_api_key,
         )
         self.collector = DataCollector(self.helius)
+        self.evm_collector = EVMDataCollector()
         self.cache = CacheService(redis_url=redis_url)
         self.db = Database(database_url=database_url)
 
@@ -90,9 +92,14 @@ class AnalysisService:
         if cached:
             return TokenAnalysis(**cached, cached=True)
 
-        # 2. Veri topla
-        logger.info(f"Analiz başlıyor: {address}")
-        raw_data = await self.collector.collect_full(address)
+        # 2. Veri topla — zincire göre pipeline seç
+        chain_type = detect_chain_from_address(address)
+        logger.info(f"Analiz başlıyor: {address} (zincir={chain_type})")
+
+        if chain_type == "evm":
+            raw_data = await self.evm_collector.collect_full(address)
+        else:
+            raw_data = await self.collector.collect_full(address)
 
         # 3. Skorla — creator geçmişini DB'den çek
         creator_wallet = raw_data.get("token_info", {}).get("creator_wallet", "")
@@ -346,6 +353,7 @@ class AnalysisService:
             decimals=info.get("decimals"),
             creator_wallet=info.get("creator_wallet"),
             platform=info.get("platform"),
+            chain=info.get("chain", "solana"),
             created_at=info.get("created_at"),
         )
 

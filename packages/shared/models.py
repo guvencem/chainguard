@@ -20,6 +20,7 @@ class TokenInfo(BaseModel):
     decimals: Optional[int] = None
     creator_wallet: Optional[str] = None
     platform: Optional[str] = None  # pump_fun, raydium, orca
+    chain: str = "solana"            # solana, base, bsc, ethereum, ...
     created_at: Optional[datetime] = None
 
 

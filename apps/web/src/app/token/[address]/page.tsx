@@ -340,6 +340,18 @@ export default function TokenPage() {
                   ${token.symbol}
                 </span>
               )}
+              {token.chain && token.chain !== "solana" && (
+                <span
+                  className="px-2 py-1 rounded-md text-xs font-bold"
+                  style={{
+                    background: "rgba(251,146,60,0.1)",
+                    color: "#FB923C",
+                    border: "1px solid rgba(251,146,60,0.2)",
+                  }}
+                >
+                  {token.chain.toUpperCase()}
+                </span>
+              )}
               {token.platform && (
                 <span
                   className="px-2 py-1 rounded-md text-xs font-medium"

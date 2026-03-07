@@ -13,6 +13,7 @@ export interface TokenInfo {
     decimals: number | null;
     creator_wallet: string | null;
     platform: string | null;
+    chain: string;
     created_at: string | null;
 }
 

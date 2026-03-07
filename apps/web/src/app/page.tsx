@@ -98,7 +98,11 @@ export default function HomePage() {
     const trimmed = address.trim();
     if (!trimmed) { setError("Token adresi gerekli."); return; }
     const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-    if (!solanaRegex.test(trimmed)) { setError("Geçersiz Solana token adresi."); return; }
+    const evmRegex = /^0x[0-9a-fA-F]{40}$/;
+    if (!solanaRegex.test(trimmed) && !evmRegex.test(trimmed)) {
+      setError("Geçersiz token adresi. Solana (base58) veya EVM (0x...) adresi girin.");
+      return;
+    }
     setError("");
     setIsLoading(true);
     router.push(`/token/${trimmed}`);
@@ -162,7 +166,7 @@ export default function HomePage() {
                 <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full" style={{ background: "#818CF8" }} />
                 <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: "#818CF8" }} />
               </span>
-              Solana Token Risk Analizi · 9 Metrik · Gerçek Zamanlı
+              Çoklu Zincir Risk Analizi · Solana · Base · BSC · Gerçek Zamanlı
             </div>
           </div>
 
@@ -200,7 +204,7 @@ export default function HomePage() {
                 type="text"
                 value={address}
                 onChange={e => { setAddress(e.target.value); if (error) setError(""); }}
-                placeholder="Token adresi yapıştır veya yazın..."
+                placeholder="Solana veya EVM token adresi yapıştır..."
                 className="w-full bg-transparent pl-14 pr-40 py-4 text-base font-mono outline-none"
                 style={{ color: "var(--cg-text)", caretColor: "#818CF8" }}
                 autoComplete="off"
