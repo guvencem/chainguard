@@ -120,7 +120,7 @@ export default function HomePage() {
         </div>
 
         <div className="hidden md:flex items-center gap-8">
-          {[["Nasıl Çalışır?", "#how"], ["Trending", "/trending"], ["Telegram", "https://t.me/chainguard8_bot"]].map(([label, href]) => (
+          {[["Nasıl Çalışır?", "#how"], ["Trending", "/trending"], ["Eğitim", "/learn"], ["Telegram", "https://t.me/chainguard8_bot"]].map(([label, href]) => (
             <a
               key={label}
               href={href}
