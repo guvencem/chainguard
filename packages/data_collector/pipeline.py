@@ -42,6 +42,7 @@ class DataCollector:
         self.wash_detector = WashDetector()
         self.sybil_detector = SybilDetector()
         self.bundler_detector = BundlerDetector()
+        self._cached_extended_holders: list = []
 
     async def collect_full(self, token_address: str) -> dict:
         """
@@ -78,25 +79,26 @@ class DataCollector:
         creator = result["token_info"].get("creator_wallet", "")
         supply = float(result["token_info"].get("supply", 0))
 
-        # Gelişmiş kümeleme için genişletilmiş holder listesi çek (max 500)
+        # Gelişmiş kümeleme için genişletilmiş holder listesi
+        # _collect_holders() içinde zaten çekildi — tekrar API çağrısı yapma
         extended_holders = []
         try:
-            raw_ext = await self.helius.get_token_accounts_paginated(token_address, max_holders=500)
-            # Normalize — getTokenAccounts formatını holder formatına çevir
-            supply_info = await self.helius.get_token_supply(token_address)
-            total_supply = float(supply_info.get("amount", 0))
-            decimals = int(supply_info.get("decimals", 0))
-            for acc in raw_ext:
-                amount = float(acc.get("amount", 0))
-                pct = (amount / total_supply * 100) if total_supply > 0 else 0
-                extended_holders.append({
-                    "address": acc.get("owner", acc.get("address", "")),
-                    "balance": amount,
-                    "ui_amount": amount / (10 ** decimals) if decimals else amount,
-                    "pct_supply": pct,
-                })
+            raw_ext = getattr(self, "_cached_extended_holders", None) or []
+            if raw_ext:
+                supply_info = await self.helius.get_token_supply(token_address)
+                total_supply = float(supply_info.get("amount", 0))
+                decimals = int(supply_info.get("decimals", 0))
+                for acc in raw_ext[:500]:  # kümeleme için max 500
+                    amount = float(acc.get("amount", 0))
+                    pct = (amount / total_supply * 100) if total_supply > 0 else 0
+                    extended_holders.append({
+                        "address": acc.get("owner", acc.get("address", "")),
+                        "balance": amount,
+                        "ui_amount": amount / (10 ** decimals) if decimals else amount,
+                        "pct_supply": pct,
+                    })
         except Exception as e:
-            logger.warning(f"Genişletilmiş holder listesi çekilemedi: {e}")
+            logger.warning(f"Genişletilmiş holder listesi işlenemedi: {e}")
 
         try:
             result["clusters"] = self.cluster_analyzer.analyze(
@@ -193,9 +195,15 @@ class DataCollector:
             # Top 20 en büyük hesabı çek (yoğunlaşma analizi için)
             accounts = await self.helius.get_token_largest_accounts(token_address)
             supply_info = await self.helius.get_token_supply(token_address)
-            
-            # Gerçek toplam holder sayısını çek (Helius DAS API)
-            real_holder_count = await self.helius.get_holder_count(token_address)
+
+            # Gerçek toplam holder sayısını getTokenAccounts ile tek seferde çek
+            # (get_holder_count() yerine — ayrı çağrı değil, zaten extended_holders için
+            # collect_full() içinde bu endpoint kullanılıyor, burada sadece sayıyı alıyoruz)
+            all_accounts = await self.helius.get_token_accounts_paginated(token_address, max_holders=10000)
+            real_holder_count = len(all_accounts) if all_accounts else 0
+            logger.info(f"Gerçek holder sayısı: {real_holder_count:,}")
+            # extended_holders olarak da sakla (collect_full'da tekrar çekilmesini engeller)
+            self._cached_extended_holders = all_accounts
             
             total_supply = float(supply_info.get("amount", 0))
             decimals = int(supply_info.get("decimals", 0))
