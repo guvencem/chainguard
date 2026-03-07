@@ -4,7 +4,6 @@
     "builder": "DOCKERFILE"
   },
   "deploy": {
-    "startCommand": "python /app/apps/api/main.py",
     "healthcheckPath": "/api/v1/health",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
