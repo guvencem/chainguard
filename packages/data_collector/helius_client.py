@@ -173,40 +173,31 @@ class HeliusClient:
             except Exception as e:
                 logger.debug(f"Solscan API erişilemedi: {e}")
 
-        # ── Kaynak 1b: Solscan public (eski endpoint) ──
-        try:
-            url = f"https://public-api.solscan.io/token/meta?tokenAddress={mint}"
-            resp = await client.get(url, timeout=10, headers={
-                "Accept": "application/json",
-            })
-            if resp.status_code == 200:
-                data = resp.json()
-                holder = data.get("holder", 0)
-                if holder and holder > 0:
-                    logger.info(f"Holder count (Solscan public): {mint[:8]}... = {holder:,}")
-                    return holder
-        except Exception as e:
-            logger.debug(f"Solscan public API erişilemedi: {e}")
-
-        # ── Kaynak 2: Helius getTokenAccounts (fallback) ──
+        # ── Kaynak 2: Helius getTokenAccounts — total alanını oku ──
+        # Helius DAS getTokenAccounts response'u {"result": {"total": N, "token_accounts": [...]}}
+        # döndürür. total alanı gerçek holder sayısını verir, liste uzunluğu değil.
         try:
             payload = {
                 "jsonrpc": "2.0",
                 "id": "hc",
                 "method": "getTokenAccounts",
-                "params": {"mint": mint, "limit": 1000, "page": 1},
+                "params": {"mint": mint, "limit": 1, "page": 1},
             }
             resp = await client.post(self.rpc_url, json=payload, timeout=15)
             resp.raise_for_status()
             data = resp.json()
-            accounts = data.get("result", {}).get("token_accounts", [])
+            result = data.get("result", {})
+
+            # total alanı varsa gerçek sayıyı kullan
+            total = result.get("total", 0)
+            if total and total > 0:
+                logger.info(f"Holder count (Helius total): {mint[:8]}... = {total:,}")
+                return int(total)
+
+            # total yoksa dönen liste uzunluğuna fallback
+            accounts = result.get("token_accounts", [])
             count = len(accounts)
-            # 1000 ise daha fazla var ama kesin sayıyı bilemiyoruz
-            if count == 1000:
-                count = 1000  # minimum tahmin (arayüzde "1000+" gösterilecek)
-                logger.info(f"Holder count (Helius fallback): {mint[:8]}... = {count}+ (minimum)")
-            else:
-                logger.info(f"Holder count (Helius fallback): {mint[:8]}... = {count}")
+            logger.info(f"Holder count (Helius list): {mint[:8]}... = {count}")
             return count
         except Exception as e:
             logger.warning(f"Holder count çekilemedi: {e}")
