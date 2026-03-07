@@ -2,20 +2,22 @@
 ChainGuard Telegram Bot — Token Risk Analizi
 
 Komutlar:
-  /start    — Karşılama ve kullanım rehberi
+  /start    — Karsilama ve kullanim rehberi
   /analyze  — Token risk analizi (/analyze <adres>)
-  /watch    — Watchlist yönetimi (/watch add|remove|list <adres>)
-  /help     — Yardım
+  /watch    — Watchlist yonetimi (/watch add|remove|list <adres>)
+  /trending — En cok sorgulanan tokenlar
+  /help     — Yardim
+  /pro      — Pro plan bilgisi
 
-Sprint 2 — Rate limiting (free: 5/gün, pro: 100/gün)
+Sprint 2 — DB entegrasyonu, watchlist alertleri, trending
 """
 
 import os
 import logging
-from datetime import datetime, timezone
-from collections import defaultdict
+from datetime import datetime, timezone, date
 
 import httpx
+import asyncpg
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -26,12 +28,16 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 
 # ── Config ──────────────────────────────────────────────
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-API_URL = os.getenv("API_URL", "https://web-production-b704c.up.railway.app")
-WEB_URL = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
+BOT_TOKEN    = os.getenv("TELEGRAM_BOT_TOKEN", "")
+API_URL      = os.getenv("API_URL", "https://web-production-b704c.up.railway.app")
+WEB_URL      = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 FREE_LIMIT = 5
-PRO_LIMIT = 100
+PRO_LIMIT  = 100
+
+ALERT_INTERVAL    = 1800   # 30 dakika
+ALERT_THRESHOLD   = 10.0  # skor farki esigi
 
 # ── Logging ─────────────────────────────────────────────
 logging.basicConfig(
@@ -40,30 +46,126 @@ logging.basicConfig(
 )
 logger = logging.getLogger("chainguard_bot")
 
-# ── In-memory state (production'da Redis/DB kullanılacak) ──
-user_queries: dict[int, dict] = defaultdict(lambda: {"count": 0, "date": "", "tier": "free", "watchlist": []})
+# ── DB Pool ─────────────────────────────────────────────
+db_pool: asyncpg.Pool | None = None
+
+# Son bilinen watchlist skorlari (in-memory, restart'ta sifirlanir)
+watchlist_scores: dict[int, dict[str, float]] = {}
 
 
-# ── Yardımcı Fonksiyonlar ───────────────────────────────
+# ── DB Baglantisi ────────────────────────────────────────
 
-def check_rate_limit(user_id: int) -> tuple[bool, int]:
-    """Rate limit kontrol — (izin var mı, kalan hak)"""
+async def init_db():
+    global db_pool
+    if not DATABASE_URL:
+        logger.warning("DATABASE_URL yok — kullanici verisi in-memory tutulacak")
+        return
+    try:
+        db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+        logger.info("Bot DB baglantisi kuruldu")
+    except Exception as e:
+        logger.error(f"Bot DB baglanti hatasi: {e}")
+
+
+async def close_db():
+    if db_pool:
+        await db_pool.close()
+
+
+# ── Kullanici DB Fonksiyonlari ───────────────────────────
+
+async def get_or_create_user(telegram_id: int, username: str = "") -> dict:
+    """Kullaniciyi DB'den al, yoksa olustur."""
+    if not db_pool:
+        return {"tier": "free", "daily_queries": 0, "last_query_date": None, "watchlist": []}
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM users WHERE telegram_id = $1", telegram_id)
+        if not row:
+            row = await conn.fetchrow(
+                "INSERT INTO users (telegram_id, username) VALUES ($1, $2) RETURNING *",
+                telegram_id, username or "",
+            )
+        return dict(row)
+
+
+async def check_rate_limit_db(telegram_id: int, username: str = "") -> tuple[bool, int]:
+    """Rate limit kontrolu — DB uzerinden. (izin var mi, kalan hak)"""
+    today = datetime.now(timezone.utc).date()
+
+    if not db_pool:
+        # Fallback: in-memory
+        return _check_rate_limit_memory(telegram_id)
+
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM users WHERE telegram_id = $1", telegram_id)
+        if not row:
+            await conn.execute(
+                "INSERT INTO users (telegram_id, username) VALUES ($1, $2)",
+                telegram_id, username or "",
+            )
+            daily_queries = 0
+            tier = "free"
+        else:
+            tier = row["tier"] or "free"
+            if row["last_query_date"] != today:
+                await conn.execute(
+                    "UPDATE users SET daily_queries = 0, last_query_date = $1 WHERE telegram_id = $2",
+                    today, telegram_id,
+                )
+                daily_queries = 0
+            else:
+                daily_queries = row["daily_queries"] or 0
+
+        limit = PRO_LIMIT if tier == "pro" else FREE_LIMIT
+        if daily_queries >= limit:
+            return False, 0
+
+        await conn.execute(
+            "UPDATE users SET daily_queries = daily_queries + 1, last_query_date = $1 WHERE telegram_id = $2",
+            today, telegram_id,
+        )
+        return True, limit - daily_queries - 1
+
+
+async def get_watchlist_db(telegram_id: int) -> list[str]:
+    """Kullanicinin watchlist'ini DB'den al."""
+    if not db_pool:
+        return []
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("SELECT watchlist FROM users WHERE telegram_id = $1", telegram_id)
+        if not row or not row["watchlist"]:
+            return []
+        return list(row["watchlist"])
+
+
+async def update_watchlist_db(telegram_id: int, watchlist: list[str]):
+    """Watchlist'i DB'ye kaydet."""
+    if not db_pool:
+        return
+    async with db_pool.acquire() as conn:
+        await conn.execute(
+            "UPDATE users SET watchlist = $1 WHERE telegram_id = $2",
+            watchlist, telegram_id,
+        )
+
+
+# ── In-memory fallback ───────────────────────────────────
+_mem_users: dict[int, dict] = {}
+
+def _check_rate_limit_memory(user_id: int) -> tuple[bool, int]:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    user = user_queries[user_id]
-
+    user = _mem_users.setdefault(user_id, {"count": 0, "date": "", "tier": "free"})
     if user["date"] != today:
         user["date"] = today
         user["count"] = 0
-
     limit = PRO_LIMIT if user["tier"] == "pro" else FREE_LIMIT
-    remaining = limit - user["count"]
-
-    if remaining <= 0:
+    if user["count"] >= limit:
         return False, 0
-
     user["count"] += 1
-    return True, remaining - 1
+    return True, limit - user["count"]
 
+
+# ── Yardimci Fonksiyonlar ────────────────────────────────
 
 def risk_emoji(score: float) -> str:
     if score < 20: return "🟢"
@@ -73,20 +175,26 @@ def risk_emoji(score: float) -> str:
     return "🚨"
 
 
-def format_number(n: float) -> str:
-    if n >= 1_000_000: return f"${n/1_000_000:.1f}M"
-    if n >= 1_000: return f"${n/1_000:.1f}K"
-    return f"${n:.0f}"
+def _escape(text: str) -> str:
+    """MarkdownV2 icin ozel karakterleri escape et."""
+    special = r"_*[]()~`>#+-=|{}.!"
+    result = ""
+    for ch in str(text):
+        if ch in special:
+            result += "\\" + ch
+        else:
+            result += ch
+    return result
 
 
 async def fetch_analysis(address: str) -> dict | None:
-    """Backend API'den token analizi çek."""
+    """Backend API'den token analizi cek."""
     url = f"{API_URL}/api/v1/token/{address}"
-    logger.info(f"API isteği: {url}")
+    logger.info(f"API istegi: {url}")
     try:
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.get(url)
-            logger.info(f"API yanıt: status={resp.status_code}, url={url}")
+            logger.info(f"API yanit: status={resp.status_code}")
             if resp.status_code == 200:
                 return resp.json()
             logger.error(f"API hata kodu: {resp.status_code}, body={resp.text[:200]}")
@@ -95,33 +203,85 @@ async def fetch_analysis(address: str) -> dict | None:
         logger.error(f"API timeout (60s): {url}")
         return None
     except Exception as e:
-        logger.error(f"API hatası ({type(e).__name__}): {e}")
+        logger.error(f"API hatasi ({type(e).__name__}): {e}")
         return None
+
+
+def _build_result_text(data: dict, remaining: int) -> str:
+    """Analiz sonucunu formatla."""
+    token   = data.get("token", {})
+    score   = data.get("score", {})
+    metrics = data.get("metrics", {})
+    warnings = data.get("warnings_tr", [])
+
+    total    = score.get("total", 0)
+    emoji    = risk_emoji(total)
+    level_tr = score.get("label_tr", "Bilinmiyor")
+    name     = token.get("name", "Unknown")
+    symbol   = token.get("symbol", "???")
+
+    vlr     = metrics.get("vlr", {})
+    rls     = metrics.get("rls", {})
+    holders = metrics.get("holders", {})
+    cluster = metrics.get("cluster", {})
+    wash    = metrics.get("wash", {})
+    sybil   = metrics.get("sybil", {})
+    bundler = metrics.get("bundler", {})
+    exit_m  = metrics.get("exit", {})
+    curve   = metrics.get("curve", {})
+
+    text = (
+        f"{emoji} *{_escape(name)}* \\(${_escape(symbol)}\\)\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🛡️ *Risk Skoru: {total:.0f}/100*\n"
+        f"📊 Seviye: *{_escape(level_tr)}*\n\n"
+        f"*── Temel Metrikler ──*\n"
+        f"📊 VLR: `{vlr.get('value', 0):.1f}x` \\(skor: {vlr.get('score', 0):.0f}\\)\n"
+        f"💧 RLS: `{rls.get('value', 0):.1f}x` \\(skor: {rls.get('score', 0):.0f}\\)\n"
+        f"👥 Holder: `{holders.get('count', 0):,}` \\(skor: {holders.get('score', 0):.0f}\\)\n\n"
+        f"*── Gelismis Analiz ──*\n"
+        f"🔗 Kumeleme: skor `{cluster.get('score', 0):.0f}`\n"
+        f"🔄 Wash: skor `{wash.get('score', 0):.0f}`\n"
+        f"🤖 Sybil: skor `{sybil.get('score', 0):.0f}`\n"
+        f"📦 Bundler: skor `{bundler.get('score', 0):.0f}`\n"
+        f"📉 Cikis: skor `{exit_m.get('score', 0):.0f}`\n"
+        f"📐 Curve: skor `{curve.get('score', 0):.0f}`\n"
+    )
+
+    if warnings:
+        text += f"\n*── Uyarilar ──*\n"
+        for w in warnings[:5]:
+            text += f"• {_escape(w)}\n"
+
+    text += f"\n_Kalan sorgu: {remaining}/{FREE_LIMIT}_"
+    return text
 
 
 # ── /start ──────────────────────────────────────────────
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Karşılama mesajı."""
     user = update.effective_user
+    await get_or_create_user(user.id, user.username or "")
+
     welcome = (
-        f"👋 Merhaba, *{user.first_name}*\\!\n\n"
+        f"👋 Merhaba, *{_escape(user.first_name)}*\\!\n\n"
         "🛡️ *ChainGuard Bot* — Solana Token Risk Analizi\n\n"
-        "Token adresini gönder, saniyeler içinde *9 metrikle* risk skorunu öğren\\.\n\n"
+        "Token adresini gonder, saniyeler icinde *9 metrikle* risk skorunu ogren\\.\n\n"
         "📋 *Komutlar:*\n"
         "• `/analyze <adres>` — Token analizi\n"
         "• `/watch add <adres>` — Watchlist'e ekle\n"
-        "• `/watch list` — Watchlist görüntüle\n"
-        "• `/watch remove <adres>` — Watchlist'ten çıkar\n"
-        "• `/help` — Yardım\n\n"
-        f"🔗 [Web Arayüzü]({WEB_URL})\n\n"
-        f"📊 Günlük sorgu hakkın: *{FREE_LIMIT}* \\(Free\\)\n"
-        "_Pro'ya geçmek için /pro yazın\\._"
+        "• `/watch list` — Watchlist goruntule\n"
+        "• `/watch remove <adres>` — Watchlist'ten cikar\n"
+        "• `/trending` — En cok sorgulanan tokenlar\n"
+        "• `/help` — Yardim\n\n"
+        f"🔗 [Web Arayuzu]({WEB_URL})\n\n"
+        f"📊 Gunluk sorgu hakkin: *{FREE_LIMIT}* \\(Free\\)\n"
+        "_Pro'ya gecmek icin /pro yazin\\._"
     )
 
     keyboard = [
-        [InlineKeyboardButton("🌐 Web Arayüzü", url=WEB_URL)],
-        [InlineKeyboardButton("📊 Örnek: BONK Analizi", callback_data="analyze_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263")],
+        [InlineKeyboardButton("🌐 Web Arayuzu", url=WEB_URL)],
+        [InlineKeyboardButton("📊 Ornek: BONK Analizi", callback_data="analyze_DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263")],
     ]
 
     await update.message.reply_text(
@@ -132,130 +292,70 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ── /help ───────────────────────────────────────────────
+# ── /help ────────────────────────────────────────────────
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
-        "🛡️ *ChainGuard Bot Komutları*\n\n"
+        "🛡️ *ChainGuard Bot Komutlari*\n\n"
         "*Analiz:*\n"
-        "• `/analyze <token_adresi>` — 9 metrikle risk analizi\n"
-        "• Token adresini direkt yapıştır → otomatik analiz\n\n"
+        "• `/analyze <token_adresi>` — 9 metrikle risk analizi\n\n"
         "*Watchlist:*\n"
-        "• `/watch add <adres>` — Takibe al\n"
-        "• `/watch list` — Takip listeni gör\n"
-        "• `/watch remove <adres>` — Takipten çıkar\n\n"
+        "• `/watch add <adres>` — Takibe al \\(maks 10\\)\n"
+        "• `/watch list` — Takip listeni gor\n"
+        "• `/watch remove <adres>` — Takipten cikar\n\n"
+        "*Diger:*\n"
+        "• `/trending` — En cok sorgulanan tokenlar\n"
+        "• `/pro` — Pro plan bilgisi\n\n"
         "*Abonelik:*\n"
-        f"• Free: günlük {FREE_LIMIT} sorgu\n"
-        f"• Pro: günlük {PRO_LIMIT} sorgu\n"
-        "• `/pro` — Pro planı hakkında bilgi"
+        f"• Free: gunluk {FREE_LIMIT} sorgu\n"
+        f"• Pro: gunluk {PRO_LIMIT} sorgu \\+ watchlist uyarilari"
     )
     await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN_V2)
 
 
-# ── /analyze ────────────────────────────────────────────
+# ── /analyze ─────────────────────────────────────────────
 
 async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Token risk analizi."""
-    user_id = update.effective_user.id
+    user = update.effective_user
 
-    # Adres kontrolü
-    if not context.args or len(context.args) < 1:
+    if not context.args:
         await update.message.reply_text(
             "❌ Token adresi gerekli\\.\n\n"
-            "Kullanım: `/analyze <solana_token_adresi>`\n\n"
-            "Örnek:\n`/analyze DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263`",
+            "Kullanim: `/analyze <solana_token_adresi>`\n\n"
+            "Ornek:\n`/analyze DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263`",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
     address = context.args[0].strip()
-
-    # Basit adres doğrulama
     if len(address) < 32 or len(address) > 44:
-        await update.message.reply_text("❌ Geçersiz Solana token adresi\\.", parse_mode=ParseMode.MARKDOWN_V2)
+        await update.message.reply_text("❌ Gecersiz Solana token adresi\\.", parse_mode=ParseMode.MARKDOWN_V2)
         return
 
-    # Rate limit
-    allowed, remaining = check_rate_limit(user_id)
+    allowed, remaining = await check_rate_limit_db(user.id, user.username or "")
     if not allowed:
         await update.message.reply_text(
-            f"⏳ Günlük sorgu limitine ulaştın \\({FREE_LIMIT}/gün\\)\\.\n\n"
-            "Pro'ya geçerek limiti artır: `/pro`",
+            f"⏳ Gunluk sorgu limitine ulastin \\({FREE_LIMIT}/gun\\)\\.\n\nPro'ya gec: `/pro`",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
-    # Loading mesajı
     loading_msg = await update.message.reply_text(
-        "⏳ *Token analiz ediliyor\\.\\.\\.*\n"
-        "9 metrik hesaplanıyor, lütfen bekleyin ⚡",
+        "⏳ *Token analiz ediliyor\\.\\.\\.*\n9 metrik hesaplaniyor, lutfen bekleyin ⚡",
         parse_mode=ParseMode.MARKDOWN_V2,
     )
 
-    # API'den veri çek
     data = await fetch_analysis(address)
-
     if not data:
         await loading_msg.edit_text(
-            "❌ Token analiz edilemedi\\.\n"
-            "Adresin doğru olduğundan emin olun\\.",
+            "❌ Token analiz edilemedi\\.\nAdresin dogru oldugunden emin olun\\.",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
-    # Sonucu formatla
-    token = data.get("token", {})
-    score = data.get("score", {})
-    metrics = data.get("metrics", {})
-    warnings = data.get("warnings_tr", [])
-
-    total = score.get("total", 0)
-    emoji = risk_emoji(total)
-    level_tr = score.get("label_tr", "Bilinmiyor")
-
-    vlr = metrics.get("vlr", {})
-    rls = metrics.get("rls", {})
-    holders = metrics.get("holders", {})
-    cluster = metrics.get("cluster", {})
-    wash = metrics.get("wash", {})
-    sybil = metrics.get("sybil", {})
-    bundler = metrics.get("bundler", {})
-    exit_m = metrics.get("exit", {})
-    curve = metrics.get("curve", {})
-
-    name = token.get("name", "Unknown")
-    symbol = token.get("symbol", "???")
-
-    # Skor özeti
-    result_text = (
-        f"{emoji} *{_escape(name)}* \\(${_escape(symbol)}\\)\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🛡️ *Risk Skoru: {total:.0f}/100*\n"
-        f"📊 Seviye: *{_escape(level_tr)}*\n\n"
-        f"*── Temel Metrikler ──*\n"
-        f"📊 VLR: `{vlr.get('value', 0):.1f}x` \\(skor: {vlr.get('score', 0):.0f}\\)\n"
-        f"💧 RLS: `{rls.get('value', 0):.1f}x` \\(skor: {rls.get('score', 0):.0f}\\)\n"
-        f"👥 Holder: `{holders.get('count', 0):,}` \\(skor: {holders.get('score', 0):.0f}\\)\n\n"
-        f"*── Gelişmiş Analiz ──*\n"
-        f"🔗 Kümeleme: skor `{cluster.get('score', 0):.0f}`\n"
-        f"🔄 Wash: skor `{wash.get('score', 0):.0f}`\n"
-        f"🤖 Sybil: skor `{sybil.get('score', 0):.0f}`\n"
-        f"📦 Bundler: skor `{bundler.get('score', 0):.0f}`\n"
-        f"📉 Çıkış: skor `{exit_m.get('score', 0):.0f}`\n"
-        f"📐 Curve: skor `{curve.get('score', 0):.0f}`\n"
-    )
-
-    # Uyarılar
-    if warnings:
-        result_text += f"\n*── Uyarılar ──*\n"
-        for w in warnings[:5]:
-            result_text += f"• {_escape(w)}\n"
-
-    result_text += f"\n_Kalan sorgu: {remaining}/{FREE_LIMIT}_"
-
-    # Butonlar
+    result_text = _build_result_text(data, remaining)
     keyboard = [
-        [InlineKeyboardButton("🌐 Detaylı Analiz", url=f"{WEB_URL}/token/{address}")],
+        [InlineKeyboardButton("🌐 Detayli Analiz", url=f"{WEB_URL}/token/{address}")],
         [
             InlineKeyboardButton("👁 Watchlist'e Ekle", callback_data=f"watch_add_{address}"),
             InlineKeyboardButton("🔄 Yenile", callback_data=f"analyze_{address}"),
@@ -270,19 +370,17 @@ async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# ── /watch ──────────────────────────────────────────────
+# ── /watch ───────────────────────────────────────────────
 
 async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Watchlist yönetimi."""
-    user_id = update.effective_user.id
-    user = user_queries[user_id]
+    user = update.effective_user
 
     if not context.args:
         await update.message.reply_text(
-            "📋 *Watchlist Komutları:*\n\n"
+            "📋 *Watchlist Komutlari:*\n\n"
             "• `/watch add <adres>` — Token ekle\n"
-            "• `/watch list` — Listeyi gör\n"
-            "• `/watch remove <adres>` — Token çıkar",
+            "• `/watch list` — Listeyi gor\n"
+            "• `/watch remove <adres>` — Token cikar",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
@@ -290,9 +388,12 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action = context.args[0].lower()
 
     if action == "list":
-        watchlist = user.get("watchlist", [])
+        watchlist = await get_watchlist_db(user.id)
         if not watchlist:
-            await update.message.reply_text("📋 Watchlist'in boş\\. `/watch add <adres>` ile ekle\\.", parse_mode=ParseMode.MARKDOWN_V2)
+            await update.message.reply_text(
+                "📋 Watchlist'in bos\\. `/watch add <adres>` ile ekle\\.",
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
             return
 
         text = "📋 *Watchlist:*\n\n"
@@ -307,96 +408,189 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action == "add" and len(context.args) >= 2:
         address = context.args[1].strip()
         if len(address) < 32:
-            await update.message.reply_text("❌ Geçersiz adres\\.", parse_mode=ParseMode.MARKDOWN_V2)
+            await update.message.reply_text("❌ Gecersiz adres\\.", parse_mode=ParseMode.MARKDOWN_V2)
             return
 
-        if address in user.get("watchlist", []):
+        watchlist = await get_watchlist_db(user.id)
+        if address in watchlist:
             await update.message.reply_text("ℹ️ Bu token zaten watchlist'inde\\.", parse_mode=ParseMode.MARKDOWN_V2)
             return
-
-        if len(user.get("watchlist", [])) >= 10:
+        if len(watchlist) >= 10:
             await update.message.reply_text("❌ Watchlist limiti: 10 token\\.", parse_mode=ParseMode.MARKDOWN_V2)
             return
 
-        user.setdefault("watchlist", []).append(address)
-        short = f"{address[:6]}...{address[-4:]}"
+        watchlist.append(address)
+        await update_watchlist_db(user.id, watchlist)
+        short = f"{address[:6]}\\.\\.\\{address[-4:]}"
         await update.message.reply_text(
-            f"✅ `{_escape(short)}` watchlist'e eklendi\\!\n"
-            f"📋 Toplam: {len(user['watchlist'])} token",
+            f"✅ `{short}` watchlist'e eklendi\\!\n📋 Toplam: {len(watchlist)} token",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
 
     if action == "remove" and len(context.args) >= 2:
         address = context.args[1].strip()
-        wl = user.get("watchlist", [])
-        if address in wl:
-            wl.remove(address)
-            await update.message.reply_text("✅ Token watchlist'ten çıkarıldı\\.", parse_mode=ParseMode.MARKDOWN_V2)
+        watchlist = await get_watchlist_db(user.id)
+        if address in watchlist:
+            watchlist.remove(address)
+            await update_watchlist_db(user.id, watchlist)
+            await update.message.reply_text("✅ Token watchlist'ten cikarildi\\.", parse_mode=ParseMode.MARKDOWN_V2)
         else:
             await update.message.reply_text("❌ Bu token watchlist'inde yok\\.", parse_mode=ParseMode.MARKDOWN_V2)
         return
 
-    await update.message.reply_text("❓ Geçersiz komut\\. `/watch add|remove|list` kullan\\.", parse_mode=ParseMode.MARKDOWN_V2)
+    await update.message.reply_text("❓ Gecersiz komut\\. `/watch add|remove|list` kullan\\.", parse_mode=ParseMode.MARKDOWN_V2)
 
 
-# ── /pro ────────────────────────────────────────────────
+# ── /trending ─────────────────────────────────────────────
+
+async def trending_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    loading = await update.message.reply_text(
+        "⏳ *Trend tokenlar yukleniyor\\.\\.\\.*",
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{API_URL}/api/v1/trending")
+            if resp.status_code != 200:
+                await loading.edit_text("❌ Trend verisi alinamadi\\.", parse_mode=ParseMode.MARKDOWN_V2)
+                return
+            data = resp.json()
+    except Exception as e:
+        logger.error(f"Trending hatasi: {e}")
+        await loading.edit_text("❌ Baglanti hatasi\\.", parse_mode=ParseMode.MARKDOWN_V2)
+        return
+
+    tokens = data.get("tokens", [])
+    if not tokens:
+        await loading.edit_text(
+            "📊 *Trend Tokenlar*\n\nHenuz veri yok\\. Token analiz ettikce burada gorunecek\\.",
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+        return
+
+    text = "📊 *En Cok Sorgulanan Tokenlar*\n\n"
+    for i, t in enumerate(tokens[:10], 1):
+        emoji = risk_emoji(t.get("total_score", 0))
+        name = _escape(t.get("name") or t.get("token_address", "")[:8])
+        score = t.get("total_score", 0)
+        queries = t.get("query_count", 0)
+        text += f"{i}\\. {emoji} *{name}* — `{score:.0f}` puan \\({queries}x\\)\n"
+
+    await loading.edit_text(text, parse_mode=ParseMode.MARKDOWN_V2)
+
+
+# ── /pro ─────────────────────────────────────────────────
 
 async def pro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Pro plan bilgisi."""
     await update.message.reply_text(
         "⭐ *ChainGuard Pro*\n\n"
-        f"📊 Günlük {PRO_LIMIT} sorgu \\(Free: {FREE_LIMIT}\\)\n"
-        "🔔 Watchlist uyarıları\n"
-        "📈 Öncelikli analiz\n"
-        "🎯 Affiliate kazanç\n\n"
-        "_Pro abonelik yakında Telegram Stars ile aktif olacak\\!_\n\n"
-        "Şimdilik Free planla devam et 🚀",
+        f"📊 Gunluk {PRO_LIMIT} sorgu \\(Free: {FREE_LIMIT}\\)\n"
+        "🔔 Watchlist uyarilari \\(otomatik bildirim\\)\n"
+        "📈 Oncelikli analiz\n"
+        "🎯 Affiliate kazanc\n\n"
+        "_Pro abonelik yakinda Telegram Stars ile aktif olacak\\!_\n\n"
+        "Simdilik Free planla devam et 🚀",
         parse_mode=ParseMode.MARKDOWN_V2,
     )
 
 
-# ── Callback Queries ────────────────────────────────────
+# ── Watchlist Alert Job ──────────────────────────────────
+
+async def watchlist_alert_job(context: ContextTypes.DEFAULT_TYPE):
+    """Her 30 dakikada bir watchlist tokenlarini kontrol et, skor degisirse bildir."""
+    if not db_pool:
+        return
+
+    try:
+        async with db_pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT telegram_id, watchlist FROM users WHERE array_length(watchlist, 1) > 0"
+            )
+    except Exception as e:
+        logger.error(f"Watchlist alert DB hatasi: {e}")
+        return
+
+    for row in rows:
+        telegram_id = row["telegram_id"]
+        watchlist = list(row["watchlist"] or [])
+
+        for address in watchlist:
+            try:
+                data = await fetch_analysis(address)
+                if not data:
+                    continue
+
+                new_score = data.get("score", {}).get("total", 0)
+                old_score = watchlist_scores.get(telegram_id, {}).get(address)
+
+                # Skoru guncelle
+                if telegram_id not in watchlist_scores:
+                    watchlist_scores[telegram_id] = {}
+                watchlist_scores[telegram_id][address] = new_score
+
+                # Ilk kontrol — baz deger olustur, bildirim gonderme
+                if old_score is None:
+                    continue
+
+                if abs(new_score - old_score) >= ALERT_THRESHOLD:
+                    token_name = data.get("token", {}).get("name", address[:8])
+                    emoji = risk_emoji(new_score)
+                    direction = "⬆️ Artti" if new_score > old_score else "⬇️ Azaldi"
+
+                    await context.bot.send_message(
+                        chat_id=telegram_id,
+                        text=(
+                            f"🔔 *Watchlist Uyarisi*\n\n"
+                            f"{emoji} *{_escape(token_name)}*\n"
+                            f"Risk Skoru: `{old_score:.0f}` → `{new_score:.0f}` {direction}\n\n"
+                            f"`{address}`\n\n"
+                            f"[Detayli Analiz]({WEB_URL}/token/{address})"
+                        ),
+                        parse_mode=ParseMode.MARKDOWN_V2,
+                        disable_web_page_preview=True,
+                    )
+                    logger.info(f"Watchlist uyarisi gonderildi: {telegram_id} → {address} ({old_score:.0f}→{new_score:.0f})")
+
+            except Exception as e:
+                logger.error(f"Watchlist kontrol hatasi ({address}): {e}")
+
+
+# ── Callback Queries ─────────────────────────────────────
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Inline buton işleyicisi."""
     query = update.callback_query
     await query.answer()
     data = query.data
+    user = query.from_user
 
     if data.startswith("analyze_"):
         address = data.replace("analyze_", "")
-        user_id = query.from_user.id
 
-        allowed, remaining = check_rate_limit(user_id)
+        allowed, remaining = await check_rate_limit_db(user.id, user.username or "")
         if not allowed:
             await query.edit_message_text(
-                f"⏳ Günlük limit doldu \\({FREE_LIMIT}/gün\\)\\.",
+                f"⏳ Gunluk limit doldu \\({FREE_LIMIT}/gun\\)\\.",
                 parse_mode=ParseMode.MARKDOWN_V2,
             )
             return
 
-        await query.edit_message_text(
-            "⏳ *Analiz ediliyor\\.\\.\\.*",
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
+        await query.edit_message_text("⏳ *Analiz ediliyor\\.\\.\\.*", parse_mode=ParseMode.MARKDOWN_V2)
 
         result = await fetch_analysis(address)
         if not result:
-            await query.edit_message_text("❌ Analiz başarısız\\.", parse_mode=ParseMode.MARKDOWN_V2)
+            await query.edit_message_text("❌ Analiz basarisiz\\.", parse_mode=ParseMode.MARKDOWN_V2)
             return
 
         token = result.get("token", {})
         score = result.get("score", {})
         total = score.get("total", 0)
         emoji = risk_emoji(total)
-        name = token.get("name", "Unknown")
+        name   = token.get("name", "Unknown")
         symbol = token.get("symbol", "???")
 
-        keyboard = [
-            [InlineKeyboardButton("🌐 Detaylı Analiz", url=f"{WEB_URL}/token/{address}")],
-        ]
-
+        keyboard = [[InlineKeyboardButton("🌐 Detayli Analiz", url=f"{WEB_URL}/token/{address}")]]
         await query.edit_message_text(
             f"{emoji} *{_escape(name)}* \\(${_escape(symbol)}\\)\n"
             f"Risk Skoru: *{total:.0f}/100* — {_escape(score.get('label_tr', ''))}",
@@ -406,50 +600,54 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif data.startswith("watch_add_"):
         address = data.replace("watch_add_", "")
-        user_id = query.from_user.id
-        user = user_queries[user_id]
+        watchlist = await get_watchlist_db(user.id)
 
-        if address not in user.get("watchlist", []):
-            user.setdefault("watchlist", []).append(address)
+        if address not in watchlist:
+            if len(watchlist) >= 10:
+                await query.answer("❌ Watchlist limiti: 10 token", show_alert=True)
+                return
+            watchlist.append(address)
+            await update_watchlist_db(user.id, watchlist)
             await query.answer("✅ Watchlist'e eklendi!", show_alert=True)
         else:
             await query.answer("ℹ️ Zaten watchlist'inde.", show_alert=True)
 
 
-# ── Escape helper ───────────────────────────────────────
-
-def _escape(text: str) -> str:
-    """MarkdownV2 için özel karakterleri escape et."""
-    special = r"_*[]()~`>#+-=|{}.!"
-    result = ""
-    for ch in str(text):
-        if ch in special:
-            result += "\\" + ch
-        else:
-            result += ch
-    return result
-
-
-# ── Main ────────────────────────────────────────────────
+# ── Main ─────────────────────────────────────────────────
 
 def main():
     if not BOT_TOKEN:
-        logger.error("TELEGRAM_BOT_TOKEN ortam değişkeni ayarlanmamış!")
+        logger.error("TELEGRAM_BOT_TOKEN ortam degiskeni ayarlanmamis!")
         return
 
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # Komut handler'ları
-    app.add_handler(CommandHandler("start", start_command))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("analyze", analyze_command))
-    app.add_handler(CommandHandler("watch", watch_command))
-    app.add_handler(CommandHandler("pro", pro_command))
-
-    # Callback query handler
+    # Komut handler'lari
+    app.add_handler(CommandHandler("start",    start_command))
+    app.add_handler(CommandHandler("help",     help_command))
+    app.add_handler(CommandHandler("analyze",  analyze_command))
+    app.add_handler(CommandHandler("watch",    watch_command))
+    app.add_handler(CommandHandler("trending", trending_command))
+    app.add_handler(CommandHandler("pro",      pro_command))
     app.add_handler(CallbackQueryHandler(button_callback))
 
-    logger.info("🤖 ChainGuard Bot başlatılıyor...")
+    # Watchlist alert job — 30 dakikada bir
+    app.job_queue.run_repeating(
+        watchlist_alert_job,
+        interval=ALERT_INTERVAL,
+        first=60,  # baslangictan 60s sonra ilk kontrol
+    )
+
+    async def post_init(application: Application):
+        await init_db()
+
+    async def post_shutdown(application: Application):
+        await close_db()
+
+    app.post_init     = post_init
+    app.post_shutdown = post_shutdown
+
+    logger.info("🤖 ChainGuard Bot baslatiliyor...")
     app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 
