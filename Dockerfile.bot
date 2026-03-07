@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Bot bağımlılıkları
+COPY apps/telegram/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Bot dosyası
+COPY apps/telegram/bot.py ./bot.py
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "bot.py"]
