@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { LangProvider } from "@/components/LangProvider";
+import { LangToggle } from "@/components/LangToggle";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -21,6 +23,14 @@ export const metadata: Metadata = {
   description:
     "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Wash trading, cüzdan kümeleme, Sybil attack ve manipülasyon tespiti.",
   keywords: [
+    // English
+    "solana token scanner",
+    "rug pull checker",
+    "solana token safety",
+    "crypto risk analysis",
+    "wash trading detection",
+    "pump.fun token checker",
+    // Turkish
     "solana token risk analizi",
     "memecoin dolandırıcılık",
     "rug pull tespit",
@@ -58,6 +68,10 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: WEB_URL,
+    languages: {
+      "tr": WEB_URL,
+      "en": WEB_URL,
+    },
   },
 };
 
@@ -74,7 +88,7 @@ export default function RootLayout({
     "operatingSystem": "Web",
     "url": WEB_URL,
     "description": "Solana tokenlarını 9 metrikle gerçek zamanlı analiz eden risk değerlendirme platformu.",
-    "inLanguage": "tr",
+    "inLanguage": ["tr", "en"],
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -93,6 +107,9 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
+        <link rel="alternate" hrefLang="tr" href={WEB_URL} />
+        <link rel="alternate" hrefLang="en" href={WEB_URL} />
+        <link rel="alternate" hrefLang="x-default" href={WEB_URL} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
@@ -109,7 +126,20 @@ export default function RootLayout({
               "radial-gradient(ellipse 100% 50% at 50% -10%, rgba(99,102,241,0.15) 0%, rgba(236,72,153,0.07) 45%, transparent 70%)",
           }}
         />
-        {children}
+        <LangProvider>
+          {/* Language toggle — fixed top-right, above all content */}
+          <div
+            style={{
+              position: "fixed",
+              top: "14px",
+              right: "16px",
+              zIndex: 100,
+            }}
+          >
+            <LangToggle />
+          </div>
+          {children}
+        </LangProvider>
       </body>
     </html>
   );

@@ -79,7 +79,7 @@ class Database:
             logger.warning("init.sql bulunamadı")
 
         # Migration dosyalarını sırayla çalıştır
-        for migration in ["migrate_sprint3.sql", "migrate_sprint4.sql"]:
+        for migration in ["migrate_sprint3.sql", "migrate_sprint4.sql", "migrate_sprint5.sql"]:
             path = os.path.join(db_dir, migration)
             if os.path.exists(path):
                 try:

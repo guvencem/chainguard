@@ -584,6 +584,162 @@ async def ws_alerts(websocket: WebSocket, token: str = ""):
         logger.warning(f"WS hata ({token}): {e}")
 
 
+# ── Wallet Connect & Holder Verification ───────────────
+
+from wallet_service import (
+    verify_solana_signature, generate_sign_message,
+    get_cgt_balance_usd, determine_holder_tier,
+    get_daily_limit, check_fraud_signals,
+)
+
+
+class WalletVerifyRequest(BaseModel):
+    wallet_address: str
+    signature: str
+    nonce: str
+    telegram_id: int | None = None
+
+
+class WalletNonceRequest(BaseModel):
+    wallet_address: str
+
+
+@app.post("/api/v1/wallet/nonce")
+async def wallet_nonce(body: WalletNonceRequest):
+    """Kullanıcının imzalayacağı nonce + mesajı döner."""
+    nonce = secrets.token_hex(16)
+    message = generate_sign_message(body.wallet_address, nonce)
+    return {"nonce": nonce, "message": message}
+
+
+@app.post("/api/v1/wallet/verify")
+async def wallet_verify(body: WalletVerifyRequest, request: Request):
+    """
+    Cüzdan imzasını doğrula, CGT bakiyesini kontrol et, tier aktif et.
+    """
+    wallet = body.wallet_address.strip()
+
+    # Adres formatı kontrolü
+    import re
+    SOLANA_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
+    if not SOLANA_RE.match(wallet):
+        raise HTTPException(status_code=400, detail="Geçersiz Solana cüzdan adresi.")
+
+    # Fraud kontrol
+    ip = request.client.host if request.client else "unknown"
+    fraud = await check_fraud_signals(wallet, ip, analysis_service.db.pool)
+    if not fraud["ok"]:
+        raise HTTPException(status_code=403, detail=fraud["reason"])
+
+    # İmza doğrulama
+    nonce_message = generate_sign_message(wallet, body.nonce)
+    valid = await verify_solana_signature(wallet, nonce_message, body.signature)
+    if not valid:
+        raise HTTPException(status_code=401, detail="Geçersiz imza.")
+
+    # CGT bakiye kontrol
+    token_amount, usd_value = await get_cgt_balance_usd(wallet)
+    tier = determine_holder_tier(usd_value)
+    daily_limit = get_daily_limit(tier)
+
+    # DB'ye kaydet
+    if analysis_service.db.pool:
+        try:
+            async with analysis_service.db.pool.acquire() as conn:
+                # Wallet connection kaydet
+                await conn.execute("""
+                    INSERT INTO wallet_connections
+                        (wallet_address, telegram_id, signature, message, ip_address)
+                    VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (wallet_address) DO UPDATE SET
+                        telegram_id = EXCLUDED.telegram_id,
+                        signature   = EXCLUDED.signature,
+                        verified_at = NOW(),
+                        is_active   = TRUE
+                """, wallet, body.telegram_id, body.signature, nonce_message, ip)
+
+                # User tablosunu güncelle
+                if body.telegram_id:
+                    await conn.execute("""
+                        UPDATE users SET
+                            wallet_address     = $1,
+                            holder_tier        = $2,
+                            holder_verified_at = NOW(),
+                            token_usd_value    = $3
+                        WHERE telegram_id = $4
+                    """, wallet, tier, usd_value, body.telegram_id)
+
+                # Bakiye geçmişi kaydet
+                await conn.execute("""
+                    INSERT INTO wallet_balances (wallet_address, token_address, usd_value)
+                    VALUES ($1, $2, $3)
+                """, wallet, os.getenv("CGT_TOKEN_ADDRESS", "TBA"), usd_value)
+
+        except Exception as e:
+            logger.error(f"Wallet kayıt hatası: {e}")
+
+    return {
+        "wallet": wallet,
+        "verified": True,
+        "cgt_amount": token_amount,
+        "usd_value": round(usd_value, 4),
+        "tier": tier,
+        "daily_limit": daily_limit,
+        "message": {
+            "free":   "Ücretsiz tier aktif. $5 değer $CGT hold edin için +5 ekstra sorgu.",
+            "holder": "Holder tier aktif! Günlük 10 sorgu hakkınız var.",
+            "pro":    "Pro tier aktif! Günlük 100 sorgu + bot uyarıları.",
+        }.get(tier, "Tier aktif."),
+    }
+
+
+@app.get("/api/v1/wallet/{wallet_address}/tier")
+async def get_wallet_tier(wallet_address: str):
+    """Cüzdanın güncel CGT bakiyesi ve tier durumunu döner."""
+    if not analysis_service.db.pool:
+        raise HTTPException(status_code=503, detail="DB bağlantısı yok.")
+
+    _, usd_value = await get_cgt_balance_usd(wallet_address)
+    tier = determine_holder_tier(usd_value)
+
+    return {
+        "wallet": wallet_address,
+        "usd_value": round(usd_value, 4),
+        "tier": tier,
+        "daily_limit": get_daily_limit(tier),
+    }
+
+
+@app.get("/api/v1/config/token")
+async def token_config():
+    """Platform token konfigürasyonunu döner (frontend için)."""
+    cgt_address  = os.getenv("CGT_TOKEN_ADDRESS", "TBA")
+    treasury     = os.getenv("TREASURY_WALLET", "TBA")
+    cgt_price    = 0.0
+
+    if cgt_address != "TBA":
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(
+                    f"https://api.dexscreener.com/latest/dex/tokens/{cgt_address}"
+                )
+                pairs = resp.json().get("pairs", [])
+                if pairs:
+                    cgt_price = float(pairs[0].get("priceUsd", 0) or 0)
+        except Exception:
+            pass
+
+    return {
+        "cgt_address": cgt_address,
+        "treasury_wallet": treasury,
+        "price_usd": cgt_price,
+        "holder_min_usd": float(os.getenv("CGT_HOLDER_MIN_USD", "5")),
+        "pro_monthly_usd": float(os.getenv("PRO_MONTHLY_USD", "29")),
+        "trader_monthly_usd": float(os.getenv("TRADER_MONTHLY_USD", "99")),
+        "pump_fun_url": f"https://pump.fun/coin/{cgt_address}" if cgt_address != "TBA" else "#",
+    }
+
+
 @app.exception_handler(404)
 async def not_found(request: Request, exc: HTTPException):
     return JSONResponse(
