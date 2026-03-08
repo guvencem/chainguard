@@ -7,23 +7,26 @@ Komutlar:
   /watch    — Watchlist yonetimi (/watch add|remove|list <adres>)
   /trending — En cok sorgulanan tokenlar
   /help     — Yardim
-  /pro      — Pro plan bilgisi
+  /pro      — Pro plan (Telegram Stars odeme)
 
-Sprint 2 — DB entegrasyonu, watchlist alertleri, trending
+Sprint 4 — Telegram Stars Pro odeme, WebSocket altyapisi
 """
 
 import os
 import logging
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 
 import httpx
 import asyncpg
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, LabeledPrice
 from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
     CallbackQueryHandler,
+    PreCheckoutQueryHandler,
+    MessageHandler,
+    filters,
 )
 from telegram.constants import ParseMode
 
@@ -33,8 +36,9 @@ API_URL      = os.getenv("API_URL", "https://web-production-b704c.up.railway.app
 WEB_URL      = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
-FREE_LIMIT = 5
-PRO_LIMIT  = 100
+FREE_LIMIT      = 5
+PRO_LIMIT       = 100
+PRO_STARS_PRICE = 250   # 250 Telegram Stars ≈ $4.99/ay
 
 ALERT_INTERVAL    = 1800   # 30 dakika
 ALERT_THRESHOLD   = 10.0  # skor farki esigi
@@ -93,7 +97,6 @@ async def check_rate_limit_db(telegram_id: int, username: str = "") -> tuple[boo
     today = datetime.now(timezone.utc).date()
 
     if not db_pool:
-        # Fallback: in-memory
         return _check_rate_limit_memory(telegram_id)
 
     async with db_pool.acquire() as conn:
@@ -106,7 +109,16 @@ async def check_rate_limit_db(telegram_id: int, username: str = "") -> tuple[boo
             daily_queries = 0
             tier = "free"
         else:
+            # pro_until süresi dolmuşsa tier'ı free'ye düşür
             tier = row["tier"] or "free"
+            if tier == "pro":
+                pro_until = row.get("pro_until")
+                if pro_until and pro_until < datetime.now(timezone.utc):
+                    tier = "free"
+                    await conn.execute(
+                        "UPDATE users SET tier = 'free' WHERE telegram_id = $1", telegram_id
+                    )
+
             if row["last_query_date"] != today:
                 await conn.execute(
                     "UPDATE users SET daily_queries = 0, last_query_date = $1 WHERE telegram_id = $2",
@@ -147,6 +159,35 @@ async def update_watchlist_db(telegram_id: int, watchlist: list[str]):
             "UPDATE users SET watchlist = $1 WHERE telegram_id = $2",
             watchlist, telegram_id,
         )
+
+
+async def activate_pro_db(telegram_id: int, charge_id: str, stars: int) -> datetime:
+    """Pro aboneliği aktifleştir — 30 gün ekle veya uzat."""
+    pro_until = datetime.now(timezone.utc) + timedelta(days=30)
+    if not db_pool:
+        return pro_until
+    async with db_pool.acquire() as conn:
+        # Mevcut pro_until varsa ve henüz geçmemişse üstüne ekle
+        row = await conn.fetchrow("SELECT pro_until FROM users WHERE telegram_id = $1", telegram_id)
+        if row and row["pro_until"] and row["pro_until"] > datetime.now(timezone.utc):
+            pro_until = row["pro_until"] + timedelta(days=30)
+
+        await conn.execute(
+            """UPDATE users SET tier = 'pro', pro_until = $1, stars_charge_id = $2
+               WHERE telegram_id = $3""",
+            pro_until, charge_id, telegram_id,
+        )
+        # Ödeme geçmişine kaydet
+        try:
+            await conn.execute(
+                """INSERT INTO payments (telegram_id, charge_id, payload, amount, pro_until)
+                   VALUES ($1, $2, 'pro_subscription_30d', $3, $4)
+                   ON CONFLICT (charge_id) DO NOTHING""",
+                telegram_id, charge_id, stars, pro_until,
+            )
+        except Exception as e:
+            logger.warning(f"Payment kaydı hatası (önemsiz): {e}")
+    return pro_until
 
 
 # ── In-memory fallback ───────────────────────────────────
@@ -668,16 +709,88 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ── /pro ─────────────────────────────────────────────────
 
 async def pro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+
+    # Mevcut abonelik durumunu kontrol et
+    pro_until = None
+    if db_pool:
+        try:
+            async with db_pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT tier, pro_until FROM users WHERE telegram_id = $1", user.id
+                )
+                if row and row["tier"] == "pro" and row["pro_until"]:
+                    pro_until = row["pro_until"]
+                    if pro_until < datetime.now(timezone.utc):
+                        pro_until = None
+        except Exception:
+            pass
+
+    if pro_until:
+        until_str = _escape(pro_until.strftime("%d.%m.%Y"))
+        await update.message.reply_text(
+            "✅ *Pro Uyeligin Aktif\\!*\n\n"
+            f"📅 Bitis tarihi: *{until_str}*\n"
+            f"📊 Gunluk sorgu: *{PRO_LIMIT}*\n"
+            "🔔 Watchlist uyarilari aktif\n\n"
+            f"_Uzatmak icin tekrar satin al — {PRO_STARS_PRICE} Stars/ay_",
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(f"⭐ {PRO_STARS_PRICE} Stars ile Uzat", callback_data="buy_pro"),
+            ]]),
+        )
+        return
+
     await update.message.reply_text(
         "⭐ *ChainGuard Pro*\n\n"
-        f"📊 Gunluk {PRO_LIMIT} sorgu \\(Free: {FREE_LIMIT}\\)\n"
+        f"📊 Gunluk *{PRO_LIMIT}* sorgu \\(Free: {FREE_LIMIT}\\)\n"
         "🔔 Watchlist uyarilari \\(otomatik bildirim\\)\n"
         "📈 Oncelikli analiz\n"
-        "🎯 Affiliate kazanc\n\n"
-        "_Pro abonelik yakinda Telegram Stars ile aktif olacak\\!_\n\n"
-        "Simdilik Free planla devam et 🚀",
+        "🎯 Affiliate linki kazanclari\n\n"
+        f"💰 Fiyat: *{PRO_STARS_PRICE} Telegram Stars* / 30 gun\n\n"
+        "_Telegram Stars ile aninda, guvenli odeme\\._",
+        parse_mode=ParseMode.MARKDOWN_V2,
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(f"⭐ {PRO_STARS_PRICE} Stars ile Satin Al", callback_data="buy_pro"),
+        ]]),
+    )
+
+
+# ── Telegram Stars Odeme ─────────────────────────────────
+
+async def pre_checkout_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Telegram odeme onay handler — her zaman onayla."""
+    query = update.pre_checkout_query
+    if query.invoice_payload == "pro_subscription_30d":
+        await query.answer(ok=True)
+    else:
+        await query.answer(ok=False, error_message="Gecersiz odeme. Lutfen tekrar deneyin.")
+
+
+async def successful_payment_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Basarili odeme sonrasi Pro aktivasyonu."""
+    user = update.effective_user
+    payment = update.message.successful_payment
+
+    if payment.invoice_payload != "pro_subscription_30d":
+        return
+
+    charge_id = payment.telegram_payment_charge_id
+    stars = payment.total_amount  # Stars miktarı
+
+    pro_until = await activate_pro_db(user.id, charge_id, stars)
+    until_str = _escape(pro_until.strftime("%d.%m.%Y"))
+
+    await update.message.reply_text(
+        "🎉 *Pro Uyeligin Aktif\\!*\n\n"
+        f"✅ {stars} Stars odendi\n"
+        f"📅 Gecerlilik: *{until_str}*'e kadar\n"
+        f"📊 Gunluk sorgu: *{PRO_LIMIT}*\n"
+        "🔔 Watchlist uyarilari aktif\n\n"
+        "_ChainGuard Pro ile korunmaya devam et\\!_ 🛡️",
         parse_mode=ParseMode.MARKDOWN_V2,
     )
+    logger.info(f"Pro aktivasyonu: user={user.id}, charge={charge_id}, until={pro_until}")
 
 
 # ── Watchlist Alert Job ──────────────────────────────────
@@ -791,6 +904,23 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.answer("Referral kodu oluşturulamadı.", show_alert=True)
 
+    elif data == "buy_pro":
+        # Stars invoice gönder
+        await context.bot.send_invoice(
+            chat_id=query.message.chat_id,
+            title="ChainGuard Pro — 30 Gün",
+            description=(
+                f"✅ Günlük {PRO_LIMIT} sorgu hakkı\n"
+                "✅ Watchlist uyarıları\n"
+                "✅ Öncelikli analiz\n"
+                "✅ Affiliate kazançları"
+            ),
+            payload="pro_subscription_30d",
+            currency="XTR",  # Telegram Stars
+            prices=[LabeledPrice("ChainGuard Pro (30 gün)", PRO_STARS_PRICE)],
+        )
+        await query.answer()
+
     elif data.startswith("watch_add_"):
         address = data.replace("watch_add_", "")
         watchlist = await get_watchlist_db(user.id)
@@ -825,6 +955,10 @@ def main():
     app.add_handler(CommandHandler("referral", referral_command))
     app.add_handler(CommandHandler("pro",      pro_command))
     app.add_handler(CallbackQueryHandler(button_callback))
+
+    # Telegram Stars odeme handler'lari
+    app.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
+    app.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_handler))
 
     # Watchlist alert job — 30 dakikada bir
     app.job_queue.run_repeating(

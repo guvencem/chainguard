@@ -14,11 +14,12 @@ import os
 import sys
 import re
 import time
+import asyncio
 import secrets
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, Header
+from fastapi import FastAPI, HTTPException, Request, Header, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -98,27 +99,82 @@ if sentry_dsn:
         pass
 
 
-# ── Rate Limiting (basit in-memory) ────────────────────
+# ── Rate Limiting ───────────────────────────────────────
 _rate_limits: dict[str, list[float]] = {}
 RATE_LIMIT_FREE = 10   # 10 istek/dakika
 RATE_WINDOW = 60        # 60 saniye
 
 
-def check_rate_limit(client_ip: str) -> bool:
+async def check_rate_limit(client_ip: str) -> bool:
+    """Redis varsa Redis sliding window, yoksa in-memory."""
+    # Redis ile dene
+    cache = analysis_service.cache if analysis_service else None
+    if cache and cache._available and cache._redis:
+        try:
+            now = time.time()
+            key = f"chainguard:rl:{client_ip}"
+            window_start = now - RATE_WINDOW
+            pipe = cache._redis.pipeline()
+            pipe.zremrangebyscore(key, 0, window_start)
+            pipe.zcard(key)
+            pipe.zadd(key, {str(now): now})
+            pipe.expire(key, int(RATE_WINDOW) + 5)
+            results = await pipe.execute()
+            count = results[1]
+            return count < RATE_LIMIT_FREE
+        except Exception:
+            pass  # Redis hata — in-memory'ye düş
+
+    # In-memory fallback
     now = time.time()
     if client_ip not in _rate_limits:
         _rate_limits[client_ip] = []
-    
-    # Eski kayıtları temizle
-    _rate_limits[client_ip] = [
-        t for t in _rate_limits[client_ip] if now - t < RATE_WINDOW
-    ]
-    
+    _rate_limits[client_ip] = [t for t in _rate_limits[client_ip] if now - t < RATE_WINDOW]
     if len(_rate_limits[client_ip]) >= RATE_LIMIT_FREE:
         return False
-    
     _rate_limits[client_ip].append(now)
     return True
+
+
+# ── WebSocket Bağlantı Yöneticisi ───────────────────────
+
+class ConnectionManager:
+    """Token bazlı WebSocket abone yönetimi."""
+
+    def __init__(self):
+        self._connections: dict[str, list[WebSocket]] = {}
+
+    async def connect(self, ws: WebSocket, token_address: str):
+        await ws.accept()
+        self._connections.setdefault(token_address, []).append(ws)
+        logger.info(f"WS bağlandı: {token_address} (toplam: {len(self._connections[token_address])})")
+
+    def disconnect(self, ws: WebSocket, token_address: str):
+        conns = self._connections.get(token_address, [])
+        if ws in conns:
+            conns.remove(ws)
+        if not conns:
+            self._connections.pop(token_address, None)
+
+    async def broadcast(self, token_address: str, data: dict):
+        """Token adresine abone olan tüm WS istemcilerine mesaj gönder."""
+        conns = self._connections.get(token_address, [])
+        if not conns:
+            return
+        dead = []
+        for ws in conns:
+            try:
+                await ws.send_json(data)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.disconnect(ws, token_address)
+
+    def subscriber_count(self, token_address: str) -> int:
+        return len(self._connections.get(token_address, []))
+
+
+ws_manager = ConnectionManager()
 
 
 # ── Adres doğrulama (Solana + EVM) ─────────────────────
@@ -166,7 +222,7 @@ async def analyze_token(address: str, request: Request):
     """
     # Rate limit kontrolü
     client_ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(client_ip):
+    if not await check_rate_limit(client_ip):
         raise HTTPException(
             status_code=429,
             detail="Çok fazla istek. Lütfen 1 dakika bekleyin. (Free: 10 istek/dk)",
@@ -181,7 +237,22 @@ async def analyze_token(address: str, request: Request):
 
     try:
         result = await analysis_service.analyze_token(address)
-        return result.model_dump()
+        data = result.model_dump()
+
+        # WebSocket abonelerine yayınla
+        if ws_manager.subscriber_count(address) > 0:
+            score = data.get("score", {})
+            token = data.get("token", {})
+            await ws_manager.broadcast(address, {
+                "type": "score_update",
+                "token_address": address,
+                "score": score.get("total", 0),
+                "label_tr": score.get("label_tr", ""),
+                "name": token.get("name", ""),
+                "symbol": token.get("symbol", ""),
+            })
+
+        return data
     except Exception as e:
         logger.error(f"Analiz hatası ({address}): {e}", exc_info=True)
         raise HTTPException(
@@ -230,7 +301,7 @@ async def get_clusters(address: str, request: Request):
 async def get_holders(address: str, request: Request):
     """Token holder dağılımı."""
     client_ip = request.client.host if request.client else "unknown"
-    if not check_rate_limit(client_ip):
+    if not await check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="Rate limit aşıldı.")
 
     if not validate_address(address):
@@ -477,6 +548,40 @@ async def validate_api_key(x_cg_api_key: str = Header(None, alias="X-CG-API-Key"
         raise HTTPException(status_code=401, detail="Geçersiz veya limitini doldurmuş API anahtarı.")
 
     return {"valid": True, **info}
+
+
+@app.websocket("/ws/v1/alerts")
+async def ws_alerts(websocket: WebSocket, token: str = ""):
+    """
+    Gerçek zamanlı token skor uyarı kanalı.
+
+    Bağlanmak için:
+      ws://<host>/ws/v1/alerts?token=<token_address>
+
+    Mesaj formatı:
+      { "type": "score_update", "token_address": "...", "score": 72, "label_tr": "Yüksek Risk", ... }
+      { "type": "ping" }  — 30s'de bir keepalive
+    """
+    if not token or not validate_address(token):
+        await websocket.close(code=1008, reason="Geçersiz token adresi.")
+        return
+
+    await ws_manager.connect(websocket, token)
+    try:
+        while True:
+            # Keepalive: client mesaj gönderirse devam et, yoksa ping-pong ile canlı tut
+            try:
+                msg = await asyncio.wait_for(websocket.receive_text(), timeout=30)
+                if msg == "ping":
+                    await websocket.send_json({"type": "pong"})
+            except asyncio.TimeoutError:
+                await websocket.send_json({"type": "ping"})
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, token)
+        logger.info(f"WS ayrıldı: {token}")
+    except Exception as e:
+        ws_manager.disconnect(websocket, token)
+        logger.warning(f"WS hata ({token}): {e}")
 
 
 @app.exception_handler(404)
