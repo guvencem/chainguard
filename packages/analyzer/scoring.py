@@ -475,13 +475,14 @@ def exit_score(exit_data: dict) -> float:
 
     score = 0.0
 
-    stages = exit_data.get("stages", 0)
+    stages = exit_data.get("stages", [])
+    stage_count = len(stages) if isinstance(stages, list) else int(stages)
     sold_pct = exit_data.get("total_sold_pct", 0)
     avg_drop = exit_data.get("avg_price_drop_pct", 0)
     is_creator = exit_data.get("seller_is_creator", False)
 
-    if stages >= 3:
-        score += min(30.0, (stages - 3) / 5.0 * 20.0 + 15.0)
+    if stage_count >= 3:
+        score += min(30.0, (stage_count - 3) / 5.0 * 20.0 + 15.0)
 
     if is_creator:
         score += 30.0

@@ -392,6 +392,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/trending` — En cok sorgulanan tokenlar\n"
         "• `/stats` — Kullanim istatistiklerin\n"
         "• `/referral` — Arkadaslarini davet et, bonus kazan\n"
+        "• `/apikey` — API anahtarını al\n"
         "• `/help` — Yardim\n\n"
         f"🔗 [Web Arayuzu]({WEB_URL})\n"
         f"🔑 [API Anahtarlari]({WEB_URL}/keys)\n\n"
@@ -427,7 +428,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "*Diger:*\n"
         "• `/trending` — En cok sorgulanan tokenlar\n"
         "• `/stats` — Kullanim istatistiklerin\n"
-        "• `/pro` — Pro plan bilgisi\n\n"
+        "• `/pro` — Pro plan bilgisi\n"
+        "• `/apikey` — API anahtarını al\n\n"
         "*Abonelik:*\n"
         f"• Free: gunluk {FREE_LIMIT} sorgu\n"
         f"• Pro: gunluk {PRO_LIMIT} sorgu \\+ watchlist uyarilari"
@@ -793,6 +795,76 @@ async def successful_payment_handler(update: Update, context: ContextTypes.DEFAU
     logger.info(f"Pro aktivasyonu: user={user.id}, charge={charge_id}, until={pro_until}")
 
 
+# ── /apikey ──────────────────────────────────────────────
+
+async def apikey_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Kullanicinin API anahtarini goster veya olustur."""
+    user = update.effective_user
+
+    loading = await update.message.reply_text(
+        "🔑 *API anahtarın alınıyor\\.\\.\\.*",
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            # Mevcut anahtarları kontrol et
+            resp = await client.get(f"{API_URL}/api/v1/keys?telegram_id={user.id}")
+            if resp.status_code == 200:
+                data = resp.json()
+                keys = data.get("keys", [])
+            else:
+                keys = []
+
+            if keys:
+                # Mevcut anahtar var — göster (maskeli)
+                key = keys[0]
+                masked = key.get("key_id", "???")
+                tier = key.get("tier", "free").upper()
+                daily_limit = key.get("daily_limit", 100)
+                daily_used = key.get("daily_used", 0)
+
+                text = (
+                    "🔑 *API Anahtarın*\n\n"
+                    f"```\n{_escape(masked)}\n```\n\n"
+                    f"⭐ Tier: *{_escape(tier)}*\n"
+                    f"📊 Kullanım: `{daily_used}/{daily_limit}` istek/gün\n\n"
+                    "_Tam anahtarı görüntülemek için web panelini kullan\\._\n"
+                    f"🌐 [API Dokümantasyonu]({WEB_URL}/keys)"
+                )
+            else:
+                # Yeni anahtar oluştur
+                create_resp = await client.post(
+                    f"{API_URL}/api/v1/keys",
+                    json={"telegram_id": user.id, "name": f"Bot Key — {user.first_name}"},
+                )
+                if create_resp.status_code == 200:
+                    key_data = create_resp.json()
+                    new_key = key_data.get("key", "")
+                    text = (
+                        "✅ *Yeni API Anahtarın Oluşturuldu\\!*\n\n"
+                        "```\n" + _escape(new_key) + "\n```\n\n"
+                        "⚠️ *Bu anahtarı güvenli bir yerde sakla\\!*\n"
+                        "_Bir daha gösterilmeyecek\\._\n\n"
+                        f"📊 Limit: `100 istek/gün` \\(Free\\)\n"
+                        "🔗 Header: `X\\-CG\\-API\\-Key: cg\\_live\\_\\.\\.\\.`\n\n"
+                        f"🌐 [API Dokümantasyonu]({WEB_URL}/keys)"
+                    )
+                else:
+                    err = create_resp.json().get("detail", "Bilinmeyen hata")
+                    text = f"❌ Anahtar oluşturulamadı: {_escape(err)}"
+
+    except Exception as e:
+        logger.error(f"apikey hatası: {e}")
+        text = "❌ Bağlantı hatası. Lütfen tekrar deneyin."
+
+    await loading.edit_text(
+        text,
+        parse_mode=ParseMode.MARKDOWN_V2,
+        disable_web_page_preview=True,
+    )
+
+
 # ── Watchlist Alert Job ──────────────────────────────────
 
 async def watchlist_alert_job(context: ContextTypes.DEFAULT_TYPE):
@@ -954,6 +1026,7 @@ def main():
     app.add_handler(CommandHandler("stats",    stats_command))
     app.add_handler(CommandHandler("referral", referral_command))
     app.add_handler(CommandHandler("pro",      pro_command))
+    app.add_handler(CommandHandler("apikey",   apikey_command))
     app.add_handler(CallbackQueryHandler(button_callback))
 
     # Telegram Stars odeme handler'lari

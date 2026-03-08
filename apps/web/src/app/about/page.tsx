@@ -42,12 +42,13 @@ export default function AboutPage() {
                         ChainGuard Nedir?
                     </h1>
                     <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-                        ChainGuard, Solana blockchain üzerindeki tokenları gerçek zamanlı olarak analiz eden
-                        bir risk değerlendirme platformudur. Amacımız, kripto yatırımcılarını{" "}
+                        ChainGuard, <span className="font-semibold" style={{ color: "var(--cg-text)" }}>Solana, Base ve BSC</span> zincirlerindeki tokenları gerçek zamanlı olarak analiz eden
+                        bir risk değerlendirme platformudur. 9 metrik motoru, <span className="font-semibold" style={{ color: "var(--cg-text)" }}>AI destekli Türkçe rapor</span> ve{" "}
+                        <span className="font-semibold" style={{ color: "var(--cg-text)" }}>creator profiling</span> ile yatırımcıları{" "}
                         <span className="font-semibold" style={{ color: "var(--cg-text)" }}>
                             sahte projeler, rug pull&apos;lar ve manipülatif tokenlardan
                         </span>{" "}
-                        korumaktır.
+                        koruruz.
                     </p>
                 </div>
 
@@ -67,7 +68,7 @@ export default function AboutPage() {
                             {
                                 step: "2",
                                 title: "Analiz Bekle",
-                                desc: "Sistem blockchain verilerini toplar ve 3 saniye içinde analiz eder.",
+                                desc: "9 metrik ile derin blockchain analizi yapılır — cüzdan kümeleri, wash trading, Sybil saldırısı ve daha fazlası.",
                                 icon: "⚡",
                             },
                             {
@@ -99,6 +100,29 @@ export default function AboutPage() {
                     </div>
                 </div>
 
+                {/* Desteklenen Zincirler */}
+                <div className="card-flat p-6">
+                    <h2 className="text-xl font-bold mb-4" style={{ color: "var(--cg-text)" }}>
+                        🔗 Desteklenen Zincirler
+                    </h2>
+                    <div className="flex flex-wrap gap-3">
+                        {[
+                            { label: "Solana", color: "#14F195" },
+                            { label: "Base", color: "#0052FF" },
+                            { label: "BSC", color: "#F3BA2F" },
+                            { label: "EVM uyumlu", color: "#818CF8" },
+                        ].map((chain) => (
+                            <span
+                                key={chain.label}
+                                className="px-4 py-1.5 rounded-full text-sm font-semibold"
+                                style={{ background: `${chain.color}18`, color: chain.color, border: `1px solid ${chain.color}40` }}
+                            >
+                                {chain.label}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Metrikler */}
                 <div>
                     <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--cg-text)" }}>
@@ -108,20 +132,56 @@ export default function AboutPage() {
                         {[
                             {
                                 title: "VLR — Hacim/Likidite Oranı",
-                                weight: "50%",
-                                desc: "24 saatlik işlem hacmini likidite havuzuyla karşılaştırır. Yüksek oran (>50x) wash trading göstergesidir.",
+                                weight: "%25",
+                                desc: "24s hacim/likidite oranı. >50x wash trading göstergesi.",
                                 color: "#E84142",
                             },
                             {
-                                title: "Holder Analizi",
-                                weight: "30%",
-                                desc: "Holder sayısı, aktif oran, top 10 yoğunlaşma ve büyüme hızını inceler. Az holder veya yüksek yoğunlaşma tehlike işaretidir.",
+                                title: "Cüzdan Kümeleme",
+                                weight: "%20",
+                                desc: "Sahte cüzdan kümelerini tespit eder. Aynı kişiye ait 400 cüzdan = 1 küme.",
+                                color: "#F97316",
+                            },
+                            {
+                                title: "Wash Trading",
+                                weight: "%15",
+                                desc: "A→B→C→A döngüsel işlemleri tespit eder. Sahte hacim kanıtı.",
                                 color: "#F59E0B",
                             },
                             {
+                                title: "Sybil Attack",
+                                weight: "%12",
+                                desc: "Yeni oluşturulmuş sahte holder cüzdanlarını tespit eder.",
+                                color: "#EC4899",
+                            },
+                            {
+                                title: "Holder Analizi",
+                                weight: "%12",
+                                desc: "Holder sayısı, top10 yoğunlaşma ve büyüme hızı.",
+                                color: "#818CF8",
+                            },
+                            {
+                                title: "Bundler Tespiti",
+                                weight: "%10",
+                                desc: "Aynı blokta 10+ cüzdana transfer = Jito bundle.",
+                                color: "#38BDF8",
+                            },
+                            {
+                                title: "Kademeli Çıkış",
+                                weight: "%8",
+                                desc: "Balinaların yavaş satış yaparak piyasayı boşaltması.",
+                                color: "#A78BFA",
+                            },
+                            {
+                                title: "Bonding Curve",
+                                weight: "%5",
+                                desc: "Pump.fun'dan Raydium'a geçişte manipülasyon tespiti.",
+                                color: "#34D399",
+                            },
+                            {
                                 title: "RLS — Gerçek Likidite Skoru",
-                                weight: "20%",
-                                desc: "Market cap ile gerçek likidite arasındaki farkı ölçer. AMM price impact hesaplaması ile gerçekte ne kadar çıkabileceğinizi gösterir.",
+                                weight: "%5",
+                                desc: "Market cap / likidite oranı. Gerçekte çıkabilirlik.",
                                 color: "#14F195",
                             },
                         ].map((metric) => (
@@ -205,7 +265,7 @@ export default function AboutPage() {
             {/* ── Footer ── */}
             <footer className="text-center py-10">
                 <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-                    © 2026 ChainGuard — Solana token risk analizi.
+                    © 2026 ChainGuard — Solana, Base, BSC token risk analizi.
                 </p>
             </footer>
         </main>

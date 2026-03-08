@@ -1,67 +1,100 @@
-# 🛡️ ChainGuard
+# ChainGuard
 
-**Solana Token Risk Analiz Platformu**
+**Solana, Base ve BSC token risk analiz platformu**
 
-Solana blockchain üzerindeki tokenları gerçek zamanlı olarak analiz eden, Türkçe risk skoru sunan yapay zeka destekli platform.
+Token adresini gir — saniyeler içinde 9 metrikle risk skorunu al. Türkçe AI rapor, cüzdan küme analizi, wash trading tespiti.
 
-## ✨ Özellikler
+## Özellikler
 
-- 🔍 **Anlık Token Analizi** — Token adresini gir, 3 saniye içinde risk skoru al
-- 📊 **3 Temel Metrik** — VLR (wash trading), RLS (likidite riski), Holder analizi
-- 🇹🇷 **Türkçe Çıktı** — Risk skorları ve uyarılar Türkçe
-- ⚡ **Gerçek Zamanlı Veri** — DexScreener + Helius API ile canlı piyasa verisi
-- 🎨 **Modern Arayüz** — Dark theme, glassmorphism, mobil uyumlu
+- **9 Metrik Analiz** — VLR, RLS, Holder, Kümeleme, Wash Trading, Sybil, Bundler, Exit, Curve
+- **Çoklu Zincir** — Solana, Base, BSC ve tüm EVM uyumlu zincirler
+- **AI Türkçe Rapor** — 9 metriğe göre otomatik Türkçe analiz özeti
+- **Creator Profiling** — Token yaratıcısının geçmiş rug oranı
+- **Telegram Bot** — /analyze, /watch, watchlist uyarıları, Pro abonelik (Telegram Stars)
+- **API Erişimi** — REST API + WebSocket gerçek zamanlı uyarılar
+- **Eğitim Merkezi** — Wash trading, cüzdan kümeleme, PIPPINU vaka analizi
 
-## 🚀 Hızlı Başlangıç
+## Servisler
 
-### Gereksinimler
-- Python 3.11+
-- Node.js 20+
-- Docker & Docker Compose
-- Helius API Key ([helius.dev](https://helius.dev))
+| Servis | Platform | URL |
+|--------|----------|-----|
+| Web | Vercel | https://chainguard-beryl.vercel.app |
+| API | Railway | https://web-production-b704c.up.railway.app |
+| Bot | Railway | @ChainGuardBot |
 
-### Kurulum
+## Proje Yapısı
 
-```bash
-# .env dosyasını oluştur
-cp .env.example .env
-# API anahtarlarını .env dosyasına ekle
-
-# Altyapıyı başlat (PostgreSQL + Redis)
-docker-compose -f infra/docker-compose.yml up -d
-
-# Backend
-cd apps/api
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
-
-# Frontend (ayrı terminal)
-cd apps/web
-npm install
-npm run dev
+```
+apps/
+  web/        → Next.js frontend (Vercel)
+  api/        → FastAPI backend (Railway)
+  telegram/   → Telegram bot (Railway)
+packages/
+  analyzer/   → Skorlama motoru (9 metrik)
+  data_collector/ → DexScreener, Helius, EVM pipeline
+  shared/     → Ortak modeller
+db/
+  init.sql           → PostgreSQL şeması
+  migrate_sprint3.sql → Referral, API keys
+  migrate_sprint4.sql → Pro abonelik, payments
 ```
 
-## 📊 API
+## Kurulum
 
-| Method | Endpoint | Açıklama |
-|--------|----------|----------|
-| GET | `/api/v1/token/{address}` | Token risk analizi |
-| GET | `/api/v1/token/{address}/holders` | Holder dağılımı |
-| GET | `/api/v1/health` | Sistem sağlık kontrolü |
+```bash
+# Ortam değişkenlerini ayarla
+cp .env.example .env
 
-## 🛡️ Risk Seviyeleri
+# Altyapı (PostgreSQL + Redis)
+docker-compose -f infra/docker-compose.yml up -d
 
-| Skor | Seviye | Anlamı |
-|------|--------|--------|
-| 0–19 | 🟢 Güvenli | Düşük risk |
-| 20–39 | 🟡 Düşük Risk | İzlenmeli |
-| 40–59 | 🟠 Orta Risk | Dikkatli olun |
-| 60–79 | 🔴 Yüksek Risk | Tehlikeli |
-| 80–100 | 🔴💀 Kritik | Muhtemel dolandırıcılık |
+# API
+cd apps/api && pip install -r requirements.txt
+python main.py
 
-## 📄 Lisans
+# Frontend
+cd apps/web && npm install && npm run dev
 
-Bu yazılım **kapalı kaynaktır**. Tüm hakları saklıdır.  
-İzinsiz kopyalama, dağıtma ve değiştirme yasaktır.
+# Bot
+cd apps/telegram && pip install -r requirements.txt
+TELEGRAM_BOT_TOKEN=xxx python bot.py
+```
 
-© 2026 ChainGuard
+## API
+
+```bash
+# Token analizi
+GET /api/v1/token/{address}
+GET /api/v1/token/{address}/clusters
+GET /api/v1/token/{address}/holders
+
+# Trending
+GET /api/v1/trending
+
+# WebSocket — gerçek zamanlı skor uyarısı
+ws://<host>/ws/v1/alerts?token={address}
+
+# API Key doğrulama
+GET /api/v1/keys/validate
+Header: X-CG-API-Key: cg_live_...
+```
+
+## Risk Seviyeleri
+
+| Skor | Seviye |
+|------|--------|
+| 0–19 | 🟢 Güvenli |
+| 20–39 | 🟡 Düşük Risk |
+| 40–59 | 🟠 Orta Risk |
+| 60–79 | 🔴 Yüksek Risk |
+| 80–100 | 🚨 Kritik |
+
+## Testler
+
+```bash
+pytest tests/
+```
+
+## Lisans
+
+Tüm hakları saklıdır. © 2026 ChainGuard
