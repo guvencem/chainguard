@@ -58,25 +58,38 @@ class Database:
             logger.info("PostgreSQL bağlantı havuzu kapatıldı")
 
     async def _ensure_tables(self):
-        """Temel tabloları oluşturur (varsa atlar)."""
+        """Temel tabloları ve migration'ları çalıştırır (varsa atlar)."""
         if not self.pool:
             return
 
-        try:
-            # init.sql dosyasını bul ve çalıştır
-            init_sql_path = os.path.join(
-                os.path.dirname(__file__), "..", "..", "db", "init.sql"
-            )
-            if os.path.exists(init_sql_path):
+        db_dir = os.path.join(os.path.dirname(__file__), "..", "..", "db")
+
+        # init.sql
+        init_sql_path = os.path.join(db_dir, "init.sql")
+        if os.path.exists(init_sql_path):
+            try:
                 with open(init_sql_path, "r", encoding="utf-8") as f:
                     sql = f.read()
                 async with self.pool.acquire() as conn:
                     await conn.execute(sql)
                 logger.info("Veritabanı tabloları oluşturuldu (init.sql)")
-            else:
-                logger.warning("init.sql bulunamadı — tablolar manuel oluşturulmalı")
-        except Exception as e:
-            logger.error(f"Tablo oluşturma hatası: {e}")
+            except Exception as e:
+                logger.error(f"init.sql hatası: {e}")
+        else:
+            logger.warning("init.sql bulunamadı")
+
+        # Migration dosyalarını sırayla çalıştır
+        for migration in ["migrate_sprint3.sql", "migrate_sprint4.sql"]:
+            path = os.path.join(db_dir, migration)
+            if os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        sql = f.read()
+                    async with self.pool.acquire() as conn:
+                        await conn.execute(sql)
+                    logger.info(f"Migration uygulandı: {migration}")
+                except Exception as e:
+                    logger.warning(f"Migration hatası ({migration}): {e}")
 
     # ─── Token CRUD ────────────────────────────────────────
 
