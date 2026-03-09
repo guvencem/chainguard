@@ -477,18 +477,22 @@ class Database:
         """Yeni API anahtarı oluşturur."""
         if not self.pool:
             return False
-        daily_limit = {"free": 100, "pro": 1000, "trader": 10000}.get(tier, 100)
+        # API key limitleri — free ücretsiz değil, ödeme gerektirir
+        API_LIMITS = {"free": 0, "pro": 1000, "trader": 10000}
+        daily_limit = API_LIMITS.get(tier, 0)
         try:
             async with self.pool.acquire() as conn:
-                # Kullanıcı id'sini al
                 user_row = await conn.fetchrow("SELECT id, tier FROM users WHERE telegram_id = $1", telegram_id)
                 user_id = user_row["id"] if user_row else None
-                user_tier = user_row["tier"] if user_row else tier
+                # Kullanıcının bot tier'ına göre API tier belirle
+                user_tier = user_row["tier"] if user_row else "free"
+                resolved_tier = tier if tier != "free" else user_tier
+                resolved_limit = API_LIMITS.get(resolved_tier, 0)
 
                 await conn.execute("""
                     INSERT INTO api_keys (key_id, user_id, telegram_id, name, tier, daily_limit)
                     VALUES ($1, $2, $3, $4, $5, $6)
-                """, key_id, user_id, telegram_id, name, user_tier, daily_limit)
+                """, key_id, user_id, telegram_id, name, resolved_tier, resolved_limit)
             return True
         except Exception as e:
             logger.error(f"API key oluşturma hatası: {e}")

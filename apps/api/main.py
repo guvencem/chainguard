@@ -466,31 +466,76 @@ def _mask_key(key: str) -> str:
 
 @app.post("/api/v1/keys")
 async def create_api_key(body: CreateKeyRequest):
-    """Yeni API anahtarı oluştur. Anahtar sadece bir kez tam gösterilir."""
+    """
+    Yeni API anahtarı oluştur.
+
+    Gereksinim: Kullanıcının Pro veya Trader tier'ında olması gerekir.
+    - Pro  ($29/ay CGT): 1.000 istek/gün
+    - Trader ($99/ay CGT): 10.000 istek/gün
+    Ücretsiz API key verilmez.
+    """
     if not body.telegram_id:
         raise HTTPException(status_code=400, detail="telegram_id gerekli.")
     if not body.name or len(body.name) > 50:
         raise HTTPException(status_code=400, detail="İsim 1-50 karakter olmalı.")
 
-    # Mevcut anahtar sayısını kontrol et (maks 5)
+    # Kullanıcı tier kontrolü — ücretli tier olmadan key verilmez
+    if analysis_service.db.pool:
+        async with analysis_service.db.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT tier, pro_until FROM users WHERE telegram_id = $1",
+                body.telegram_id
+            )
+            if not row:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Kullanıcı bulunamadı. Önce botta /start yazın."
+                )
+            tier = row["tier"] or "free"
+            # Pro süresi dolmuşsa free'ye düş
+            if tier == "pro" and row["pro_until"]:
+                from datetime import datetime, timezone
+                if row["pro_until"] < datetime.now(timezone.utc):
+                    tier = "free"
+
+            if tier not in ("pro", "trader"):
+                raise HTTPException(
+                    status_code=402,
+                    detail=(
+                        "API anahtarı için Pro veya Trader üyelik gereklidir. "
+                        "Pro: $29/ay CGT (1.000 istek/gün) | "
+                        "Trader: $99/ay CGT (10.000 istek/gün). "
+                        "Satın almak için botta /pro yazın."
+                    )
+                )
+    else:
+        tier = "free"
+
+    # Mevcut anahtar sayısı kontrolü
     existing = await analysis_service.db.list_api_keys(body.telegram_id)
-    if len(existing) >= 5:
-        raise HTTPException(status_code=400, detail="Maksimum 5 API anahtarı oluşturabilirsiniz.")
+    max_keys = 5 if tier == "trader" else 3
+    if len(existing) >= max_keys:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Maksimum {max_keys} API anahtarı oluşturabilirsiniz."
+        )
 
     key = _generate_api_key()
     success = await analysis_service.db.create_api_key(
         telegram_id=body.telegram_id,
         name=body.name,
         key_id=key,
+        tier=tier,
     )
     if not success:
         raise HTTPException(status_code=500, detail="Anahtar oluşturulamadı.")
 
+    limits = {"pro": 1000, "trader": 10000}
     return {
-        "key": key,  # TAM anahtar — sadece bir kez gösterilir
+        "key": key,
         "name": body.name,
-        "tier": "free",
-        "daily_limit": 100,
+        "tier": tier,
+        "daily_limit": limits.get(tier, 0),
         "warning": "Bu anahtarı güvenli bir yerde saklayın. Tekrar gösterilmeyecek.",
     }
 
