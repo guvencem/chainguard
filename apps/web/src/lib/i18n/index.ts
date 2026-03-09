@@ -3,41 +3,56 @@ import { en } from "./en"
 
 export type Lang = "tr" | "en"
 
-// Derive a structural shape (widened strings) so both tr and en satisfy it
-export type Translations = {
+export interface FeatureItem {
+  emoji: string
+  title: string
+  desc: string
+  tag: string
+}
+
+export interface StatItem {
+  value: string
+  label: string
+  sub: string
+}
+
+export interface Translations {
   nav: {
-    analyze: string
+    how: string
     trending: string
     learn: string
-    token: string
     api: string
+    telegram: string
   }
   home: {
-    hero_title: string
-    hero_title2: string
+    badge: string
     hero_sub: string
     placeholder: string
     btn_analyze: string
-    btn_trending: string
-    stats_analyzed: string
-    stats_protected: string
-    stats_chains: string
+    try_label: string
+    scroll: string
+    features_badge: string
     features_title: string
+    features_sub: string
+    cta_title: string
+    cta_sub: string
+    cta_button: string
+    cta_free: string
+    error_required: string
+    error_invalid: string
   }
-  risk: {
-    safe: string
-    low: string
-    medium: string
-    high: string
-    critical: string
-  }
+  stats: readonly StatItem[]
+  features: readonly FeatureItem[]
   footer: {
     tagline: string
-    rights: string
+    links: readonly string[]
   }
 }
 
-export const translations: Record<Lang, Translations> = { tr, en }
+export const translations: Record<Lang, Translations> = {
+  tr: tr as unknown as Translations,
+  en: en as unknown as Translations,
+}
 export const defaultLang: Lang = "tr"
 
 export function getT(lang: Lang): Translations {
