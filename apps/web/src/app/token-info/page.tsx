@@ -205,22 +205,10 @@ export default function TokenInfoPage() {
                         {WHY_HOLD.map((card) => (
                             <div
                                 key={card.title}
-                                className="p-6 rounded-2xl transition-all duration-200"
+                                className="p-6 rounded-2xl card-hover"
                                 style={{
                                     background: "var(--cg-surface)",
                                     border: "1px solid var(--cg-border-strong)",
-                                    boxShadow: "var(--cg-shadow-sm)",
-                                    // hover handled via inline style — static SSR only, so we use a wrapper trick below
-                                }}
-                                onMouseEnter={(e) => {
-                                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-                                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--cg-border-accent)";
-                                    (e.currentTarget as HTMLDivElement).style.boxShadow = "0 0 24px rgba(129,140,248,0.12)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                                    (e.currentTarget as HTMLDivElement).style.borderColor = "var(--cg-border-strong)";
-                                    (e.currentTarget as HTMLDivElement).style.boxShadow = "var(--cg-shadow-sm)";
                                 }}
                             >
                                 <div className="text-3xl mb-3">{card.icon}</div>
