@@ -76,12 +76,20 @@ app = FastAPI(
 )
 
 # CORS — deploy'da CORS_ORIGINS env ile ayarlanır
-_default_origins = "http://localhost:3000,https://chainguard.app"
-_cors_origins = os.getenv("CORS_ORIGINS", _default_origins).split(",")
+_default_origins = (
+    "http://localhost:3000,"
+    "https://chainguard.app,"
+    "https://chainguard-beryl.vercel.app,"
+    "https://www.chainguard.app"
+)
+_cors_raw = os.getenv("CORS_ORIGINS", _default_origins)
+# Vercel preview URL'leri için wildcard pattern desteği
+_cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in _cors_origins],
+    allow_origins=_cors_origins,
+    allow_origin_regex=r"https://chainguard.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
