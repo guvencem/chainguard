@@ -632,7 +632,7 @@ async def ws_alerts(websocket: WebSocket, token: str = ""):
 # ── Wallet Connect & Holder Verification ───────────────
 
 from wallet_service import (
-    verify_solana_signature, generate_sign_message,
+    verify_solana_signature, verify_evm_signature, generate_sign_message,
     get_cgt_balance_usd, determine_holder_tier,
     get_daily_limit, check_fraud_signals,
 )
@@ -642,6 +642,7 @@ class WalletVerifyRequest(BaseModel):
     wallet_address: str
     signature: str
     nonce: str
+    chain: str = "solana"          # solana | evm
     telegram_id: int | None = None
 
 
@@ -663,12 +664,20 @@ async def wallet_verify(body: WalletVerifyRequest, request: Request):
     Cüzdan imzasını doğrula, CGT bakiyesini kontrol et, tier aktif et.
     """
     wallet = body.wallet_address.strip()
+    chain  = body.chain.lower() if body.chain else "solana"
 
     # Adres formatı kontrolü
     import re
     SOLANA_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
-    if not SOLANA_RE.match(wallet):
-        raise HTTPException(status_code=400, detail="Geçersiz Solana cüzdan adresi.")
+    EVM_RE    = re.compile(r"^0x[0-9a-fA-F]{40}$")
+
+    if chain == "evm":
+        if not EVM_RE.match(wallet):
+            raise HTTPException(status_code=400, detail="Geçersiz EVM cüzdan adresi.")
+    else:
+        chain = "solana"
+        if not SOLANA_RE.match(wallet):
+            raise HTTPException(status_code=400, detail="Geçersiz Solana cüzdan adresi.")
 
     # Fraud kontrol
     ip = request.client.host if request.client else "unknown"
@@ -676,9 +685,12 @@ async def wallet_verify(body: WalletVerifyRequest, request: Request):
     if not fraud["ok"]:
         raise HTTPException(status_code=403, detail=fraud["reason"])
 
-    # İmza doğrulama
+    # İmza doğrulama — Solana (ed25519) veya EVM (secp256k1 personal_sign)
     nonce_message = generate_sign_message(wallet, body.nonce)
-    valid = await verify_solana_signature(wallet, nonce_message, body.signature)
+    if chain == "evm":
+        valid = await verify_evm_signature(wallet, nonce_message, body.signature)
+    else:
+        valid = await verify_solana_signature(wallet, nonce_message, body.signature)
     if not valid:
         raise HTTPException(status_code=401, detail="Geçersiz imza.")
 
@@ -694,14 +706,15 @@ async def wallet_verify(body: WalletVerifyRequest, request: Request):
                 # Wallet connection kaydet
                 await conn.execute("""
                     INSERT INTO wallet_connections
-                        (wallet_address, telegram_id, signature, message, ip_address)
-                    VALUES ($1, $2, $3, $4, $5)
+                        (wallet_address, telegram_id, signature, message, chain, ip_address)
+                    VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (wallet_address) DO UPDATE SET
                         telegram_id = EXCLUDED.telegram_id,
                         signature   = EXCLUDED.signature,
+                        chain       = EXCLUDED.chain,
                         verified_at = NOW(),
                         is_active   = TRUE
-                """, wallet, body.telegram_id, body.signature, nonce_message, ip)
+                """, wallet, body.telegram_id, body.signature, nonce_message, chain, ip)
 
                 # User tablosunu güncelle
                 if body.telegram_id:

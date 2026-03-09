@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import WalletConnect from "@/components/WalletConnect";
 
 export const metadata: Metadata = {
     title: "API Erişimi — ChainGuard",
@@ -48,12 +49,26 @@ export default function KeysPage() {
                     </p>
                 </div>
 
+                {/* Wallet Connect — CGT ile Tier Aktif Et */}
+                <div>
+                    <h2 className="text-xl font-bold mb-2" style={{ color: "var(--cg-text)" }}>
+                        CGT ile Tier Aktif Et
+                    </h2>
+                    <p className="text-sm mb-6" style={{ color: "var(--cg-text-muted)" }}>
+                        Cüzdanını bağla, CGT bakiyeni doğrula — tier otomatik aktif edilir.
+                        Phantom, Solflare, Backpack ve MetaMask desteklenmektedir.
+                    </p>
+                    <div className="max-w-sm">
+                        <WalletConnect />
+                    </div>
+                </div>
+
                 {/* Pricing Tiers */}
                 <div>
                     <h2 className="text-xl font-bold mb-6" style={{ color: "var(--cg-text)" }}>
                         Planlar
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* Free */}
                         <div className="card-flat p-6 flex flex-col">
                             <div className="mb-4">
@@ -70,12 +85,46 @@ export default function KeysPage() {
                             <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>her zaman</p>
                             <ul className="space-y-3 flex-1">
                                 {[
-                                    "100 istek/gün",
+                                    "5 sorgu/gün",
                                     "Web arayüzü",
-                                    "Temel analiz",
+                                    "API erişimi yok",
+                                ].map((f, i) => (
+                                    <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "var(--cg-text-muted)" }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                            stroke={i === 2 ? "#6B7280" : "#22C55E"}
+                                            strokeWidth="2.5" strokeLinecap="round">
+                                            <path d={i === 2 ? "M18 6L6 18M6 6l12 12" : "M20 6L9 17l-5-5"} />
+                                        </svg>
+                                        {f}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Holder */}
+                        <div className="card-flat p-6 flex flex-col"
+                            style={{ border: "1px solid rgba(16,185,129,0.3)" }}>
+                            <div className="mb-4">
+                                <span
+                                    className="text-xs font-bold uppercase tracking-widest px-2 py-1 rounded-full"
+                                    style={{ background: "rgba(16,185,129,0.12)", color: "#10B981" }}
+                                >
+                                    Holder
+                                </span>
+                            </div>
+                            <div className="mb-1">
+                                <span className="text-3xl font-black" style={{ color: "var(--cg-text)" }}>$5</span>
+                                <span className="text-sm ml-1" style={{ color: "var(--cg-text-muted)" }}>CGT tutarak</span>
+                            </div>
+                            <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>cüzdan bağla → otomatik aktif</p>
+                            <ul className="space-y-3 flex-1">
+                                {[
+                                    "10 sorgu/gün",
+                                    "Web arayüzü",
+                                    "Holder rozeti",
                                 ].map((f) => (
                                     <li key={f} className="flex items-center gap-2 text-sm" style={{ color: "var(--cg-text-muted)" }}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" strokeLinecap="round">
                                             <path d="M20 6L9 17l-5-5" />
                                         </svg>
                                         {f}
@@ -84,7 +133,7 @@ export default function KeysPage() {
                             </ul>
                         </div>
 
-                        {/* Pro — highlighted */}
+                        {/* Pro API — highlighted */}
                         <div
                             className="card-flat p-6 flex flex-col relative"
                             style={{ border: "1px solid var(--cg-accent)", boxShadow: "0 0 24px rgba(129,140,248,0.12)" }}
@@ -104,10 +153,10 @@ export default function KeysPage() {
                                 </span>
                             </div>
                             <div className="mb-1">
-                                <span className="text-3xl font-black" style={{ color: "var(--cg-text)" }}>250</span>
-                                <span className="text-lg font-semibold ml-1" style={{ color: "var(--cg-text-muted)" }}>Stars/ay</span>
+                                <span className="text-3xl font-black" style={{ color: "var(--cg-text)" }}>$29</span>
+                                <span className="text-sm ml-1" style={{ color: "var(--cg-text-muted)" }}>CGT/ay</span>
                             </div>
-                            <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>Telegram üzerinden</p>
+                            <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>veya 250 Telegram Stars</p>
                             <ul className="space-y-3 flex-1">
                                 {[
                                     "1.000 istek/gün",
@@ -135,10 +184,10 @@ export default function KeysPage() {
                                 </span>
                             </div>
                             <div className="mb-1">
-                                <span className="text-3xl font-black" style={{ color: "var(--cg-text)" }}>1.000</span>
-                                <span className="text-lg font-semibold ml-1" style={{ color: "var(--cg-text-muted)" }}>Stars/ay</span>
+                                <span className="text-3xl font-black" style={{ color: "var(--cg-text)" }}>$99</span>
+                                <span className="text-sm ml-1" style={{ color: "var(--cg-text-muted)" }}>CGT/ay</span>
                             </div>
-                            <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>Telegram üzerinden</p>
+                            <p className="text-xs mb-6" style={{ color: "var(--cg-text-muted)" }}>veya 1.000 Telegram Stars</p>
                             <ul className="space-y-3 flex-1">
                                 {[
                                     "10.000 istek/gün",

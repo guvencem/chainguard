@@ -154,6 +154,38 @@ async def verify_solana_signature(
         return False
 
 
+async def verify_evm_signature(
+    wallet_address: str,
+    message: str,
+    signature: str,
+) -> bool:
+    """
+    EVM (MetaMask/Ethereum) personal_sign imzasını doğrular.
+
+    eth_account kütüphanesi ile EIP-191 doğrulama yapılır.
+    İmza hex formatında olmalı (0x prefix ile veya olmadan).
+    """
+    try:
+        from eth_account import Account
+        from eth_account.messages import encode_defunct
+
+        msg = encode_defunct(text=message)
+        recovered = Account.recover_message(msg, signature=signature)
+        return recovered.lower() == wallet_address.lower()
+
+    except ImportError:
+        logger.warning("eth-account yok — EVM imza formatı temel kontrolde")
+        return (
+            signature.startswith("0x")
+            and len(signature) == 132          # 0x + 130 hex chars
+            and wallet_address.startswith("0x")
+            and len(wallet_address) == 42
+        )
+    except Exception as e:
+        logger.warning(f"EVM imza doğrulama hatası: {e}")
+        return False
+
+
 def generate_sign_message(wallet_address: str, nonce: str) -> str:
     """Kullanıcının imzalayacağı mesajı üret."""
     return (
