@@ -7,6 +7,7 @@ COPY apps/api/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Proje dosyalarını kopyala
+COPY db/ ./db/
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 
