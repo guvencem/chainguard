@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-const WEB_URL = "https://chainguard-beryl.vercel.app";
+const WEB_URL = "https://taranoid-beryl.vercel.app";
 const API_URL = "https://web-production-b704c.up.railway.app";
 
 export async function generateMetadata({
@@ -30,14 +30,14 @@ export async function generateMetadata({
     // fallback: score parametresiz OG
   }
 
-  const title = `${shortAddr} Risk Analizi — ChainGuard`;
+  const title = `${shortAddr} Risk Analizi — Taranoid`;
   const description = `Solana token ${shortAddr} için 9 metrikli risk analizi. Wash trading, cüzdan kümeleme, Sybil attack tespiti.`;
 
   return {
     title,
     description,
     openGraph: {
-      title: `${shortAddr} — ChainGuard Risk Analizi`,
+      title: `${shortAddr} — Taranoid Risk Analizi`,
       description: "Bu Solana tokenının risk skorunu gör. 9 metrikle analiz edildi.",
       type: "website",
       url: pageUrl,
@@ -45,7 +45,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: `${shortAddr} — ChainGuard Risk Analizi`,
+      title: `${shortAddr} — Taranoid Risk Analizi`,
       description: "Bu Solana tokenının risk skorunu gör.",
       images: [ogUrl],
     },

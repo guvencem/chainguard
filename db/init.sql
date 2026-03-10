@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- ChainGuard — PostgreSQL Veritabanı Şeması
+-- Taranoid — PostgreSQL Veritabanı Şeması
 -- Sprint 2 — Analiz geçmişi, skor kayıtları, metrikler
 -- ═══════════════════════════════════════════════════════════
 

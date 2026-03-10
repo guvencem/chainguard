@@ -1,5 +1,5 @@
 """
-ChainGuard — Cüzdan Kümeleme Analiz Motoru (Wallet Cluster Analyzer)
+Taranoid — Cüzdan Kümeleme Analiz Motoru (Wallet Cluster Analyzer)
 
 Sprint 2 — Metrik 4
 

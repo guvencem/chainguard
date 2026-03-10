@@ -1,5 +1,5 @@
 """
-ChainGuard — Token Analiz Servisi
+Taranoid — Token Analiz Servisi
 
 Veri toplama, skorlama ve cache katmanlarını birleştiren
 ana iş mantığı servisi.

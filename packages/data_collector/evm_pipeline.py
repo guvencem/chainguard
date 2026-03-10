@@ -1,5 +1,5 @@
 """
-ChainGuard — EVM Zincir Pipeline (Sprint 4)
+Taranoid — EVM Zincir Pipeline (Sprint 4)
 
 Base, BSC, Ethereum ve diğer EVM zincirleri için
 DexScreener tabanlı hafif veri toplama pipeline'ı.

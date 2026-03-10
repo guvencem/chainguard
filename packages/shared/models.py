@@ -1,5 +1,5 @@
 """
-ChainGuard — Ortak veri modelleri.
+Taranoid — Ortak veri modelleri.
 Pydantic ile tip güvenli veri yapıları.
 
 Sprint 2: 9 metrikli genişletilmiş model.

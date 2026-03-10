@@ -1,5 +1,5 @@
 """
-ChainGuard — Sybil Attack ve Bundler Tespit Motoru
+Taranoid — Sybil Attack ve Bundler Tespit Motoru
 
 Sprint 2 — Metrik 6 (Sybil) + Metrik 7 (Bundler)
 

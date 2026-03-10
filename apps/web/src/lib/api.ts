@@ -1,5 +1,5 @@
 /**
- * ChainGuard — API İstemcisi (Sprint 2)
+ * Taranoid — API İstemcisi (Sprint 2)
  * Backend Pydantic modelleriyle birebir uyumlu tip tanımları.
  */
 
@@ -170,7 +170,7 @@ export interface HealthStatus {
     };
 }
 
-class ChainGuardAPI {
+class TaranoidAPI {
     private baseUrl: string;
 
     constructor(baseUrl: string = API_URL) {
@@ -260,5 +260,5 @@ export class APIError extends Error {
     }
 }
 
-export const api = new ChainGuardAPI();
+export const api = new TaranoidAPI();
 export default api;

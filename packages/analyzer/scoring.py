@@ -1,5 +1,5 @@
 """
-ChainGuard — Analiz Motoru: Skorlama Fonksiyonları
+Taranoid — Analiz Motoru: Skorlama Fonksiyonları
 
 Sprint 2 Metrikleri (9 metrik):
   1. VLR  (Hacim/Likidite Oranı)        — ağırlık %25

@@ -1,5 +1,5 @@
 """
-ChainGuard — Ortak yapılandırma modülü.
+Taranoid — Ortak yapılandırma modülü.
 Tüm servisler bu modül üzerinden ortam değişkenlerini okur.
 """
 
@@ -25,7 +25,7 @@ class HeliusConfig:
 
 @dataclass
 class DatabaseConfig:
-    url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/chainguard"))
+    url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/taranoid"))
 
 
 @dataclass

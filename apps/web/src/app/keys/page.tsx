@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import WalletConnect from "@/components/WalletConnect";
 
 export const metadata: Metadata = {
-    title: "API Erişimi — ChainGuard",
-    description: "ChainGuard API fiyatlandırması, dokümantasyonu ve API anahtarı alma rehberi.",
+    title: "API Erişimi — Taranoid",
+    description: "Taranoid API fiyatlandırması, dokümantasyonu ve API anahtarı alma rehberi.",
 };
 
 export default function KeysPage() {
@@ -26,7 +26,7 @@ export default function KeysPage() {
                         <span className="font-bold text-[10px]">CG</span>
                     </div>
                     <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>
-                        ChainGuard
+                        Taranoid
                     </span>
                 </div>
             </nav>
@@ -45,7 +45,7 @@ export default function KeysPage() {
                         API Erişimi
                     </h1>
                     <p className="text-lg" style={{ color: "var(--cg-text-muted)" }}>
-                        ChainGuard&apos;ı kendi uygulamalarınıza entegre edin. Solana token risk analizini programatik olarak kullanın.
+                        Taranoid&apos;ı kendi uygulamalarınıza entegre edin. Solana token risk analizini programatik olarak kullanın.
                     </p>
                 </div>
 
@@ -216,8 +216,8 @@ export default function KeysPage() {
                             {
                                 step: "1",
                                 title: "Telegram botuna git",
-                                desc: "@ChainGuardBot",
-                                href: "https://t.me/ChainGuardBot",
+                                desc: "@TaranoidBot",
+                                href: "https://t.me/TaranoidBot",
                                 color: "#6366F1",
                             },
                             {
@@ -419,7 +419,7 @@ console.log(score.total);`}</pre>
             {/* Footer */}
             <footer className="text-center py-10">
                 <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-                    © 2026 ChainGuard — Solana token risk analizi.
+                    © 2026 Taranoid — Solana token risk analizi.
                 </p>
             </footer>
         </main>

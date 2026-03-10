@@ -1,5 +1,5 @@
 """
-ChainGuard — FastAPI Backend
+Taranoid — FastAPI Backend
 
 Sprint 2 API Endpointleri:
   GET /api/v1/health                    → Sistem sağlık kontrolü
@@ -36,7 +36,7 @@ logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
 )
-logger = logging.getLogger("chainguard.api")
+logger = logging.getLogger("taranoid.api")
 
 # ── Servis Singleton ────────────────────────────────────
 analysis_service: AnalysisService = None
@@ -59,17 +59,17 @@ async def lifespan(app: FastAPI):
         database_url=database_url,
     )
     await analysis_service.startup()
-    logger.info("🛡️ ChainGuard API başlatıldı")
+    logger.info("🛡️ Taranoid API başlatıldı")
     
     yield
     
     await analysis_service.shutdown()
-    logger.info("ChainGuard API kapatıldı")
+    logger.info("Taranoid API kapatıldı")
 
 
 # ── FastAPI Uygulaması ──────────────────────────────────
 app = FastAPI(
-    title="ChainGuard API",
+    title="Taranoid API",
     description="Solana Token Risk Analiz Platformu",
     version="2.0.0",
     lifespan=lifespan,
@@ -78,9 +78,9 @@ app = FastAPI(
 # CORS — deploy'da CORS_ORIGINS env ile ayarlanır
 _default_origins = (
     "http://localhost:3000,"
-    "https://chainguard.app,"
-    "https://chainguard-beryl.vercel.app,"
-    "https://www.chainguard.app"
+    "https://www.taranoid.com,"
+    "https://taranoid-beryl.vercel.app,"
+    "https://www.taranoid.app"
 )
 _cors_raw = os.getenv("CORS_ORIGINS", _default_origins)
 # Vercel preview URL'leri için wildcard pattern desteği
@@ -89,7 +89,7 @@ _cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_origin_regex=r"https://chainguard.*\.vercel\.app",
+    allow_origin_regex=r"https://taranoid.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -120,7 +120,7 @@ async def check_rate_limit(client_ip: str) -> bool:
     if cache and cache._available and cache._redis:
         try:
             now = time.time()
-            key = f"chainguard:rl:{client_ip}"
+            key = f"taranoid:rl:{client_ip}"
             window_start = now - RATE_WINDOW
             pipe = cache._redis.pipeline()
             pipe.zremrangebyscore(key, 0, window_start)
@@ -370,10 +370,10 @@ async def token_history(address: str, request: Request):
 
 # ── Affiliate Linkleri ─────────────────────────────────
 AFFILIATE_LINKS = {
-    "binance": "https://www.binance.com/tr/register?ref=CHAINGUARD",
-    "okx": "https://www.okx.com/join/CHAINGUARD",
-    "bybit": "https://www.bybit.com/register?affiliate_id=CHAINGUARD",
-    "gate": "https://www.gate.io/signup?ref=CHAINGUARD",
+    "binance": "https://www.binance.com/tr/register?ref=TARANOID",
+    "okx": "https://www.okx.com/join/TARANOID",
+    "bybit": "https://www.bybit.com/register?affiliate_id=TARANOID",
+    "gate": "https://www.gate.io/signup?ref=TARANOID",
 }
 
 
@@ -411,8 +411,8 @@ async def affiliate_links():
 
 # ── Referral Sistemi ───────────────────────────────────
 
-WEB_URL = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
-BOT_USERNAME = os.getenv("BOT_USERNAME", "chainguardbot")
+WEB_URL = os.getenv("WEB_URL", "https://taranoid-beryl.vercel.app")
+BOT_USERNAME = os.getenv("BOT_USERNAME", "taranoidbot")
 
 
 @app.get("/api/v1/referral/{telegram_id}")

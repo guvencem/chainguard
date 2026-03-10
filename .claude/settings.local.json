@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(cat:*)",
+      "Bash(pip install:*)",
+      "Bash(set:*)",
+      "Bash(psql:*)",
+      "Bash(python:*)",
+      "WebFetch(domain:www.bybit.com)",
+      "WebFetch(domain:www.binance.com)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(npx next:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(railway:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)"
+    ]
+  }
+}

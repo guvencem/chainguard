@@ -28,7 +28,7 @@ async def rpc_call(client, method, params):
     return data.get("result", {})
 
 async def main():
-    print("ChainGuard - Token Analizi")
+    print("Taranoid - Token Analizi")
     print(f"Adres: {TOKEN}")
     print(f"Uzunluk: {len(TOKEN)}")
     print()
@@ -199,7 +199,7 @@ async def main():
             "label_tr": labels["tr"],
             "warnings": warnings,
         }
-        with open("d:/chainguard/analysis_result.json", "w", encoding="utf-8") as f:
+        with open("d:/taranoid/analysis_result.json", "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False, default=str)
         print(f"\n  Sonuc kaydedildi: analysis_result.json")
     

@@ -68,7 +68,7 @@ export const en = {
     },
   ],
   footer: {
-    tagline: "© 2026 ChainGuard — Not investment advice. DYOR.",
+    tagline: "© 2026 Taranoid — Not investment advice. DYOR.",
     links: ["Telegram", "Learn", "API", "About"],
   },
 } as const

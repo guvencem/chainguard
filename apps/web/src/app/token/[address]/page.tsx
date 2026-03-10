@@ -222,7 +222,7 @@ export default function TokenPage() {
           className="font-bold text-sm"
           style={{ color: "var(--cg-text)" }}
         >
-          ChainGuard
+          Taranoid
         </span>
       </div>
     </nav>
@@ -824,7 +824,7 @@ export default function TokenPage() {
           Bu analizi paylaş:
         </span>
         <a
-          href={`https://t.me/share/url?url=${encodeURIComponent(`https://chainguard-beryl.vercel.app/token/${address}`)}&text=${encodeURIComponent(`${token?.symbol ? `$${token.symbol}` : "Token"} risk skoru: ${Math.round(score.total)}/100 — ChainGuard analizi`)}`}
+          href={`https://t.me/share/url?url=${encodeURIComponent(`https://taranoid-beryl.vercel.app/token/${address}`)}&text=${encodeURIComponent(`${token?.symbol ? `$${token.symbol}` : "Token"} risk skoru: ${Math.round(score.total)}/100 — Taranoid analizi`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
@@ -833,7 +833,7 @@ export default function TokenPage() {
           Telegram'da Paylaş
         </a>
         <a
-          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`$${token?.symbol || "Token"} risk skoru: ${Math.round(score.total)}/100 ${score.total >= 60 ? "⚠️ Yüksek risk!" : "✅ Düşük risk"} — ChainGuard analizi:`)}&url=${encodeURIComponent(`https://chainguard-beryl.vercel.app/token/${address}`)}`}
+          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`$${token?.symbol || "Token"} risk skoru: ${Math.round(score.total)}/100 ${score.total >= 60 ? "⚠️ Yüksek risk!" : "✅ Düşük risk"} — Taranoid analizi:`)}&url=${encodeURIComponent(`https://taranoid-beryl.vercel.app/token/${address}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
@@ -853,7 +853,7 @@ export default function TokenPage() {
       {/* Footer */}
       <footer className="text-center py-8" style={{ borderTop: "1px solid var(--cg-border)" }}>
         <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-          ChainGuard analiz sonuçları yatırım tavsiyesi değildir. Kendi araştırmanızı yapın.
+          Taranoid analiz sonuçları yatırım tavsiyesi değildir. Kendi araştırmanızı yapın.
         </p>
       </footer>
     </main>

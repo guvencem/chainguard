@@ -70,7 +70,7 @@ export default function WalletClusteringPage() {
 
           <Section title="Kümeleme Nasıl Çalışır?">
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              ChainGuard 4 farklı sinyal kullanarak aynı kişiye ait cüzdanları tespit eder:
+              Taranoid 4 farklı sinyal kullanarak aynı kişiye ait cüzdanları tespit eder:
             </p>
             <div className="space-y-3">
               {[

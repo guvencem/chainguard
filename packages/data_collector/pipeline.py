@@ -1,5 +1,5 @@
 """
-ChainGuard — Veri Toplama Pipeline
+Taranoid — Veri Toplama Pipeline
 
 Token adresi verildiğinde 5 adımlı veri toplama süreci:
   1. Token Metadata    → getAsset

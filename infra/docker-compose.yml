@@ -3,12 +3,12 @@ version: "3.9"
 services:
   postgres:
     image: timescale/timescaledb:latest-pg16
-    container_name: chainguard-db
+    container_name: taranoid-db
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: chainguard
+      POSTGRES_DB: taranoid
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
@@ -22,7 +22,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: chainguard-redis
+    container_name: taranoid-redis
     restart: unless-stopped
     ports:
       - "6379:6379"

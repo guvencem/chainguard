@@ -1,5 +1,5 @@
 """
-ChainGuard Telegram Bot — Token Risk Analizi
+Taranoid Telegram Bot — Token Risk Analizi
 
 Komutlar:
   /start    — Karsilama ve kullanim rehberi
@@ -14,6 +14,7 @@ Sprint 4 — Telegram Stars Pro odeme, WebSocket altyapisi
 
 import os
 import logging
+import re
 from datetime import datetime, timezone, date, timedelta
 
 import httpx
@@ -33,7 +34,7 @@ from telegram.constants import ParseMode
 # ── Config ──────────────────────────────────────────────
 BOT_TOKEN    = os.getenv("TELEGRAM_BOT_TOKEN", "")
 API_URL      = os.getenv("API_URL", "https://web-production-b704c.up.railway.app")
-WEB_URL      = os.getenv("WEB_URL", "https://chainguard-beryl.vercel.app")
+WEB_URL      = os.getenv("WEB_URL", "https://taranoid-beryl.vercel.app")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 FREE_LIMIT      = 5
@@ -48,7 +49,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
-logger = logging.getLogger("chainguard_bot")
+logger = logging.getLogger("taranoid_bot")
 
 # ── DB Pool ─────────────────────────────────────────────
 db_pool: asyncpg.Pool | None = None
@@ -233,7 +234,7 @@ async def fetch_analysis(address: str) -> dict | None:
     url = f"{API_URL}/api/v1/token/{address}"
     logger.info(f"API istegi: {url}")
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(url)
             logger.info(f"API yanit: status={resp.status_code}")
             if resp.status_code == 200:
@@ -382,7 +383,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     welcome = (
         f"👋 Merhaba, *{_escape(user.first_name)}*\\!\n\n"
-        "🛡️ *ChainGuard Bot* — Solana Token Risk Analizi\n\n"
+        "🛡️ *Taranoid Bot* — Solana Token Risk Analizi\n\n"
         "Token adresini gonder, saniyeler icinde *9 metrikle* risk skorunu ogren\\.\n\n"
         "📋 *Komutlar:*\n"
         "• `/analyze <adres>` — Token analizi\n"
@@ -418,7 +419,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
-        "🛡️ *ChainGuard Bot Komutlari*\n\n"
+        "🛡️ *Taranoid Bot Komutlari*\n\n"
         "*Analiz:*\n"
         "• `/analyze <token_adresi>` — 9 metrikle risk analizi\n\n"
         "*Watchlist:*\n"
@@ -452,7 +453,7 @@ async def analyze_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     address = context.args[0].strip()
-    if len(address) < 32 or len(address) > 44:
+    if not re.match(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$", address):
         await update.message.reply_text("❌ Gecersiz Solana token adresi\\.", parse_mode=ParseMode.MARKDOWN_V2)
         return
 
@@ -626,7 +627,7 @@ async def referral_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    bot_username = context.bot.username or "chainguardbot"
+    bot_username = context.bot.username or "taranoidbot"
     bot_link = f"https://t\\.me/{bot_username}?start={ref_code}"
     web_link = f"{WEB_URL}/?ref={ref_code}"
 
@@ -664,7 +665,7 @@ async def referral_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     keyboard = [[
-        InlineKeyboardButton("📤 Linki Kopyala", switch_inline_query=f"ChainGuard ile {invite_count} kişiyi güvende tut! t.me/{bot_username}?start={ref_code}"),
+        InlineKeyboardButton("📤 Linki Kopyala", switch_inline_query=f"Taranoid ile {invite_count} kişiyi güvende tut! t.me/{bot_username}?start={ref_code}"),
     ]]
 
     await update.message.reply_text(
@@ -744,7 +745,7 @@ async def pro_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "⭐ *ChainGuard Pro*\n\n"
+        "⭐ *Taranoid Pro*\n\n"
         f"📊 Gunluk *{PRO_LIMIT}* sorgu \\(Free: {FREE_LIMIT}\\)\n"
         "🔔 Watchlist uyarilari \\(otomatik bildirim\\)\n"
         "📈 Oncelikli analiz\n"
@@ -789,7 +790,7 @@ async def successful_payment_handler(update: Update, context: ContextTypes.DEFAU
         f"📅 Gecerlilik: *{until_str}*'e kadar\n"
         f"📊 Gunluk sorgu: *{PRO_LIMIT}*\n"
         "🔔 Watchlist uyarilari aktif\n\n"
-        "_ChainGuard Pro ile korunmaya devam et\\!_ 🛡️",
+        "_Taranoid Pro ile korunmaya devam et\\!_ 🛡️",
         parse_mode=ParseMode.MARKDOWN_V2,
     )
     logger.info(f"Pro aktivasyonu: user={user.id}, charge={charge_id}, until={pro_until}")
@@ -970,7 +971,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "referral":
         ref_code = await _get_ref_code(user.id)
         if ref_code:
-            bot_username = context.bot.username or "chainguardbot"
+            bot_username = context.bot.username or "taranoidbot"
             link = f"https://t.me/{bot_username}?start={ref_code}"
             await query.answer(f"Referral kodun: {ref_code}", show_alert=True)
         else:
@@ -980,7 +981,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Stars invoice gönder
         await context.bot.send_invoice(
             chat_id=query.message.chat_id,
-            title="ChainGuard Pro — 30 Gün",
+            title="Taranoid Pro — 30 Gün",
             description=(
                 f"✅ Günlük {PRO_LIMIT} sorgu hakkı\n"
                 "✅ Watchlist uyarıları\n"
@@ -989,7 +990,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             payload="pro_subscription_30d",
             currency="XTR",  # Telegram Stars
-            prices=[LabeledPrice("ChainGuard Pro (30 gün)", PRO_STARS_PRICE)],
+            prices=[LabeledPrice("Taranoid Pro (30 gün)", PRO_STARS_PRICE)],
         )
         await query.answer()
 
@@ -1049,7 +1050,7 @@ def main():
     app.post_init     = post_init
     app.post_shutdown = post_shutdown
 
-    logger.info("🤖 ChainGuard Bot baslatiliyor...")
+    logger.info("🤖 Taranoid Bot baslatiliyor...")
     app.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
 
 

@@ -1,5 +1,5 @@
 """
-ChainGuard — Sprint 4
+Taranoid — Sprint 4
 Template-based Türkçe Analiz Raporu Üretici
 
 Her token analizi için metrik değerlerine göre

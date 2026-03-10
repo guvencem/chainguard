@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- ChainGuard — Sprint 1 Veritabanı Şeması
+-- Taranoid — Sprint 1 Veritabanı Şeması
 -- TimescaleDB uzantısı ile zaman serisi desteği
 -- ═══════════════════════════════════════════════════════════
 
@@ -76,5 +76,5 @@ CREATE INDEX IF NOT EXISTS idx_tx_wallet ON transactions(from_wallet, timestamp 
 -- ── Durum bildirimi ────────────────────────────────────────
 DO $$
 BEGIN
-    RAISE NOTICE '✅ ChainGuard Sprint 1 şeması başarıyla oluşturuldu.';
+    RAISE NOTICE '✅ Taranoid Sprint 1 şeması başarıyla oluşturuldu.';
 END $$;

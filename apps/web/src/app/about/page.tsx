@@ -1,12 +1,12 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Hakkında — ChainGuard",
-    description: "ChainGuard nedir, nasıl çalışır? Solana token risk analiz platformu hakkında bilgi.",
+    title: "Hakkında — Taranoid",
+    description: "Taranoid nedir, nasıl çalışır? Solana token risk analiz platformu hakkında bilgi.",
 };
 
 /**
- * Hakkında Sayfası — ChainGuard nedir, nasıl çalışır
+ * Hakkında Sayfası — Taranoid nedir, nasıl çalışır
  */
 
 export default function AboutPage() {
@@ -29,7 +29,7 @@ export default function AboutPage() {
                         <span className="font-bold text-[10px]">CG</span>
                     </div>
                     <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>
-                        ChainGuard
+                        Taranoid
                     </span>
                 </div>
             </nav>
@@ -39,10 +39,10 @@ export default function AboutPage() {
                 {/* Hero */}
                 <div>
                     <h1 className="text-4xl font-bold mb-4" style={{ background: "var(--cg-gradient-brand)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                        ChainGuard Nedir?
+                        Taranoid Nedir?
                     </h1>
                     <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-                        ChainGuard, <span className="font-semibold" style={{ color: "var(--cg-text)" }}>Solana, Base ve BSC</span> zincirlerindeki tokenları gerçek zamanlı olarak analiz eden
+                        Taranoid, <span className="font-semibold" style={{ color: "var(--cg-text)" }}>Solana, Base ve BSC</span> zincirlerindeki tokenları gerçek zamanlı olarak analiz eden
                         bir risk değerlendirme platformudur. 9 metrik motoru, <span className="font-semibold" style={{ color: "var(--cg-text)" }}>AI destekli Türkçe rapor</span> ve{" "}
                         <span className="font-semibold" style={{ color: "var(--cg-text)" }}>creator profiling</span> ile yatırımcıları{" "}
                         <span className="font-semibold" style={{ color: "var(--cg-text)" }}>
@@ -247,7 +247,7 @@ export default function AboutPage() {
                     </h2>
                     <div className="space-y-2 text-sm" style={{ color: "var(--cg-text-muted)" }}>
                         <p>
-                            ChainGuard tarafından sunulan analizler ve risk skorları <strong>yatırım tavsiyesi değildir</strong>.
+                            Taranoid tarafından sunulan analizler ve risk skorları <strong>yatırım tavsiyesi değildir</strong>.
                             Platform, blockchain verilerini algoritmik olarak değerlendirir; bu değerlendirmeler hatalı olabilir.
                         </p>
                         <p>
@@ -255,7 +255,7 @@ export default function AboutPage() {
                             yapmanız (DYOR — Do Your Own Research) önerilir.
                         </p>
                         <p>
-                            ChainGuard, herhangi bir finansal kayıptan sorumlu tutulamaz. Platform &quot;olduğu gibi&quot; (as-is)
+                            Taranoid, herhangi bir finansal kayıptan sorumlu tutulamaz. Platform &quot;olduğu gibi&quot; (as-is)
                             sunulmaktadır.
                         </p>
                     </div>
@@ -265,7 +265,7 @@ export default function AboutPage() {
             {/* ── Footer ── */}
             <footer className="text-center py-10">
                 <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-                    © 2026 ChainGuard — Solana, Base, BSC token risk analizi.
+                    © 2026 Taranoid — Solana, Base, BSC token risk analizi.
                 </p>
             </footer>
         </main>

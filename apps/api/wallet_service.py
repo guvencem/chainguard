@@ -1,5 +1,5 @@
 """
-ChainGuard — Wallet Connect & Holder Verification Servisi
+Taranoid — Wallet Connect & Holder Verification Servisi
 
 Akış:
   1. Frontend Phantom ile mesaj imzalar → /api/v1/wallet/verify'a gönderir
@@ -189,7 +189,7 @@ async def verify_evm_signature(
 def generate_sign_message(wallet_address: str, nonce: str) -> str:
     """Kullanıcının imzalayacağı mesajı üret."""
     return (
-        f"ChainGuard kimlik doğrulama\n"
+        f"Taranoid kimlik doğrulama\n"
         f"Cüzdan: {wallet_address}\n"
         f"Nonce: {nonce}\n"
         f"Bu mesajı imzalamak token transferi gerektirmez."

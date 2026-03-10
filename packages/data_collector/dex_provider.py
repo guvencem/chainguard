@@ -1,5 +1,5 @@
 """
-ChainGuard — DEX Veri Sağlayıcı
+Taranoid — DEX Veri Sağlayıcı
 
 Gerçek zamanlı piyasa verisi çeker:
   - Jupiter Price API v2  → Fiyat (ücretsiz, key gerektirmez)
@@ -56,7 +56,7 @@ class DexDataProvider:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 timeout=httpx.Timeout(15.0),
-                headers={"User-Agent": "ChainGuard/1.0"},
+                headers={"User-Agent": "Taranoid/1.0"},
             )
         return self._client
 

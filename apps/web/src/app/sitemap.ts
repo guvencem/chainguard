@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const WEB_URL = "https://chainguard-beryl.vercel.app";
+const WEB_URL = "https://taranoid-beryl.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

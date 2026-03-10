@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s — ChainGuard Eğitim",
-    default: "Eğitim Merkezi — ChainGuard",
+    template: "%s — Taranoid Eğitim",
+    default: "Eğitim Merkezi — Taranoid",
   },
   description:
     "Memecoin dolandırıcılıklarını, rug pull'ları ve wash trading'i Türkçe öğren. Gerçek vakalar, adım adım analizler.",
@@ -13,10 +13,10 @@ export const metadata: Metadata = {
     "wash trading nedir",
     "solana scam nasıl anlaşılır",
     "kripto güvenlik eğitim",
-    "chainguard",
+    "taranoid",
   ],
   openGraph: {
-    siteName: "ChainGuard",
+    siteName: "Taranoid",
     locale: "tr_TR",
     type: "article",
   },

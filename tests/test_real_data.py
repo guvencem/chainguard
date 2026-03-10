@@ -1,5 +1,5 @@
 """
-ChainGuard — Gerçek Veri Analiz Testi
+Taranoid — Gerçek Veri Analiz Testi
 
 Bu script gerçek Solana tokenlarını analiz eder.
 Helius API key varsa zengin veri, yoksa public RPC ile temel veri çeker.
@@ -84,7 +84,7 @@ async def helius_das_call(client: httpx.AsyncClient, method: str, params: dict) 
     """Helius DAS API çağrısı."""
     payload = {
         "jsonrpc": "2.0",
-        "id": "chainguard-test",
+        "id": "taranoid-test",
         "method": method,
         "params": params,
     }
@@ -285,7 +285,7 @@ def get_approximate_market_data(name: str) -> dict:
 
 
 async def main():
-    print("🛡️  ChainGuard — Gerçek Veri Analiz Testi")
+    print("🛡️  Taranoid — Gerçek Veri Analiz Testi")
     print(f"   Tarih: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"   RPC: {RPC_URL[:50]}...")
     print()

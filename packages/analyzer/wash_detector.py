@@ -1,5 +1,5 @@
 """
-ChainGuard — Wash Trading Tespit Motoru
+Taranoid — Wash Trading Tespit Motoru
 
 Sprint 2 — Metrik 5
 

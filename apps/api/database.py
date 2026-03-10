@@ -1,5 +1,5 @@
 """
-ChainGuard — PostgreSQL Veritabanı Katmanı
+Taranoid — PostgreSQL Veritabanı Katmanı
 
 Sprint 2 — Analiz geçmişi, trending tokenlar, API logları.
 asyncpg ile async bağlantı havuzu kullanır.
@@ -598,7 +598,7 @@ class Database:
                     VALUES ($1, $2, $3, $4, $5, $6)
                 """,
                     exchange,
-                    f"CHAINGUARD_{exchange.upper()}",
+                    f"TARANOID_{exchange.upper()}",
                     click_source,
                     token_address or None,
                     ip_address,

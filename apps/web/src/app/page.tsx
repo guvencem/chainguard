@@ -39,7 +39,7 @@ const EXAMPLE_TOKENS = [
 ];
 
 const FOOTER_HREFS = [
-  "https://t.me/chainguard8_bot",
+  "https://t.me/taranoid8_bot",
   "/learn",
   "/keys",
   "/about",
@@ -79,7 +79,7 @@ export default function HomePage() {
           >
             <ShieldIcon size={14} />
           </div>
-          <span className="font-black text-base tracking-tight" style={{ color: "var(--cg-text)" }}>ChainGuard</span>
+          <span className="font-black text-base tracking-tight" style={{ color: "var(--cg-text)" }}>Taranoid</span>
         </div>
 
         <div className="hidden md:flex items-center gap-8">
@@ -88,7 +88,7 @@ export default function HomePage() {
             [t.nav.trending, "/trending"],
             [t.nav.learn, "/learn"],
             [t.nav.api, "/keys"],
-            [t.nav.telegram, "https://t.me/chainguard8_bot"],
+            [t.nav.telegram, "https://t.me/taranoid8_bot"],
           ].map(([label, href]) => (
             <a
               key={label}
@@ -104,7 +104,7 @@ export default function HomePage() {
         </div>
 
         <a
-          href="https://t.me/chainguard8_bot"
+          href="https://t.me/taranoid8_bot"
           target="_blank"
           rel="noopener noreferrer"
           className="cta-button px-4 py-2 text-xs flex items-center gap-2"
@@ -303,7 +303,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a
-                href="https://t.me/chainguard8_bot"
+                href="https://t.me/taranoid8_bot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="cta-button px-8 py-4 text-base flex items-center gap-2"
@@ -331,7 +331,7 @@ export default function HomePage() {
             >
               <ShieldIcon size={12} />
             </div>
-            <span className="font-bold text-sm" style={{ color: "var(--cg-text-muted)" }}>ChainGuard</span>
+            <span className="font-bold text-sm" style={{ color: "var(--cg-text-muted)" }}>Taranoid</span>
           </div>
           <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
             {t.footer.tagline}

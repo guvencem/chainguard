@@ -1,5 +1,5 @@
 /**
- * ChainGuard — Multi-Wallet Connect
+ * Taranoid — Multi-Wallet Connect
  *
  * Desteklenen cüzdanlar:
  *  Solana: Phantom, Solflare, Backpack

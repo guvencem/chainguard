@@ -1,5 +1,5 @@
 """
-ChainGuard — Redis Cache Katmanı (Opsiyonel)
+Taranoid — Redis Cache Katmanı (Opsiyonel)
 
 Redis varsa kullanır, yoksa graceful degradation ile devam eder.
 Cache TTL değerleri:
@@ -66,7 +66,7 @@ class CacheService:
     # ── Token Skoru Cache ────────────────────────────
 
     def _score_key(self, address: str) -> str:
-        return f"chainguard:score:{address}"
+        return f"taranoid:score:{address}"
 
     async def get_score(self, address: str) -> Optional[dict]:
         if not self._available:
@@ -95,7 +95,7 @@ class CacheService:
     # ── Token Metadata Cache ─────────────────────────
 
     def _metadata_key(self, address: str) -> str:
-        return f"chainguard:meta:{address}"
+        return f"taranoid:meta:{address}"
 
     async def get_metadata(self, address: str) -> Optional[dict]:
         if not self._available:
@@ -123,7 +123,7 @@ class CacheService:
     # ── Holder Cache ─────────────────────────────────
 
     def _holders_key(self, address: str) -> str:
-        return f"chainguard:holders:{address}"
+        return f"taranoid:holders:{address}"
 
     async def get_holders(self, address: str) -> Optional[list]:
         if not self._available:
@@ -153,7 +153,7 @@ class CacheService:
     TTL_CLUSTERS = 120  # 2 dakika
 
     def _clusters_key(self, address: str) -> str:
-        return f"chainguard:clusters:{address}"
+        return f"taranoid:clusters:{address}"
 
     async def get_clusters(self, address: str) -> Optional[list]:
         if not self._available:
@@ -184,7 +184,7 @@ class CacheService:
         if not self._available:
             return None
         try:
-            data = await self._redis.get("chainguard:trending")
+            data = await self._redis.get("taranoid:trending")
             if data:
                 return json.loads(data)
         except Exception:
@@ -196,7 +196,7 @@ class CacheService:
             return
         try:
             await self._redis.setex(
-                "chainguard:trending",
+                "taranoid:trending",
                 self.TTL_TRENDING,
                 json.dumps(tokens, default=str),
             )

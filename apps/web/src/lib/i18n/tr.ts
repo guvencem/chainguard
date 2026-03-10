@@ -68,7 +68,7 @@ export const tr = {
     },
   ],
   footer: {
-    tagline: "© 2026 ChainGuard — Yatırım tavsiyesi değildir. DYOR.",
+    tagline: "© 2026 Taranoid — Yatırım tavsiyesi değildir. DYOR.",
     links: ["Telegram", "Eğitim", "API", "Hakkımızda"],
   },
 } as const

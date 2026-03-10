@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "$CGT — ChainGuard Token",
+    title: "$CGT — Taranoid Token",
     description:
-        "The utility token powering the ChainGuard ecosystem. Hold $CGT to unlock premium access, API keys, and governance rights.",
+        "The utility token powering the Taranoid ecosystem. Hold $CGT to unlock premium access, API keys, and governance rights.",
 };
 
 const WHY_HOLD = [
@@ -25,7 +25,7 @@ const WHY_HOLD = [
     {
         icon: "🚀",
         title: "Growing Demand",
-        desc: "Every new ChainGuard user needs $CGT. As the platform grows, token demand increases organically.",
+        desc: "Every new Taranoid user needs $CGT. As the platform grows, token demand increases organically.",
     },
     {
         icon: "🎯",
@@ -59,7 +59,7 @@ const HOW_IT_WORKS = [
         step: "2",
         icon: "🔗",
         title: "Connect Your Wallet",
-        desc: "Link your Solana wallet to ChainGuard. We verify your balance in real-time.",
+        desc: "Link your Solana wallet to Taranoid. We verify your balance in real-time.",
         color: "#818CF8",
     },
     {
@@ -91,7 +91,7 @@ export default function TokenInfoPage() {
                         <span className="font-bold text-[10px]">CG</span>
                     </div>
                     <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>
-                        ChainGuard
+                        Taranoid
                     </span>
                 </div>
             </nav>
@@ -120,14 +120,14 @@ export default function TokenInfoPage() {
                                 WebkitTextFillColor: "transparent",
                             }}
                         >
-                            ChainGuard Token
+                            Taranoid Token
                         </span>
                         <br />
                         <span style={{ color: "var(--cg-text)" }}>($CGT)</span>
                     </h1>
 
                     <p className="text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-                        The utility token powering the ChainGuard ecosystem.{" "}
+                        The utility token powering the Taranoid ecosystem.{" "}
                         <span style={{ color: "var(--cg-text)" }}>Hold to unlock premium access.</span>
                     </p>
 
@@ -197,7 +197,7 @@ export default function TokenInfoPage() {
                             </span>
                         </h2>
                         <p className="text-base" style={{ color: "var(--cg-text-muted)" }}>
-                            Real utility, real demand. Every feature on ChainGuard runs on $CGT.
+                            Real utility, real demand. Every feature on Taranoid runs on $CGT.
                         </p>
                     </div>
 
@@ -331,7 +331,7 @@ export default function TokenInfoPage() {
             {/* ── Footer ── */}
             <footer className="text-center py-10">
                 <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-                    © 2026 ChainGuard — $CGT is a utility token, not a financial instrument. DYOR.
+                    © 2026 Taranoid — $CGT is a utility token, not a financial instrument. DYOR.
                 </p>
             </footer>
         </main>

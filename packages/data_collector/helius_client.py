@@ -1,5 +1,5 @@
 """
-ChainGuard — Helius API Client
+Taranoid — Helius API Client
 
 Solana blockchain verilerini Helius API üzerinden toplar.
 Kullanılan endpointler:
@@ -49,7 +49,7 @@ class HeliusClient:
         client = await self._get_client()
         payload = {
             "jsonrpc": "2.0",
-            "id": "chainguard",
+            "id": "taranoid",
             "method": method,
             "params": params,
         }
@@ -139,7 +139,7 @@ class HeliusClient:
         client = await self._get_client()
         payload = {
             "jsonrpc": "2.0",
-            "id": "chainguard",
+            "id": "taranoid",
             "method": "getTokenLargestAccounts",
             "params": [mint],
         }
@@ -253,7 +253,7 @@ class HeliusClient:
         client = await self._get_client()
         payload = {
             "jsonrpc": "2.0",
-            "id": "chainguard",
+            "id": "taranoid",
             "method": "getTokenSupply",
             "params": [mint],
         }

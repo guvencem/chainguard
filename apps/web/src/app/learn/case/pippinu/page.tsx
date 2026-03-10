@@ -71,7 +71,7 @@ export default function PippinuCasePage() {
           </h1>
           <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
             380 sahte cüzdan, %97 kayıp, 72 saat. Gerçek bir rug pull'un adım adım anatomisi —
-            ChainGuard hangi sinyalleri, ne zaman tespit etti?
+            Taranoid hangi sinyalleri, ne zaman tespit etti?
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export default function PippinuCasePage() {
             <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#FB923C" }}>Vaka Özeti</p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center mb-4">
               {[
-                { label: "ChainGuard Skoru", value: "87", sub: "/ 100 risk", color: "#F87171" },
+                { label: "Taranoid Skoru", value: "87", sub: "/ 100 risk", color: "#F87171" },
                 { label: "Gerçek Holder", value: "~4", sub: "kişi tahmini", color: "#FBBF24" },
                 { label: "Sahte Cüzdan", value: "376+", sub: "kümelenmiş", color: "#FB923C" },
                 { label: "Kayıp", value: "%97", sub: "72 saatte", color: "#EF4444" },
@@ -154,10 +154,10 @@ export default function PippinuCasePage() {
             ]} />
           </Section>
 
-          {/* ChainGuard tespiti */}
-          <Section title="ChainGuard Metrikleri — Anlık Tablo">
+          {/* Taranoid tespiti */}
+          <Section title="Taranoid Metrikleri — Anlık Tablo">
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              Token açılışından 2 saat sonra ChainGuard tarafından analiz edildiğinde gösterilen metrikler:
+              Token açılışından 2 saat sonra Taranoid tarafından analiz edildiğinde gösterilen metrikler:
             </p>
             <div className="rounded-2xl overflow-hidden mb-5" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
               <div className="px-4 py-2.5" style={{ background: "rgba(255,255,255,0.03)" }}>
@@ -314,7 +314,7 @@ export default function PippinuCasePage() {
         <div className="mt-6 flex items-center justify-center gap-3">
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu vakayı paylaş:</span>
           <a
-            href={`https://t.me/share/url?url=${encodeURIComponent("https://chainguard-beryl.vercel.app/learn/case/pippinu")}&text=${encodeURIComponent("Gerçek bir rug pull'un anatomisi: PIPPINU nasıl %97 kaybettirdi?")}`}
+            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/case/pippinu")}&text=${encodeURIComponent("Gerçek bir rug pull'un anatomisi: PIPPINU nasıl %97 kaybettirdi?")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}
@@ -322,7 +322,7 @@ export default function PippinuCasePage() {
             Telegram'da Paylaş
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Gerçek bir rug pull'un blockchain analizi: PIPPINU vakası. 380 sahte cüzdan, %97 kayıp — ChainGuard bunu önceden gördü:")}&url=${encodeURIComponent("https://chainguard-beryl.vercel.app/learn/case/pippinu")}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Gerçek bir rug pull'un blockchain analizi: PIPPINU vakası. 380 sahte cüzdan, %97 kayıp — Taranoid bunu önceden gördü:")}&url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/case/pippinu")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}

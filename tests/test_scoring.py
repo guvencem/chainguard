@@ -1,5 +1,5 @@
 """
-ChainGuard — Skorlama Motoru Birim Testleri
+Taranoid — Skorlama Motoru Birim Testleri
 
 9 metrik + birleşik skor + Sprint 4 özellikleri (EVM chain detection, report generator).
 """

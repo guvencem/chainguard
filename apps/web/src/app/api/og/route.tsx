@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
           }}
         />
 
-        {/* ChainGuard branding — top left */}
+        {/* Taranoid branding — top left */}
         <div
           style={{
             position: "absolute",
@@ -139,11 +139,11 @@ export async function GET(req: NextRequest) {
             CG
           </div>
           <span style={{ color: "white", fontSize: 18, fontWeight: 800, letterSpacing: -0.5 }}>
-            ChainGuard
+            Taranoid
           </span>
         </div>
 
-        {/* chainguard.app — top right */}
+        {/* taranoid.app — top right */}
         <div
           style={{
             position: "absolute",
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
             fontWeight: 500,
           }}
         >
-          chainguard.app
+          taranoid.app
         </div>
 
         {/* Main content */}
@@ -279,7 +279,7 @@ export async function GET(req: NextRequest) {
               color: "rgba(255,255,255,0.25)",
               fontSize: 13,
             }}>
-              9 metrikle analiz edildi · chainguard.app/token/{address.slice(0, 8)}...
+              9 metrikle analiz edildi · taranoid.app/token/{address.slice(0, 8)}...
             </div>
           </div>
         </div>

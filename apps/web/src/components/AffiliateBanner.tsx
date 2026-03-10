@@ -15,7 +15,7 @@ const EXCHANGES = [
     tagline: "Dünyanın #1 Borsası",
     bonus: "%20 Fee İadesi",
     features: ["500+ kripto", "Düşük komisyon", "Türkçe destek"],
-    url: "https://www.binance.com/tr/register?ref=CHAINGUARD",
+    url: "https://www.binance.com/tr/register?ref=TARANOID",
     brand: "#F0B90B",
     brandDark: "#B8860B",
     initial: "B",
@@ -27,7 +27,7 @@ const EXCHANGES = [
     tagline: "Web3'ün En Büyük Gateway'i",
     bonus: "%20 Komisyon İadesi",
     features: ["350+ token", "Futures & Spot", "DeFi entegre"],
-    url: "https://www.okx.com/join/CHAINGUARD",
+    url: "https://www.okx.com/join/TARANOID",
     brand: "#00D4FF",
     brandDark: "#0099BB",
     initial: "O",
@@ -39,7 +39,7 @@ const EXCHANGES = [
     tagline: "Trader'ın Tercihi",
     bonus: "%30 Fee İadesi",
     features: ["Copy trading", "Launchpad erişim", "7/24 destek"],
-    url: "https://www.bybit.com/register?affiliate_id=CHAINGUARD",
+    url: "https://www.bybit.com/register?affiliate_id=TARANOID",
     brand: "#F7A600",
     brandDark: "#C47D00",
     initial: "By",
@@ -51,7 +51,7 @@ const EXCHANGES = [
     tagline: "En Fazla Token Seçeneği",
     bonus: "%40 Komisyon",
     features: ["1700+ token", "Erken listeleme", "Staking fırsatları"],
-    url: "https://www.gate.io/signup?ref=CHAINGUARD",
+    url: "https://www.gate.io/signup?ref=TARANOID",
     brand: "#2ECC71",
     brandDark: "#1A9951",
     initial: "G",
@@ -123,7 +123,7 @@ export default function AffiliateBanner({ tokenAddress, score = 0 }: AffiliateBa
               <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "13px", marginTop: "3px" }}>
                 {score >= 40
                   ? `Bu token ${Math.round(score)} risk skoru taşıyor — sermayeni güvende tut`
-                  : "ChainGuard partner borsalarla ayrıcalıklı komisyon iadesi"}
+                  : "Taranoid partner borsalarla ayrıcalıklı komisyon iadesi"}
               </p>
             </div>
           </div>

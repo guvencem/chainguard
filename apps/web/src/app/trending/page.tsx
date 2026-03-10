@@ -112,7 +112,7 @@ export default function TrendingPage() {
           >
             <ShieldIcon />
           </div>
-          <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>ChainGuard</span>
+          <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>Taranoid</span>
         </div>
       </nav>
 

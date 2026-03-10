@@ -16,10 +16,10 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const WEB_URL = "https://chainguard-beryl.vercel.app";
+const WEB_URL = "https://taranoid-beryl.vercel.app";
 
 export const metadata: Metadata = {
-  title: "ChainGuard — Solana Token Risk Analizi",
+  title: "Taranoid — Solana Token Risk Analizi",
   description:
     "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Wash trading, cüzdan kümeleme, Sybil attack ve manipülasyon tespiti.",
   keywords: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     "rug pull tespit",
     "wash trading",
     "kripto güvenlik",
-    "chainguard",
+    "taranoid",
     "solana scam",
     "cüzdan kümeleme",
     "sybil attack",
@@ -44,25 +44,25 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL(WEB_URL),
   openGraph: {
-    title: "ChainGuard — Solana Token Risk Analizi",
+    title: "Taranoid — Solana Token Risk Analizi",
     description:
       "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Manipülasyon tespiti.",
     type: "website",
     locale: "tr_TR",
     url: WEB_URL,
-    siteName: "ChainGuard",
+    siteName: "Taranoid",
     images: [
       {
         url: `${WEB_URL}/api/og`,
         width: 1200,
         height: 630,
-        alt: "ChainGuard — Solana Token Risk Analizi",
+        alt: "Taranoid — Solana Token Risk Analizi",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "ChainGuard — Solana Token Risk Analizi",
+    title: "Taranoid — Solana Token Risk Analizi",
     description: "Solana tokenlarını 9 metrikle analiz et. Rug pull'lardan korun.",
     images: [`${WEB_URL}/api/og`],
   },
@@ -83,7 +83,7 @@ export default function RootLayout({
   const schemaOrg = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "ChainGuard",
+    "name": "Taranoid",
     "applicationCategory": "FinanceApplication",
     "operatingSystem": "Web",
     "url": WEB_URL,

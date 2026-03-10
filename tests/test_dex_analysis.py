@@ -1,5 +1,5 @@
 """
-ChainGuard — Gerçek DEX Veri Analiz Testi
+Taranoid — Gerçek DEX Veri Analiz Testi
 
 DexScreener + Helius API ile gerçek zamanlı token analizi.
 Yaklaşık/sabit değerler yerine canlı piyasa verisi kullanır.
@@ -159,7 +159,7 @@ async def analyze_token(client, dex, token):
 
 async def main():
     print("=" * 65)
-    print("  ChainGuard - Gercek DEX Veri Analizi")
+    print("  Taranoid - Gercek DEX Veri Analizi")
     print(f"  Tarih: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  Helius: {'AKTIF' if HELIUS_KEY else 'YOK'}")
     print(f"  Veri Kaynagi: DexScreener + Jupiter + Solana RPC")

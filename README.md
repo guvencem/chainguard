@@ -1,4 +1,4 @@
-# ChainGuard
+# Taranoid
 
 **Solana, Base ve BSC token risk analiz platformu**
 
@@ -18,9 +18,9 @@ Token adresini gir — saniyeler içinde 9 metrikle risk skorunu al. Türkçe AI
 
 | Servis | Platform | URL |
 |--------|----------|-----|
-| Web | Vercel | https://chainguard-beryl.vercel.app |
+| Web | Vercel | https://taranoid-beryl.vercel.app |
 | API | Railway | https://web-production-b704c.up.railway.app |
-| Bot | Railway | @ChainGuardBot |
+| Bot | Railway | @TaranoidBot |
 
 ## Proje Yapısı
 
@@ -97,4 +97,4 @@ pytest tests/
 
 ## Lisans
 
-Tüm hakları saklıdır. © 2026 ChainGuard
+Tüm hakları saklıdır. © 2026 Taranoid

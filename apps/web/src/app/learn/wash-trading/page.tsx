@@ -47,7 +47,7 @@ export default function WashTradingPage() {
           </h1>
           <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
             Milyonlarca dolarlık "hacim" nasıl saatte yerden biter? Aynı paranın döngüde kullanılmasını ve
-            ChainGuard'ın bunu nasıl tespit ettiğini öğren.
+            Taranoid'ın bunu nasıl tespit ettiğini öğren.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function WashTradingPage() {
 
           <Section title="VLR — Hacim / Likidite Oranı">
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              ChainGuard'ın en önemli metrigi VLR (Volume/Liquidity Ratio), wash trading'i şu formülle yakalar:
+              Taranoid'ın en önemli metrigi VLR (Volume/Liquidity Ratio), wash trading'i şu formülle yakalar:
             </p>
             <CodeBlock>{`VLR = 24s Hacim ÷ Likidite Havuzu
 
@@ -140,7 +140,7 @@ export default function WashTradingPage() {
           </Section>
 
           <div className="p-5 rounded-2xl" style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.15)" }}>
-            <p className="text-sm font-bold mb-2" style={{ color: "#818CF8" }}>🛡️ ChainGuard Wash Trading Skoru</p>
+            <p className="text-sm font-bold mb-2" style={{ color: "#818CF8" }}>🛡️ Taranoid Wash Trading Skoru</p>
             <p className="text-sm leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
               VLR + döngü tespiti + unique cüzdan oranı birleştirilerek 0–100 arası wash trading skoru hesaplanır.
               Skor 60+'ı geçen tokenlarda anlamlı wash trading tespit edilmiş demektir.
@@ -156,7 +156,7 @@ export default function WashTradingPage() {
 
         <div className="mt-6 flex items-center justify-center gap-3">
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu dersi paylaş:</span>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://chainguard-beryl.vercel.app/learn/wash-trading")}&text=${encodeURIComponent("Wash trading nedir, nasıl tespit edilir? Türkçe açıklama:")}`}
+          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/wash-trading")}&text=${encodeURIComponent("Wash trading nedir, nasıl tespit edilir? Türkçe açıklama:")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}>
