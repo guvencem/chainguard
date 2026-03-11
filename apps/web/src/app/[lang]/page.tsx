@@ -406,13 +406,34 @@ export default function HomePage() {
             {t.footer.links.map((label, i) => {
               const href = FOOTER_HREFS[i];
               const isExternal = href?.startsWith("http");
-              const Tag = isExternal ? "a" : Link;
+
+              if (isExternal) {
+                return (
+                  <a
+                    key={label}
+                    href={href || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-bold transition-all"
+                    style={{ color: "var(--cg-text-muted)" }}
+                    onMouseEnter={(e: any) => {
+                      (e.currentTarget.style.color = "var(--cg-text)");
+                      (e.currentTarget.style.textShadow = "0 0 10px rgba(255,255,255,0.3)");
+                    }}
+                    onMouseLeave={(e: any) => {
+                      (e.currentTarget.style.color = "var(--cg-text-muted)");
+                      (e.currentTarget.style.textShadow = "none");
+                    }}
+                  >
+                    {label}
+                  </a>
+                )
+              }
+
               return (
-                <Tag
+                <Link
                   key={label}
                   href={href || "#"}
-                  target={isExternal ? "_blank" : undefined}
-                  rel={isExternal ? "noopener noreferrer" : undefined}
                   className="text-sm font-bold transition-all"
                   style={{ color: "var(--cg-text-muted)" }}
                   onMouseEnter={(e: any) => {
@@ -425,7 +446,7 @@ export default function HomePage() {
                   }}
                 >
                   {label}
-                </Tag>
+                </Link>
               )
             })}
           </div>

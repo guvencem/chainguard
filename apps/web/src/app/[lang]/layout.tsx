@@ -147,7 +147,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang={lang}>
+    <html lang={lang} suppressHydrationWarning>
       <head>
         {/* ── Anti-flash: theme applied before React hydration ── */}
         <script
@@ -160,7 +160,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         />
       </head>
-      <body className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`}>
+      <body className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`} suppressHydrationWarning>
         {/* Hero gradient */}
         <div
           className="fixed inset-0 -z-10 pointer-events-none"
