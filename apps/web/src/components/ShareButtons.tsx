@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useParams } from "next/navigation"
 
 interface ShareButtonsProps {
   tokenAddress: string
@@ -8,7 +9,7 @@ interface ShareButtonsProps {
   score: number
 }
 
-const WEB_URL = "https://taranoid-beryl.vercel.app"
+const WEB_URL = "https://taranoid.app"
 
 function XIcon() {
   return (
@@ -47,7 +48,10 @@ export default function ShareButtons({ tokenAddress, tokenSymbol, score }: Share
   const [copied, setCopied] = useState(false)
   const [hovered, setHovered] = useState<string | null>(null)
 
-  const pageUrl = `${WEB_URL}/token/${tokenAddress}`
+  const params = useParams()
+  const langStr = params?.lang || "tr"
+
+  const pageUrl = `${WEB_URL}/${langStr}/token/${tokenAddress}`
   const sym = tokenSymbol ? `$${tokenSymbol}` : "Token"
   const scoreText = `${sym} risk skoru: ${Math.round(score)}/100 ${score >= 60 ? "⚠️ Yüksek risk!" : "✅ Düşük risk"} — Taranoid analizi`
 
@@ -59,7 +63,7 @@ export default function ShareButtons({ tokenAddress, tokenSymbol, score }: Share
       await navigator.clipboard.writeText(pageUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2200)
-    } catch {}
+    } catch { }
   }, [pageUrl])
 
   const base: React.CSSProperties = {
