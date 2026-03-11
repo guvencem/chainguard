@@ -76,16 +76,11 @@ app = FastAPI(
 )
 
 # CORS — deploy'da CORS_ORIGINS env ile ayarlanır
-_default_origins = (
-    "http://localhost:3000,"
-    "https://taranoid.com,"
-    "https://www.taranoid.com,"
-    "https://taranoid-beryl.vercel.app,"
-    "https://app.taranoid.com"
-)
-_cors_raw = os.getenv("CORS_ORIGINS", _default_origins)
+_default_origins_str = "http://localhost:3000,https://taranoid.com,https://www.taranoid.com,https://taranoid-beryl.vercel.app,https://app.taranoid.com,https://www.taranoid.app"
+_cors_raw = os.getenv("CORS_ORIGINS", "")
+_cors_combined = _default_origins_str + "," + _cors_raw
 # Vercel preview URL'leri için wildcard pattern desteği
-_cors_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+_cors_origins = list(set([o.strip() for o in _cors_combined.split(",") if o.strip()]))
 
 app.add_middleware(
     CORSMiddleware,
