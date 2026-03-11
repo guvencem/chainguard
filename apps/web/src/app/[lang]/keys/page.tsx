@@ -40,12 +40,10 @@ export default function KeysPage() {
 
     return (
         <main className="min-h-screen grid-bg relative overflow-x-hidden pt-16">
-            <head>
-                <script
-                    type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-                />
-            </head>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+            />
             <div className="mesh-bg opacity-30 fixed inset-0 pointer-events-none -z-10" />
             <Navbar />
 

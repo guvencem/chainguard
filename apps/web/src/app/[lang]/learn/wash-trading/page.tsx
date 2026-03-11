@@ -1,15 +1,15 @@
 import Link from "next/link";
 import LessonNav from "@/components/learn/LessonNav";
 import { Metadata } from "next";
+import { getT, Lang } from "@/lib/i18n";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const isTr = resolvedParams.lang === "tr";
+  const lang = resolvedParams.lang as Lang;
+  const t = getT(lang).learn_wash_trading;
   return {
-    title: isTr ? "Wash Trading Nedir, Nasıl Tespit Edilir? | Taranoid" : "What is Wash Trading and How to Detect it? | Taranoid",
-    description: isTr
-      ? "Solana ve kripto paralar üzerinde wash trading nasıl yapılır? Taranoid'ın VLR (Volume/Liquidity Ratio) ve döngüsel hacim tespiti algoritmalarını öğrenin."
-      : "How is wash trading done on Solana and crypto tokens? Learn about Taranoid's VLR (Volume/Liquidity Ratio) and cyclical volume detection algorithms.",
+    title: t.meta_title,
+    description: t.meta_desc,
   };
 }
 
@@ -33,14 +33,14 @@ function CodeBlock({ children }: { children: string }) {
 
 export default async function WashTradingPage({ params }: { params: Promise<{ lang: string }> }) {
   const resolvedParams = await params;
-  const lang = resolvedParams.lang;
-  const isTr = lang === "tr";
+  const lang = resolvedParams.lang as Lang;
+  const t = getT(lang).learn_wash_trading;
   const WEB_URL = "https://taranoid.app";
 
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": isTr ? "Wash Trading Nedir, Nasıl Tespit Edilir?" : "What is Wash Trading and How to Detect it?",
+    "headline": t.meta_title,
     "image": `${WEB_URL}/api/og`,
     "author": {
       "@type": "Organization",
@@ -61,12 +61,10 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
 
   return (
     <main className="min-h-screen grid-bg">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-        />
-      </head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <div className="fixed inset-0 pointer-events-none -z-10"
         style={{ background: "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(239,68,68,0.08) 0%, transparent 70%)" }}
       />
@@ -79,49 +77,42 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
         <div className="mb-10 animate-slide-up">
           <div className="flex items-center gap-2 mb-4">
             <span className="metric-badge" style={{ background: "rgba(248,113,113,0.1)", color: "#F87171", border: "1px solid rgba(248,113,113,0.2)" }}>
-              Ders 2
+              {getT(lang).learn.lessons[1].tag}
             </span>
-            <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>6 dk okuma</span>
+            <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>{t.read_time}</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight mb-4" style={{ color: "var(--cg-text)" }}>
-            🔄 Wash Trading Tespiti
+            {t.h1}
           </h1>
           <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-            Milyonlarca dolarlık "hacim" nasıl saatte yerden biter? Aynı paranın döngüde kullanılmasını ve
-            Taranoid'ın bunu nasıl tespit ettiğini öğren.
+            {t.intro}
           </p>
         </div>
 
         <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
 
-          <Section title="Wash Trading Nedir?">
+          <Section title={t.sections.what_is_it.title}>
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              Wash trading, aynı kişi veya koordineli bir grubun kendi kendine alım-satım yaparak yapay hacim
-              oluşturmasıdır. A cüzdanı B'ye satar, B cüzdanı C'ye, C cüzdanı tekrar A'ya. Sonuç: 3 işlem,
-              ama gerçekte hiçbir para el değiştirmemiş.
+              {t.sections.what_is_it.p1}
             </p>
             <div className="p-5 rounded-2xl mb-4" style={{ background: "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.15)" }}>
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#F87171" }}>Döngü Örneği</p>
+              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#F87171" }}>{t.sections.what_is_it.example_title}</p>
               <div className="flex items-center justify-center gap-2 text-sm font-mono flex-wrap" style={{ color: "var(--cg-text-muted)" }}>
-                {["Cüzdan A", "→", "Cüzdan B", "→", "Cüzdan C", "→", "Cüzdan A"].map((s, i) => (
-                  <span key={i} style={{ color: s === "→" ? "rgba(248,113,113,0.5)" : s === "Cüzdan A" ? "#F87171" : "var(--cg-text-muted)" }}>
+                {t.sections.what_is_it.example_flow.map((s, i) => (
+                  <span key={i} style={{ color: s === "→" ? "rgba(248,113,113,0.5)" : i === 0 || i === t.sections.what_is_it.example_flow.length - 1 ? "#F87171" : "var(--cg-text-muted)" }}>
                     {s}
                   </span>
                 ))}
               </div>
               <p className="text-xs mt-3 text-center" style={{ color: "var(--cg-text-dim)" }}>
-                Blockchain'de 3 işlem görünür → Borsa "yüksek hacim" gösterir → Yatırımcı ilgi duyar
+                {t.sections.what_is_it.example_caption}
               </p>
             </div>
           </Section>
 
-          <Section title="Neden Yapılır?">
+          <Section title={t.sections.why_do_it.title}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              {[
-                { icon: "📈", title: "Algı Yaratmak", desc: "Yüksek hacim = popüler token algısı. CoinGecko/DEXScreener'da üst sıralara çıkmak." },
-                { icon: "🎯", title: "FOMO Yaratmak", desc: "$5M günlük hacim gören yatırımcı 'kaçırmayayım' diye alım yapar." },
-                { icon: "💰", title: "Pump Hazırlığı", desc: "Sahte aktivite oluşturduktan sonra tokenı dump etmek için zemin hazırlamak." },
-              ].map((item) => (
+              {t.sections.why_do_it.items.map((item) => (
                 <div key={item.title} className="p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <div className="text-2xl mb-2">{item.icon}</div>
                   <p className="text-sm font-bold mb-1" style={{ color: "var(--cg-text)" }}>{item.title}</p>
@@ -131,27 +122,13 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
             </div>
           </Section>
 
-          <Section title="VLR — Hacim / Likidite Oranı">
+          <Section title={t.sections.vlr.title}>
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              Taranoid'ın en önemli metrigi VLR (Volume/Liquidity Ratio), wash trading'i şu formülle yakalar:
+              {t.sections.vlr.p1}
             </p>
-            <CodeBlock>{`VLR = 24s Hacim ÷ Likidite Havuzu
-
-Örnek 1 (Normal):
-  Hacim: $500K    Likidite: $200K    VLR = 2.5x ✅
-
-Örnek 2 (Şüpheli):
-  Hacim: $8M      Likidite: $80K     VLR = 100x ⚠️
-
-Örnek 3 (Kritik):
-  Hacim: $50M     Likidite: $50K     VLR = 1000x 🚨`}</CodeBlock>
+            <CodeBlock>{t.sections.vlr.code}</CodeBlock>
             <div className="space-y-2 mb-4">
-              {[
-                { range: "VLR < 10x", label: "Normal", color: "#34D399" },
-                { range: "VLR 10–50x", label: "Şüpheli", color: "#FBBF24" },
-                { range: "VLR 50–200x", label: "Yüksek Risk", color: "#FB923C" },
-                { range: "VLR > 200x", label: "Neredeyse Kesin Wash", color: "#F87171" },
-              ].map((row) => (
+              {t.sections.vlr.ranges.map((row) => (
                 <div key={row.range} className="flex items-center justify-between px-4 py-2.5 rounded-xl"
                   style={{ background: `${row.color}08`, border: `1px solid ${row.color}15` }}>
                   <span className="text-xs font-mono font-bold" style={{ color: row.color }}>{row.range}</span>
@@ -161,19 +138,14 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
             </div>
           </Section>
 
-          <Section title="Diğer Tespit Sinyalleri">
+          <Section title={t.sections.other_signals.title}>
             <div className="space-y-3">
-              {[
-                { icon: "⏱️", title: "30 Saniyede Geri-İleri", desc: "Aynı iki cüzdan arasında 30 saniyeden kısa aralıklarla yapılan çok sayıda işlem. İnsan davranışı değil." },
-                { icon: "💯", title: "Aynı Miktar ±%5", desc: "100 SOL → 100.3 SOL → 99.8 SOL şeklinde dönen para. Tolerans eklenerek 'gerçekmiş gibi' gösterilir." },
-                { icon: "🌙", title: "Gece Saati Aktivitesi", detail: "Türkiye saatiyle 03:00–06:00 arası anormal yüksek hacim. Bot çalışıyor, insan uyuyor." },
-                { icon: "👻", title: "Az Unique Cüzdan", desc: "10.000 işlem ama sadece 15 farklı cüzdan. Gerçek piyasada yüzlerce farklı alıcı olur." },
-              ].map((s) => (
+              {t.sections.other_signals.items.map((s) => (
                 <div key={s.title} className="flex gap-4 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <span className="text-lg flex-shrink-0">{s.icon}</span>
                   <div>
                     <p className="text-sm font-bold mb-1" style={{ color: "var(--cg-text)" }}>{s.title}</p>
-                    <p className="text-xs leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>{(s as any).desc || (s as any).detail}</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>{s.desc}</p>
                   </div>
                 </div>
               ))}
@@ -181,27 +153,26 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
           </Section>
 
           <div className="p-5 rounded-2xl" style={{ background: "rgba(129,140,248,0.06)", border: "1px solid rgba(129,140,248,0.15)" }}>
-            <p className="text-sm font-bold mb-2" style={{ color: "#818CF8" }}>🛡️ Taranoid Wash Trading Skoru</p>
+            <p className="text-sm font-bold mb-2" style={{ color: "#818CF8" }}>{t.score_box.title}</p>
             <p className="text-sm leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-              VLR + döngü tespiti + unique cüzdan oranı birleştirilerek 0–100 arası wash trading skoru hesaplanır.
-              Skor 60+'ı geçen tokenlarda anlamlı wash trading tespit edilmiş demektir.
+              {t.score_box.desc}
             </p>
           </div>
         </div>
 
         <div className="mt-10 p-6 rounded-2xl text-center animate-slide-up" style={{ animationDelay: "0.15s", background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.12)" }}>
-          <p className="text-base font-bold mb-2" style={{ color: "var(--cg-text)" }}>Şüpheli bir token gördün mü?</p>
-          <p className="text-sm mb-4" style={{ color: "var(--cg-text-muted)" }}>Adresi gir, VLR ve wash trading skorunu anında gör.</p>
-          <Link href={`/${lang}`} className="cta-button px-8 py-3 text-sm inline-block">Token Analiz Et</Link>
+          <p className="text-base font-bold mb-2" style={{ color: "var(--cg-text)" }}>{t.cta.title}</p>
+          <p className="text-sm mb-4" style={{ color: "var(--cg-text-muted)" }}>{t.cta.desc}</p>
+          <Link href={`/${lang}`} className="cta-button px-8 py-3 text-sm inline-block">{t.cta.btn}</Link>
         </div>
 
         <div className="mt-6 flex items-center justify-center gap-3">
-          <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu dersi paylaş:</span>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/learn/wash-trading")}&text=${encodeURIComponent("Wash trading nedir, nasıl tespit edilir? Türkçe açıklama:")}`}
+          <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>{t.share}</span>
+          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/" + lang + "/learn/wash-trading")}&text=${encodeURIComponent(t.meta_title)}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}>
-            Telegram'da Paylaş
+            {t.share_btn}
           </a>
         </div>
       </article>

@@ -133,12 +133,10 @@ export default function TrendingPage() {
   return (
     <main className="min-h-screen grid-bg relative overflow-x-hidden pt-16">
       {schemaOrg && (
-        <head>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
-          />
-        </head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
+        />
       )}
       <div className="mesh-bg opacity-30" />
       <Navbar />

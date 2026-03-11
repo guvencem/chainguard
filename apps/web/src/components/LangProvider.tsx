@@ -25,38 +25,33 @@ const LangContext = createContext<LangContextValue>({
 })
 
 export function LangProvider({ children, initialLang = defaultLang }: { children: ReactNode; initialLang?: Lang }) {
-  const [lang, setLangState] = useState<Lang>(initialLang)
-
-  // Hydrate from localStorage on mount ONLY if it overrides the URL (advanced sync)
+  // Sync URL-driven language to localStorage/cookie for middleware to use on next direct visit
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY) as Lang | null
-      if (stored && stored !== initialLang && (stored === "tr" || stored === "en")) {
-        // We only enforce localStorage if they navigate without middleware catching it, 
-        // but generally middleware handles the cookie.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLangState(stored)
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored !== initialLang) {
+        localStorage.setItem(STORAGE_KEY, initialLang)
+        document.cookie = `${STORAGE_KEY}=${initialLang}; path=/; max-age=31536000; SameSite=Lax`
       }
     } catch {
-      // localStorage unavailable (SSR safety)
+      // ignore
     }
   }, [initialLang])
 
+  // setLang now just sets storage and handles route push.
+  // We don't use React state because the URL is the source of truth for Next.js App Router i18n.
+  // Any UI change will happen via Next.js navigation to the new /[lang] path.
   const setLang = useCallback((next: Lang) => {
-    setLangState(next)
     try {
       localStorage.setItem(STORAGE_KEY, next)
-      // Also set a cookie so the server can read it if needed
       document.cookie = `${STORAGE_KEY}=${next}; path=/; max-age=31536000; SameSite=Lax`
-    } catch {
-      // Ignore storage errors
-    }
+    } catch { }
   }, [])
 
-  const t = getT(lang)
+  const t = getT(initialLang)
 
   return (
-    <LangContext.Provider value={{ lang, setLang, t }}>
+    <LangContext.Provider value={{ lang: initialLang, setLang, t }}>
       {children}
     </LangContext.Provider>
   )

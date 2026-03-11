@@ -1,15 +1,15 @@
 import Link from "next/link";
 import LessonNav from "@/components/learn/LessonNav";
 import { Metadata } from "next";
+import { getT, Lang } from "@/lib/i18n";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const isTr = resolvedParams.lang === "tr";
+  const lang = resolvedParams.lang as Lang;
+  const t = getT(lang).learn_memecoin_101;
   return {
-    title: isTr ? "Memecoin 101: Rug Pull Nedir, Nasıl Çalışır? | Taranoid" : "Memecoin 101: What is a Rug Pull and How it Works | Taranoid",
-    description: isTr
-      ? "Memecoin nedir ve rug pull dolandırıcılığı nasıl yapılır? Pump.fun üzerindeki sahte projelere karşı Taranoid risk metriklerini öğren."
-      : "What is a memecoin and how do rug pull scams work? Learn to avoid Pump.fun scams using Taranoid's AI risk metrics.",
+    title: t.meta_title,
+    description: t.meta_desc,
   };
 }
 
@@ -52,14 +52,14 @@ function SignalList({ items, color }: { items: { signal: string; detail: string 
 
 export default async function Memecoin101Page({ params }: { params: Promise<{ lang: string }> }) {
   const resolvedParams = await params;
-  const lang = resolvedParams.lang;
-  const isTr = lang === "tr";
+  const lang = resolvedParams.lang as Lang;
+  const t = getT(lang).learn_memecoin_101;
   const WEB_URL = "https://taranoid.app";
 
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": isTr ? "Memecoin 101: Rug Pull Nedir, Nasıl Çalışır?" : "Memecoin 101: What is a Rug Pull and How it Works",
+    "headline": t.meta_title,
     "image": `${WEB_URL}/api/og`,
     "author": {
       "@type": "Organization",
@@ -80,12 +80,10 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
 
   return (
     <main className="min-h-screen grid-bg">
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-        />
-      </head>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <div className="fixed inset-0 pointer-events-none -z-10"
         style={{ background: "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(99,102,241,0.1) 0%, transparent 70%)" }}
       />
@@ -98,32 +96,27 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
         <div className="mb-10 animate-slide-up">
           <div className="flex items-center gap-2 mb-4">
             <span className="metric-badge" style={{ background: "rgba(129,140,248,0.1)", color: "#818CF8", border: "1px solid rgba(129,140,248,0.2)" }}>
-              Ders 1
+              {getT(lang).learn.lessons[0].tag}
             </span>
-            <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>8 dk okuma</span>
+            <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>{t.read_time}</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight mb-4" style={{ color: "var(--cg-text)" }}>
-            🎓 Memecoin 101
+            {t.h1}
           </h1>
           <p className="text-lg leading-relaxed" style={{ color: "var(--cg-text-muted)" }}>
-            Memecoin nedir, nasıl çalışır ve insanlar neden kaybeder? Bu derste rug pull mekanizmasını ve tehlike sinyallerini öğreneceksin.
+            {t.intro}
           </p>
         </div>
 
         {/* İçerik */}
         <div className="animate-slide-up" style={{ animationDelay: "0.05s" }}>
 
-          <Section title="Memecoin Nedir?">
+          <Section title={t.sections.what_is_it.title}>
             <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--cg-text-muted)" }}>
-              Memecoin, genellikle internet meme'lerine veya viral içeriklere dayanan kripto para birimidir.
-              DOGE, SHIB, PEPE bunların en tanınmış örnekleri. Ancak günde yüzlerce yeni memecoin piyasaya çıkıyor
-              ve çoğu dolandırıcılık amacıyla tasarlanmış.
+              {t.sections.what_is_it.p1}
             </p>
             <div className="grid grid-cols-2 gap-3 mb-4">
-              {[
-                { label: "Meşru Memecoin", items: ["Gerçek topluluk desteği", "Şeffaf geliştirici", "Büyük borsalarda listelendi", "Uzun süredir var"], color: "#34D399" },
-                { label: "Sahte Memecoin", items: ["Anonim ekip", "Hızlı pump & dump", "Sosyal medya botu ordusu", "Kısa ömürlü"], color: "#F87171" },
-              ].map((box) => (
+              {t.sections.what_is_it.cards.map((box) => (
                 <div key={box.label} className="p-4 rounded-xl" style={{ background: `${box.color}08`, border: `1px solid ${box.color}15` }}>
                   <p className="text-xs font-bold mb-3" style={{ color: box.color }}>{box.label}</p>
                   {box.items.map((item) => (
@@ -136,18 +129,12 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
             </div>
           </Section>
 
-          <Section title="Rug Pull Nasıl Çalışır?">
+          <Section title={t.sections.how_it_works.title}>
             <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--cg-text-muted)" }}>
-              Rug pull, geliştiricilerin yatırımcıların parasını alıp kaçmasıdır. Tipik senaryo:
+              {t.sections.how_it_works.p1}
             </p>
             <div className="space-y-3 mb-4">
-              {[
-                { step: "1", title: "Token Oluştur", desc: "Pump.fun'da 2-3 dakikada token açılır. Maliyet: ~0.02 SOL. Toplam arz birkaç kişinin elinde.", color: "#818CF8" },
-                { step: "2", title: "Sahte Topluluk Kur", desc: "Telegram/Discord grubu açılır. Bot hesaplarla şişirilir. 'Büyük proje' izlenimi yaratılır.", color: "#FBBF24" },
-                { step: "3", title: "Holder Sayısını Şişir", desc: "Aynı kişiye ait yüzlerce cüzdan token alır. 'Binlerce holder var' algısı oluşturulur.", color: "#FB923C" },
-                { step: "4", title: "Pump Yap", desc: "Koordineli alımlarla fiyat yapay olarak yükselir. Sosyal medyada '100x fırsat' paylaşımları yapılır.", color: "#F87171" },
-                { step: "5", title: "Dump Et & Kaç", desc: "Geliştirici tüm tokenlarını satar. Fiyat %90-99 düşer. Proje terk edilir.", color: "#EF4444" },
-              ].map((s) => (
+              {t.sections.how_it_works.steps.map((s) => (
                 <div key={s.step} className="flex gap-4 p-4 rounded-xl" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0"
                     style={{ background: `${s.color}15`, color: s.color }}>
@@ -162,57 +149,49 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
             </div>
           </Section>
 
-          <Section title="Tehlike Sinyalleri">
-            <SignalList color="#F87171" items={[
-              { signal: "🔴 Anonim geliştirici", detail: "Kim olduğunu bilmediğin birine para veriyorsun. Doğrulanmış kimlik yoksa risk çok yüksek." },
-              { signal: "⚠️ Az holder, yüksek yoğunlaşma", detail: "100'den az holder veya top 10 cüzdanın supply'ın %80+'ını tutması — satış anında fiyat çöker." },
-              { signal: "🚨 Çok hızlı yükseliş", detail: "Token açılışından itibaren dakikalar içinde %1000+ yükseliş. Gerçek değil, koordineli pump." },
-              { signal: "🤖 Bot aktivitesi", detail: "Telegram'da sürekli aynı mesajları atan hesaplar, Twitter'da anlamsız RT şişirmesi." },
-              { signal: "🔒 Kilitli likidite yok", detail: "Likidite kilitlenmemişse geliştirici dilediği zaman havuzu boşaltabilir." },
-            ]} />
+          <Section title={t.sections.red_flags.title}>
+            <SignalList color="#F87171" items={[...t.sections.red_flags.items]} />
           </Section>
 
-          <InfoBox color="#34D399" icon="✅" title="Altın Kural">
-            FOMO (kaçırma korkusu) ile alım yapma. Eğer bir token sana '10 dakikada 10x' vaat ediyorsa, büyük ihtimalle
-            sen zaten onların çıkış likiditesisin.
+          <InfoBox color="#34D399" icon="✅" title={t.info_boxes.golden_rule.title}>
+            {t.info_boxes.golden_rule.desc}
           </InfoBox>
 
-          <InfoBox color="#818CF8" icon="🛡️" title="Taranoid Ne Yapar?">
-            Bir token adresini girerek VLR (wash trading), cüzdan kümeleme (sahte holder), Sybil attack ve 6 metrik
-            daha ile saniyeler içinde risk skoru alabilirsin. 0 = güvenli, 100 = kritik risk.
+          <InfoBox color="#818CF8" icon="🛡️" title={t.info_boxes.what_taranoid_does.title}>
+            {t.info_boxes.what_taranoid_does.desc}
           </InfoBox>
 
         </div>
 
         {/* CTA */}
         <div className="mt-10 p-6 rounded-2xl text-center animate-slide-up" style={{ animationDelay: "0.15s", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
-          <p className="text-base font-bold mb-2" style={{ color: "var(--cg-text)" }}>Öğrendiklerini test et</p>
+          <p className="text-base font-bold mb-2" style={{ color: "var(--cg-text)" }}>{t.cta.title}</p>
           <p className="text-sm mb-4" style={{ color: "var(--cg-text-muted)" }}>
-            Merak ettiğin bir tokenı analiz et ve risk skorunu gör.
+            {t.cta.desc}
           </p>
           <Link href={`/${lang}`} className="cta-button px-8 py-3 text-sm inline-block">
-            Token Analiz Et
+            {t.cta.btn}
           </Link>
         </div>
 
         {/* Paylaş */}
         <div className="mt-6 flex items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "0.18s" }}>
-          <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu dersi paylaş:</span>
+          <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>{t.share}</span>
           <a
-            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/learn/memecoin-101")}&text=${encodeURIComponent("Memecoin dolandırıcılıklarını öğrenmek isteyenlere: Taranoid Eğitim Merkezi")}`}
+            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/" + lang + "/learn/memecoin-101")}&text=${encodeURIComponent(t.meta_title)}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}
           >
-            Telegram'da Paylaş
+            {t.share_telegram}
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Memecoin rug pull'ları nasıl çalışır? @taranoidapp Türkçe eğitim:")}&url=${encodeURIComponent("https://taranoid.app/learn/memecoin-101")}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(t.meta_title)}&url=${encodeURIComponent("https://taranoid.app/" + lang + "/learn/memecoin-101")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}
           >
-            X'te Paylaş
+            {t.share_x}
           </a>
         </div>
       </article>
