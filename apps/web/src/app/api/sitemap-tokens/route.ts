@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-    const WEB_URL = "https://taranoid.app";
+    const WEB_URL = "https://taranoid.com";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     let validTokens: string[] = [];

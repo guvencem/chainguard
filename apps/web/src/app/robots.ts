@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const WEB_URL = "https://taranoid.app"; // Update this to production domain when ready
+const WEB_URL = "https://taranoid.com"; // Update this to production domain when ready
 
 export default function robots(): MetadataRoute.Robots {
   return {

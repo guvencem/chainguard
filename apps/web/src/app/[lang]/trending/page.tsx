@@ -125,7 +125,7 @@ export default function TrendingPage() {
     "itemListElement": tokens.map((t, i) => ({
       "@type": "ListItem",
       "position": i + 1,
-      "url": `https://taranoid.app/en/token/${t.token_address}`,
+      "url": `https://taranoid.com/en/token/${t.token_address}`,
       "name": t.name || t.symbol || "Token"
     }))
   } : null;

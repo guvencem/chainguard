@@ -539,7 +539,7 @@ export default function TokenPage() {
           <button
             onClick={() => {
               const langStr = params.lang || "en";
-              const code = `<iframe src="https://taranoid.app/${langStr}/embed/${address}" width="300" height="140" style="border:none;border-radius:16px;overflow:hidden;"></iframe>`;
+              const code = `<iframe src="https://taranoid.com/${langStr}/embed/${address}" width="300" height="140" style="border:none;border-radius:16px;overflow:hidden;"></iframe>`;
               navigator.clipboard.writeText(code);
               alert("🚀 Widget kodu panoya kopyalandı! Kendi sitenize ekleyebilirsiniz.");
             }}

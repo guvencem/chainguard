@@ -20,7 +20,7 @@ const jetbrains = JetBrains_Mono({
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
 });
 
-const WEB_URL = "https://taranoid.app";
+const WEB_URL = "https://taranoid.com";
 
 export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
   const resolvedParams = await params;

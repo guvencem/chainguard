@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://web-production-b704c.up.railway.app";
-const WEB_URL = "https://taranoid.app";
+const WEB_URL = "https://taranoid.com";
 
 async function getAnalysis(address: string): Promise<TokenAnalysis | null> {
     try {

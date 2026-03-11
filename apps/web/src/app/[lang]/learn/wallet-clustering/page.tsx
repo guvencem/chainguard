@@ -26,7 +26,7 @@ export default async function WalletClusteringPage({ params }: { params: Promise
   const resolvedParams = await params;
   const lang = resolvedParams.lang as Lang;
   const t = getT(lang).learn_wallet_clustering;
-  const WEB_URL = "https://taranoid.app";
+  const WEB_URL = "https://taranoid.com";
 
   const articleSchema = {
     "@context": "https://schema.org",

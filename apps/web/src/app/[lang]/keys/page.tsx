@@ -12,7 +12,7 @@ export default function KeysPage() {
         "@context": "https://schema.org",
         "@type": "Product",
         "name": "Taranoid API Access",
-        "image": "https://taranoid.app/api/og",
+        "image": "https://taranoid.com/api/og",
         "description": "Taranoid'i kendi botlarınıza, dApp'lerinize ve sistemlerinize entegre edin. Solana token risk analizini otomatikleştirin.",
         "brand": {
             "@type": "Brand",
@@ -22,7 +22,7 @@ export default function KeysPage() {
             {
                 "@type": "Offer",
                 "name": "Trader Plan",
-                "url": "https://taranoid.app/tr/keys",
+                "url": "https://taranoid.com/tr/keys",
                 "priceCurrency": "USD",
                 "price": "29",
                 "availability": "https://schema.org/InStock"
@@ -30,7 +30,7 @@ export default function KeysPage() {
             {
                 "@type": "Offer",
                 "name": "Pro Plan",
-                "url": "https://taranoid.app/tr/keys",
+                "url": "https://taranoid.com/tr/keys",
                 "priceCurrency": "USD",
                 "price": "99",
                 "availability": "https://schema.org/InStock"
@@ -130,7 +130,7 @@ export default function KeysPage() {
                                     Base Endpoint
                                 </p>
                                 <code className="block px-5 py-4 rounded-xl text-sm md:text-base font-mono font-bold" style={{ background: "rgba(0,0,0,0.4)", color: "#34D399", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)" }}>
-                                    https://taranoid.app/api
+                                    https://taranoid.com/api
                                 </code>
                             </div>
 
@@ -161,7 +161,7 @@ export default function KeysPage() {
                             className="text-xs md:text-sm overflow-x-auto leading-relaxed"
                             style={{ background: "rgba(0,0,0,0.4)", color: "#34D399", padding: "1.25rem", borderRadius: "1rem", border: "1px solid rgba(255,255,255,0.05)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)" }}
                         >{`curl -H "X-CG-API-Key: cg_live_..." \\
-https://taranoid.app/api/v1/token/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263`}</pre>
+https://taranoid.com/api/v1/token/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263`}</pre>
 
                         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -175,7 +175,7 @@ https://taranoid.app/api/v1/token/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263`}
 
 headers = {"X-CG-API-Key": "cg_live_..."}
 r = httpx.get(
-    "https://taranoid.app/api/v1/token/ADRES",
+  "https://taranoid.com/api/v1/token/ADRES",
     headers=headers
 )
 print(r.json()["score"]["total"])`}</pre>

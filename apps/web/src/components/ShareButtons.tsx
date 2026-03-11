@@ -9,7 +9,7 @@ interface ShareButtonsProps {
   score: number
 }
 
-const WEB_URL = "https://taranoid.app"
+const WEB_URL = "https://taranoid.com"
 
 function XIcon() {
   return (

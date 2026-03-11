@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
           </span>
         </div>
 
-        {/* taranoid.app — top right */}
+        {/* taranoid.com — top right */}
         <div
           style={{
             position: "absolute",
@@ -154,7 +154,7 @@ export async function GET(req: NextRequest) {
             fontWeight: 500,
           }}
         >
-          taranoid.app
+          taranoid.com
         </div>
 
         {/* Main content */}
@@ -279,7 +279,7 @@ export async function GET(req: NextRequest) {
               color: "rgba(255,255,255,0.25)",
               fontSize: 13,
             }}>
-              9 metrikle analiz edildi · taranoid.app/token/{address.slice(0, 8)}...
+              9 metrikle analiz edildi · taranoid.com/token/{address.slice(0, 8)}...
             </div>
           </div>
         </div>

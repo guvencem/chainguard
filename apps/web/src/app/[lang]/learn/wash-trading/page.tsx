@@ -35,7 +35,7 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
   const resolvedParams = await params;
   const lang = resolvedParams.lang as Lang;
   const t = getT(lang).learn_wash_trading;
-  const WEB_URL = "https://taranoid.app";
+  const WEB_URL = "https://taranoid.com";
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -168,7 +168,7 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
 
         <div className="mt-6 flex items-center justify-center gap-3">
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>{t.share}</span>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/" + lang + "/learn/wash-trading")}&text=${encodeURIComponent(t.meta_title)}`}
+          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.com/" + lang + "/learn/wash-trading")}&text=${encodeURIComponent(t.meta_title)}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}>

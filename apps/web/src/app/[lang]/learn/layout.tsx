@@ -34,7 +34,7 @@ export default async function LearnLayout({ children, params }: { children: Reac
   const resolvedParams = await params;
   const lang = resolvedParams.lang;
   const isTr = lang === "tr";
-  const WEB_URL = "https://taranoid.app";
+  const WEB_URL = "https://taranoid.com";
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",

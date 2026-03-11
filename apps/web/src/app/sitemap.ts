@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const WEB_URL = "https://taranoid.app";
+const WEB_URL = "https://taranoid.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   // Define standard routes

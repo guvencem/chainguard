@@ -41,7 +41,7 @@ export async function generateMetadata(
     ? `${address} adresli ${tokenName} tokeninin Taranoid yapay zeka analiz raporu. Wash trading, Sybil attack ve rug pull test sonuçlarını inceleyin.`
     : `Taranoid AI analysis report for ${tokenName} (${address}). View wash trading, Sybil attack, and rug pull audit results instantly.`;
 
-  const WEB_URL = "https://taranoid.app";
+  const WEB_URL = "https://taranoid.com";
 
   return {
     title,
@@ -99,7 +99,7 @@ export default async function TokenLayout({ children, params }: Props) {
     }
   } catch (error) { }
 
-  const WEB_URL = "https://taranoid.app";
+  const WEB_URL = "https://taranoid.com";
 
   const schemaOrg = {
     "@context": "https://schema.org",
