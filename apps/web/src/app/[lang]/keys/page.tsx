@@ -85,7 +85,7 @@ export default function KeysPage() {
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                             {[
-                                { step: "1", title: "Taranoid Bot'a Git", desc: "@TaranoidBot", href: "https://t.me/taranoid8_bot", color: "#6366F1" },
+                                { step: "1", title: "Taranoid Bot'a Git", desc: "@TaranoidBot", href: "https://t.me/TaranoidBot", color: "#6366F1" },
                                 { step: "2", title: "Kodu Çalıştır", desc: "/apikey yazarak anahtarı türet.", href: null, color: "#818CF8" },
                                 { step: "3", title: "Entegre Et", desc: "X-CG-API-Key başlığında gönder.", href: null, color: "#EC4899" },
                             ].map((item) => (

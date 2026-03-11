@@ -199,7 +199,7 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
         <div className="mt-6 flex items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "0.18s" }}>
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu dersi paylaş:</span>
           <a
-            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/memecoin-101")}&text=${encodeURIComponent("Memecoin dolandırıcılıklarını öğrenmek isteyenlere: Taranoid Eğitim Merkezi")}`}
+            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/learn/memecoin-101")}&text=${encodeURIComponent("Memecoin dolandırıcılıklarını öğrenmek isteyenlere: Taranoid Eğitim Merkezi")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}
@@ -207,7 +207,7 @@ export default async function Memecoin101Page({ params }: { params: Promise<{ la
             Telegram'da Paylaş
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Memecoin rug pull'ları nasıl çalışır? @taranoidapp Türkçe eğitim:")}&url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/memecoin-101")}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Memecoin rug pull'ları nasıl çalışır? @taranoidapp Türkçe eğitim:")}&url=${encodeURIComponent("https://taranoid.app/learn/memecoin-101")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}

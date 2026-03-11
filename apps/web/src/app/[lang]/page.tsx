@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useLang } from "@/components/LangProvider";
 import LiveTicker from "@/components/LiveTicker";
 import Navbar from "@/components/Navbar";
@@ -402,24 +403,31 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-8">
-            {t.footer.links.map((label, i) => (
-              <a
-                key={label}
-                href={FOOTER_HREFS[i]}
-                className="text-sm font-bold transition-all"
-                style={{ color: "var(--cg-text-muted)" }}
-                onMouseEnter={e => {
-                  (e.currentTarget.style.color = "var(--cg-text)");
-                  (e.currentTarget.style.textShadow = "0 0 10px rgba(255,255,255,0.3)");
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget.style.color = "var(--cg-text-muted)");
-                  (e.currentTarget.style.textShadow = "none");
-                }}
-              >
-                {label}
-              </a>
-            ))}
+            {t.footer.links.map((label, i) => {
+              const href = FOOTER_HREFS[i];
+              const isExternal = href?.startsWith("http");
+              const Tag = isExternal ? "a" : Link;
+              return (
+                <Tag
+                  key={label}
+                  href={href || "#"}
+                  target={isExternal ? "_blank" : undefined}
+                  rel={isExternal ? "noopener noreferrer" : undefined}
+                  className="text-sm font-bold transition-all"
+                  style={{ color: "var(--cg-text-muted)" }}
+                  onMouseEnter={(e: any) => {
+                    (e.currentTarget.style.color = "var(--cg-text)");
+                    (e.currentTarget.style.textShadow = "0 0 10px rgba(255,255,255,0.3)");
+                  }}
+                  onMouseLeave={(e: any) => {
+                    (e.currentTarget.style.color = "var(--cg-text-muted)");
+                    (e.currentTarget.style.textShadow = "none");
+                  }}
+                >
+                  {label}
+                </Tag>
+              )
+            })}
           </div>
         </div>
       </footer>

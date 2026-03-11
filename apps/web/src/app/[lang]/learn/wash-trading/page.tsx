@@ -197,7 +197,7 @@ export default async function WashTradingPage({ params }: { params: Promise<{ la
 
         <div className="mt-6 flex items-center justify-center gap-3">
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu dersi paylaş:</span>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/wash-trading")}&text=${encodeURIComponent("Wash trading nedir, nasıl tespit edilir? Türkçe açıklama:")}`}
+          <a href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/learn/wash-trading")}&text=${encodeURIComponent("Wash trading nedir, nasıl tespit edilir? Türkçe açıklama:")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}>

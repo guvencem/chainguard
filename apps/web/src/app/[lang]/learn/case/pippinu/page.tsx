@@ -355,7 +355,7 @@ export default async function PippinuCasePage({ params }: { params: Promise<{ la
         <div className="mt-6 flex items-center justify-center gap-3">
           <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>Bu vakayı paylaş:</span>
           <a
-            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/case/pippinu")}&text=${encodeURIComponent("Gerçek bir rug pull'un anatomisi: PIPPINU nasıl %97 kaybettirdi?")}`}
+            href={`https://t.me/share/url?url=${encodeURIComponent("https://taranoid.app/learn/case/pippinu")}&text=${encodeURIComponent("Gerçek bir rug pull'un anatomisi: PIPPINU nasıl %97 kaybettirdi?")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)" }}
@@ -363,7 +363,7 @@ export default async function PippinuCasePage({ params }: { params: Promise<{ la
             Telegram'da Paylaş
           </a>
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Gerçek bir rug pull'un blockchain analizi: PIPPINU vakası. 380 sahte cüzdan, %97 kayıp — Taranoid bunu önceden gördü:")}&url=${encodeURIComponent("https://taranoid-beryl.vercel.app/learn/case/pippinu")}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent("Gerçek bir rug pull'un blockchain analizi: PIPPINU vakası. 380 sahte cüzdan, %97 kayıp — Taranoid bunu önceden gördü:")}&url=${encodeURIComponent("https://taranoid.app/learn/case/pippinu")}`}
             target="_blank" rel="noopener noreferrer"
             className="metric-badge hover:opacity-80 transition-opacity"
             style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)" }}

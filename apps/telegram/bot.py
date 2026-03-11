@@ -34,7 +34,7 @@ from telegram.constants import ParseMode
 # ── Config ──────────────────────────────────────────────
 BOT_TOKEN    = os.getenv("TELEGRAM_BOT_TOKEN", "")
 API_URL      = os.getenv("API_URL", "https://web-production-b704c.up.railway.app")
-WEB_URL      = os.getenv("WEB_URL", "https://taranoid-beryl.vercel.app")
+WEB_URL      = os.getenv("WEB_URL", "https://taranoid.app")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 FREE_LIMIT      = 5

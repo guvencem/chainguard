@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { TokenAnalysis, api } from "@/lib/api";
 
 export const revalidate = 86400; // ISR: Yeniden oluşturma süresi 24 saat (86400 saniye)
@@ -158,9 +159,9 @@ export default async function ReportPage({ params }: { params: Promise<{ lang: s
                 </section>
 
                 <section className="mt-16 text-center border-t border-white/10 pt-8">
-                    <a href={`/${resolvedParams.lang}/token/${resolvedParams.address}`} className="inline-block font-bold py-3 px-8 rounded-full transition-colors" style={{ background: "var(--cg-accent)", color: "white", textDecoration: "none" }}>
+                    <Link href={`/${resolvedParams.lang}/token/${resolvedParams.address}`} className="inline-block font-bold py-3 px-8 rounded-full transition-colors" style={{ background: "var(--cg-accent)", color: "white", textDecoration: "none" }}>
                         {isTr ? "Canlı Dashboard'u Görüntüle" : "View Live Dashboard"}
-                    </a>
+                    </Link>
                 </section>
             </div>
         </article>

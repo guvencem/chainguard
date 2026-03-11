@@ -76,7 +76,7 @@ app = FastAPI(
 )
 
 # CORS — deploy'da CORS_ORIGINS env ile ayarlanır
-_default_origins_str = "http://localhost:3000,https://taranoid.com,https://www.taranoid.com,https://taranoid-beryl.vercel.app,https://app.taranoid.com,https://www.taranoid.app"
+_default_origins_str = "http://localhost:3000,https://taranoid.com,https://www.taranoid.com,https://app.taranoid.com,https://www.taranoid.app,https://taranoid.app"
 _cors_raw = os.getenv("CORS_ORIGINS", "")
 _cors_combined = _default_origins_str + "," + _cors_raw
 # Vercel preview URL'leri için wildcard pattern desteği
@@ -406,7 +406,7 @@ async def affiliate_links():
 
 # ── Referral Sistemi ───────────────────────────────────
 
-WEB_URL = os.getenv("WEB_URL", "https://taranoid-beryl.vercel.app")
+WEB_URL = os.getenv("WEB_URL", "https://taranoid.app")
 BOT_USERNAME = os.getenv("BOT_USERNAME", "taranoidbot")
 
 
