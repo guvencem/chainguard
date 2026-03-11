@@ -989,6 +989,7 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "✅ Affiliate kazançları"
             ),
             payload="pro_subscription_30d",
+            provider_token="",
             currency="XTR",  # Telegram Stars
             prices=[LabeledPrice("Taranoid Pro (30 gün)", PRO_STARS_PRICE)],
         )

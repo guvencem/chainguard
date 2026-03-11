@@ -24,20 +24,23 @@ const LangContext = createContext<LangContextValue>({
   t: getT(defaultLang),
 })
 
-export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(defaultLang)
+export function LangProvider({ children, initialLang = defaultLang }: { children: ReactNode; initialLang?: Lang }) {
+  const [lang, setLangState] = useState<Lang>(initialLang)
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage on mount ONLY if it overrides the URL (advanced sync)
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Lang | null
-      if (stored === "tr" || stored === "en") {
+      if (stored && stored !== initialLang && (stored === "tr" || stored === "en")) {
+        // We only enforce localStorage if they navigate without middleware catching it, 
+        // but generally middleware handles the cookie.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLangState(stored)
       }
     } catch {
       // localStorage unavailable (SSR safety)
     }
-  }, [])
+  }, [initialLang])
 
   const setLang = useCallback((next: Lang) => {
     setLangState(next)

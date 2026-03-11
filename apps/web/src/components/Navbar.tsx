@@ -35,7 +35,7 @@ export default function Navbar() {
         {!isHome && (
           <button
             onClick={() => router.push("/")}
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 border border-white/10 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-x-1 mr-2"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 border border-white/10 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-x-1 mr-2"
             style={{ color: "var(--cg-text-muted)" }}
             aria-label="Ana Sayfaya Dön"
           >

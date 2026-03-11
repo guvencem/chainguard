@@ -10,7 +10,7 @@ interface ThemeContextValue {
   toggleTheme: () => void
 }
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: "dark", toggleTheme: () => {} })
+const ThemeContext = createContext<ThemeContextValue>({ theme: "dark", toggleTheme: () => { } })
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark")
@@ -19,17 +19,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
       if (stored === "light" || stored === "dark") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTheme(stored)
         document.documentElement.setAttribute("data-theme", stored)
       }
-    } catch {}
+    } catch { }
   }, [])
 
   const toggleTheme = () => {
     const next: Theme = theme === "dark" ? "light" : "dark"
     setTheme(next)
     document.documentElement.setAttribute("data-theme", next)
-    try { localStorage.setItem(STORAGE_KEY, next) } catch {}
+    try { localStorage.setItem(STORAGE_KEY, next) } catch { }
   }
 
   return (

@@ -1,0 +1,188 @@
+
+> web@0.1.0 lint
+> eslint
+
+
+D:\chainguard\apps\web\src\app\[lang]\about\page.tsx
+  40:68  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\embed\[address]\page.tsx
+  29:22  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\chainguard\apps\web\src\app\[lang]\keys\page.tsx
+   74:37  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   74:63  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  205:48  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\layout.tsx
+  170:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\chainguard\apps\web\src\app\[lang]\learn\case\pippinu\page.tsx
+  114:70  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  363:21  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  371:14  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\learn\memecoin-101\page.tsx
+   37:30  warning  'color' is defined but never used                                @typescript-eslint/no-unused-vars
+  118:49  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  176:72  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  176:88  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  207:21  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  215:14  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\learn\page.tsx
+  98:52  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\learn\wallet-clustering\page.tsx
+   90:25   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   90:38   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   90:97   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  188:107  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\learn\wash-trading\page.tsx
+   90:34   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   90:40   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+   91:21   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  100:42   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  100:64   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  100:87   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  113:27   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  113:55   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  113:68   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  136:23   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  136:87   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  176:109  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  176:128  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  187:23   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  204:21   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\app\[lang]\token-info\page.tsx
+  196:25  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  196:25  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  196:25  error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+D:\chainguard\apps\web\src\app\[lang]\token\[address]\layout.tsx
+   31:12  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+   35:9   warning  'shortAddress' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  100:12  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+
+D:\chainguard\apps\web\src\app\[lang]\token\[address]\page.tsx
+    5:8   warning  'RiskGauge' is defined but never used                                                                                                                        @typescript-eslint/no-unused-vars
+    6:8   warning  'MetricCard' is defined but never used                                                                                                                       @typescript-eslint/no-unused-vars
+    7:8   warning  'HolderChart' is defined but never used                                                                                                                      @typescript-eslint/no-unused-vars
+    8:8   warning  'PriceChart' is defined but never used                                                                                                                       @typescript-eslint/no-unused-vars
+    9:8   warning  'ClusterGraph' is defined but never used                                                                                                                     @typescript-eslint/no-unused-vars
+   33:10  warning  'BarChartIcon' is defined but never used                                                                                                                     @typescript-eslint/no-unused-vars
+   43:10  warning  'DropletIcon' is defined but never used                                                                                                                      @typescript-eslint/no-unused-vars
+   51:10  warning  'UsersIcon' is defined but never used                                                                                                                        @typescript-eslint/no-unused-vars
+   62:10  warning  'NetworkIcon' is defined but never used                                                                                                                      @typescript-eslint/no-unused-vars
+   73:10  warning  'CycleIcon' is defined but never used                                                                                                                        @typescript-eslint/no-unused-vars
+   84:10  warning  'BotIcon' is defined but never used                                                                                                                          @typescript-eslint/no-unused-vars
+   95:10  warning  'PackageIcon' is defined but never used                                                                                                                      @typescript-eslint/no-unused-vars
+  106:10  warning  'TrendDownIcon' is defined but never used                                                                                                                    @typescript-eslint/no-unused-vars
+  115:10  warning  'CurveIcon' is defined but never used                                                                                                                        @typescript-eslint/no-unused-vars
+  146:10  warning  'ExternalLinkIcon' is defined but never used                                                                                                                 @typescript-eslint/no-unused-vars
+  156:10  warning  'DatabaseIcon' is defined but never used                                                                                                                     @typescript-eslint/no-unused-vars
+  172:10  warning  'clustersData' is assigned a value but never used                                                                                                            @typescript-eslint/no-unused-vars
+  325:9   warning  'warnings_tr' is assigned a value but never used                                                                                                             @typescript-eslint/no-unused-vars
+  527:11  error    Do not use an `<a>` element to navigate to `/learn/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  527:11  error    Do not use an `<a>` element to navigate to `/learn/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+  527:11  error    Do not use an `<a>` element to navigate to `/learn/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+D:\chainguard\apps\web\src\app\[lang]\token\[address]\report\page.tsx
+  57:54  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\chainguard\apps\web\src\app\[lang]\token\[address]\report\page.tsx:57:54
+  55 |     const { token, score, metrics, report_tr } = analysis;
+  56 |     const isTr = resolvedParams.lang === "tr";
+> 57 |     const dateStr = new Date(analysis.analyzed_at || Date.now()).toLocaleDateString(isTr ? "tr-TR" : "en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+     |                                                      ^^^^^^^^^^ Cannot call impure function
+  58 |
+  59 |     return (
+  60 |         <article className="max-w-4xl mx-auto py-12 px-6 lg:px-8 min-h-screen text-gray-200" style={{ background: "var(--cg-bg)" }}>  react-hooks/purity
+
+D:\chainguard\apps\web\src\app\api\sitemap-tokens\route.ts
+  17:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+
+D:\chainguard\apps\web\src\app\not-found.tsx
+  21:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\chainguard\apps\web\src\app\not-found.tsx:21:9
+  19 |
+  20 |     useEffect(() => {
+> 21 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  22 |     }, []);
+  23 |
+  24 |     if (!mounted) return null;  react-hooks/set-state-in-effect
+
+D:\chainguard\apps\web\src\components\LangProvider.tsx
+  37:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\chainguard\apps\web\src\components\LangProvider.tsx:37:9
+  35 |         // We only enforce localStorage if they navigate without middleware catching it, 
+  36 |         // but generally middleware handles the cookie.
+> 37 |         setLangState(stored)
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |       }
+  39 |     } catch {
+  40 |       // localStorage unavailable (SSR safety)  react-hooks/set-state-in-effect
+
+D:\chainguard\apps\web\src\components\PriceChart.tsx
+  391:52  warning  'tokenSymbol' is defined but never used   @typescript-eslint/no-unused-vars
+  415:18  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  443:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  443:58  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  445:35  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  445:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  476:22  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  476:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  479:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  479:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\chainguard\apps\web\src\components\PricingView.tsx
+  21:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:23  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:18  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+
+D:\chainguard\apps\web\src\components\ShareButtons.tsx
+  103:20  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\chainguard\apps\web\src\components\ThemeProvider.tsx
+  22:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\chainguard\apps\web\src\components\ThemeProvider.tsx:22:9
+  20 |       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
+  21 |       if (stored === "light" || stored === "dark") {
+> 22 |         setTheme(stored)
+     |         ^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |         document.documentElement.setAttribute("data-theme", stored)
+  24 |       }
+  25 |     } catch {}  react-hooks/set-state-in-effect
+
+D:\chainguard\apps\web\src\lib\api.ts
+  234:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 83 problems (57 errors, 26 warnings)
+

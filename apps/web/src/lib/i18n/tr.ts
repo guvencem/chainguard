@@ -7,8 +7,10 @@ export const tr = {
     telegram: "Telegram",
   },
   home: {
-    badge: "Çoklu Zincir Risk Analizi · Solana · Base · BSC · Gerçek Zamanlı",
-    hero_sub: "Solana tokenlarını yatırmadan önce analiz et. Wash trading, cüzdan kümeleme, Sybil attack ve rug pull paternlerini saniyeler içinde tespit et.",
+    badge: "Solana Token Risk Skoru · Güvenlik Analizi · Wash Trading Tespiti",
+    h1_main: "Taranoid",
+    h1_sub: "Risk Skoru & Token Analiz Motoru",
+    hero_sub: "Solana tokenlarına yatırım yapmadan önce riskleri test edin. Kapsamlı dolandırıcılık testi, wash trading, cüzdan kümeleme ve Sybil ağlarını tek tıkla saniyeler içinde tespit edin.",
     placeholder: "Solana veya EVM token adresi yapıştır...",
     btn_analyze: "Analiz Et",
     try_label: "Dene:",

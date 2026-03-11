@@ -26,6 +26,8 @@ export interface Translations {
   }
   home: {
     badge: string
+    h1_main: string
+    h1_sub: string
     hero_sub: string
     placeholder: string
     btn_analyze: string

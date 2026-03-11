@@ -7,8 +7,10 @@ export const en = {
     telegram: "Telegram",
   },
   home: {
-    badge: "Multi-Chain Risk Analysis · Solana · Base · BSC · Real-Time",
-    hero_sub: "Analyze Solana tokens before investing. Detect wash trading, wallet clustering, Sybil attacks and rug pull patterns in seconds.",
+    badge: "Solana Token Scanner · Rug Pull Checker · Real-Time Market Auditor",
+    h1_main: "Taranoid",
+    h1_sub: "Risk Analyzer & Rug Checker",
+    hero_sub: "Analyze Solana tokens before investing. A premium rug pull checker detecting wash trading, wallet clustering, Sybil attacks and hidden developer patterns in seconds.",
     placeholder: "Paste token address (Solana, Base, BSC)...",
     btn_analyze: "Analyze",
     try_label: "Try:",

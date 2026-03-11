@@ -1,5 +1,6 @@
 "use client"
 
+import { usePathname, useRouter } from "next/navigation"
 import { useLang } from "./LangProvider"
 import type { Lang } from "@/lib/i18n"
 
@@ -7,6 +8,22 @@ const LANGS: Lang[] = ["tr", "en"]
 
 export function LangToggle() {
   const { lang, setLang } = useLang()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const handleLangChange = (newLang: Lang) => {
+    if (newLang === lang) return;
+    setLang(newLang);
+
+    // Rewrite URL to new language
+    const segments = pathname.split('/');
+    if (segments[1] === "tr" || segments[1] === "en") {
+      segments[1] = newLang;
+      router.push(segments.join('/') || '/');
+    } else {
+      router.push(`/${newLang}${pathname}`);
+    }
+  }
 
   return (
     <div
@@ -25,15 +42,16 @@ export function LangToggle() {
         return (
           <button
             key={l}
-            onClick={() => setLang(l)}
+            onClick={() => handleLangChange(l)}
             aria-pressed={isActive}
             aria-label={l === "tr" ? "Türkçe" : "English"}
             style={{
-              padding: "3px 9px",
+              padding: "8px 14px",
+              minHeight: "36px",
               borderRadius: "5px",
               border: "none",
               cursor: "pointer",
-              fontSize: "11px",
+              fontSize: "12px",
               fontWeight: 700,
               letterSpacing: "0.05em",
               textTransform: "uppercase",

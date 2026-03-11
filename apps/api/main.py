@@ -801,6 +801,106 @@ async def token_config():
     }
 
 
+@app.post("/api/v1/pay/solana")
+async def create_solana_pay(request: Request):
+    """Solana Pay referans linki oluşturur."""
+    body = await request.json()
+    tier = body.get("tier", "pro")
+    
+    # Pro $29, Trader $99
+    price = float(os.getenv("PRO_MONTHLY_USD", "29")) if tier == "pro" else float(os.getenv("TRADER_MONTHLY_USD", "99"))
+    
+    import pay_service
+    sol_price = await pay_service.get_sol_price_usd()
+    if sol_price <= 0:
+        raise HTTPException(status_code=500, detail="SOL fiyatı alınamadı.")
+        
+    sol_amount = round(price / sol_price, 4)
+    reference = pay_service.generate_reference()
+    
+    if not reference:
+        raise HTTPException(status_code=500, detail="Referans oluşturulamadı.")
+        
+    from urllib.parse import urlencode
+    
+    label = "Taranoid Pro API" if tier == "pro" else "Taranoid Trader API"
+    params = {
+        "amount": str(sol_amount),
+        "reference": reference,
+        "label": label,
+        "message": f"{label} Subscription"
+    }
+    
+    pay_url = f"solana:{pay_service.TREASURY_WALLET}?{urlencode(params)}"
+    
+    return {
+        "pay_url": pay_url,
+        "reference": reference,
+        "sol_amount": sol_amount,
+        "usd_price": price,
+        "tier": tier
+    }
+
+
+@app.post("/api/v1/pay/solana/verify")
+async def verify_solana_pay(request: Request):
+    """Ödemenin yapılıp yapılmadığını Helius üzerinden kontrol eder."""
+    body = await request.json()
+    reference = body.get("reference")
+    tier = body.get("tier", "pro")
+    wallet_address = body.get("wallet_address")
+    
+    if not reference or not wallet_address:
+        raise HTTPException(status_code=400, detail="Eksik parametreler")
+        
+    price = float(os.getenv("PRO_MONTHLY_USD", "29")) if tier == "pro" else float(os.getenv("TRADER_MONTHLY_USD", "99"))
+    
+    import pay_service
+    sol_price = await pay_service.get_sol_price_usd()
+    sol_amount = round(price / sol_price, 4) if sol_price > 0 else 0
+    
+    is_paid = await pay_service.verify_transaction(reference, sol_amount)
+    
+    if is_paid:
+        if analysis_service.db.pool:
+            try:
+                from datetime import timedelta, timezone, datetime
+                pro_until = datetime.now(timezone.utc) + timedelta(days=30)
+                async with analysis_service.db.pool.acquire() as conn:
+                    conn_row = await conn.fetchrow("SELECT telegram_id FROM wallet_connections WHERE wallet_address = $1", wallet_address)
+                    if conn_row and conn_row["telegram_id"]:
+                        t_id = conn_row["telegram_id"]
+                        await conn.execute(
+                            "UPDATE users SET tier = $1, pro_until = $2 WHERE telegram_id = $3",
+                            tier, pro_until, t_id
+                        )
+                        new_limit = 100 if tier == "pro" else 1000
+                        await conn.execute(
+                            "UPDATE api_keys SET tier = $1, daily_limit = $2 WHERE telegram_id = $3",
+                            tier, new_limit, t_id
+                        )
+                    else:
+                        row = await conn.fetchrow("SELECT id FROM users WHERE wallet_address = $1", wallet_address)
+                        if not row:
+                            await conn.execute(
+                                "INSERT INTO users (wallet_address, tier, pro_until) VALUES ($1, $2, $3)",
+                                wallet_address, tier, pro_until
+                            )
+                        else:
+                            await conn.execute(
+                                "UPDATE users SET tier = $1, pro_until = $2 WHERE wallet_address = $3",
+                                tier, pro_until, wallet_address
+                            )
+                return {"status": "success", "tier": tier}
+            except Exception as e:
+                logger.error(f"Kullanıcı tier güncelleme hatası: {e}")
+                return {"status": "error", "message": "Veritabanı hatası"}
+        else:
+             return {"status": "error", "message": "DB bağlantısı yok"}
+    
+    return {"status": "pending"}
+
+
 @app.exception_handler(404)
 async def not_found(request: Request, exc: HTTPException):
     return JSONResponse(
