@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LangProvider";
+import LiveTicker from "@/components/LiveTicker";
 
 function ShieldIcon({ size = 16 }: { size?: number }) {
   return (
@@ -30,6 +31,14 @@ function ArrowRightIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+function ZapIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
+
 const FEATURE_COLORS = ["#818CF8", "#F87171", "#34D399", "#FBBF24", "#F472B6", "#60A5FA"];
 
 const EXAMPLE_TOKENS = [
@@ -45,10 +54,49 @@ const FOOTER_HREFS = [
   "/about",
 ];
 
+function AnimatedStatCard({ value, label, sub, delay }: { value: string; label: string; sub: string; delay: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="stat-card"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(20px)",
+        transition: `opacity 0.6s ease ${delay}s, transform 0.6s cubic-bezier(0.34,1.56,0.64,1) ${delay}s`,
+      }}
+    >
+      <div
+        className="text-3xl md:text-4xl font-black tabular-nums gradient-text mb-1"
+        style={{
+          animation: visible ? `jackpot-bounce 0.5s ease ${delay + 0.3}s both` : "none",
+        }}
+      >
+        {value}
+      </div>
+      <div className="text-sm font-bold mb-0.5" style={{ color: "var(--cg-text-muted)" }}>{label}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>{sub}</div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [address, setAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const router = useRouter();
   const { t } = useLang();
 
@@ -75,7 +123,11 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #6366F1, #EC4899)", boxShadow: "0 0 20px rgba(99,102,241,0.5)", color: "white" }}
+            style={{
+              background: "linear-gradient(135deg, #6366F1, #EC4899)",
+              boxShadow: "0 0 20px rgba(99,102,241,0.5)",
+              color: "white",
+            }}
           >
             <ShieldIcon size={14} />
           </div>
@@ -103,28 +155,39 @@ export default function HomePage() {
           ))}
         </div>
 
+        {/* Right: CTA — theme+lang toggle is fixed-positioned in layout */}
         <a
           href="https://t.me/taranoid8_bot"
           target="_blank"
           rel="noopener noreferrer"
-          className="cta-button px-4 py-2 text-xs flex items-center gap-2"
+          className="cta-button px-4 py-2 text-xs flex items-center gap-2 mr-20"
         >
           <span>🤖</span> {t.nav.telegram}
         </a>
       </nav>
 
+      {/* ── Live Ticker (below fixed nav) ── */}
+      <div className="fixed top-16 left-0 right-0 z-40">
+        <LiveTicker />
+      </div>
+
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-16">
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-4 pt-24">
         <div className="glow-orb animate-orb" style={{ width: 600, height: 600, top: "10%", left: "15%", background: "rgba(99,102,241,0.12)" }} />
         <div className="glow-orb animate-orb-reverse" style={{ width: 500, height: 500, top: "20%", right: "10%", background: "rgba(236,72,153,0.08)" }} />
         <div className="glow-orb" style={{ width: 300, height: 300, bottom: "15%", left: "30%", background: "rgba(129,140,248,0.06)" }} />
 
         <div className="relative z-10 flex flex-col items-center text-center max-w-5xl mx-auto">
-          {/* Badge */}
+
+          {/* Live badge */}
           <div className="animate-slide-up mb-8">
             <div
-              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase"
-              style={{ background: "rgba(129,140,248,0.1)", border: "1px solid rgba(129,140,248,0.25)", color: "#818CF8" }}
+              className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs font-bold tracking-widest uppercase animate-border-glow"
+              style={{
+                background: "rgba(129,140,248,0.1)",
+                border: "1px solid rgba(129,140,248,0.25)",
+                color: "#818CF8",
+              }}
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-pulse-ring absolute inline-flex h-full w-full rounded-full" style={{ background: "#818CF8" }} />
@@ -157,8 +220,14 @@ export default function HomePage() {
             style={{ animationDelay: "0.2s" }}
           >
             <div
-              className="relative p-1.5 rounded-2xl"
-              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 40px rgba(0,0,0,0.4)" }}
+              className="relative p-1.5 rounded-2xl transition-all duration-300"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: `1px solid ${searchFocused ? "rgba(129,140,248,0.4)" : "rgba(255,255,255,0.1)"}`,
+                boxShadow: searchFocused
+                  ? "0 0 0 4px rgba(129,140,248,0.1), 0 8px 40px rgba(0,0,0,0.4)"
+                  : "0 8px 40px rgba(0,0,0,0.4)",
+              }}
             >
               <div className="absolute left-5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--cg-text-dim)" }}>
                 <SearchIcon />
@@ -167,8 +236,10 @@ export default function HomePage() {
                 type="text"
                 value={address}
                 onChange={e => { setAddress(e.target.value); if (error) setError(""); }}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
                 placeholder={t.home.placeholder}
-                className="w-full bg-transparent pl-14 pr-40 py-4 text-base font-mono outline-none"
+                className="w-full bg-transparent pl-14 pr-44 py-4 text-base font-mono outline-none"
                 style={{ color: "var(--cg-text)", caretColor: "#818CF8" }}
                 autoComplete="off"
                 spellCheck={false}
@@ -177,7 +248,7 @@ export default function HomePage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="cta-button absolute right-2 top-1/2 -translate-y-1/2 px-6 py-3 text-sm flex items-center gap-2"
+                className="cta-button absolute right-2 top-1/2 -translate-y-1/2 px-5 py-3 text-sm flex items-center gap-2"
               >
                 {isLoading ? (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
@@ -185,15 +256,17 @@ export default function HomePage() {
                     <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 ) : (
-                  <>{t.home.btn_analyze} <ArrowRightIcon /></>
+                  <><ZapIcon /> {t.home.btn_analyze} <ArrowRightIcon /></>
                 )}
               </button>
             </div>
-            {error && <p className="mt-3 text-sm font-semibold" style={{ color: "var(--cg-red)" }}>{error}</p>}
+            {error && (
+              <p className="mt-3 text-sm font-semibold animate-fade-in" style={{ color: "var(--cg-red)" }}>{error}</p>
+            )}
           </form>
 
           {/* Example tokens */}
-          <div className="animate-slide-up flex items-center gap-3 mt-5" style={{ animationDelay: "0.26s" }}>
+          <div className="animate-slide-up flex flex-wrap items-center justify-center gap-3 mt-5" style={{ animationDelay: "0.26s" }}>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
               {t.home.try_label}
             </span>
@@ -202,23 +275,35 @@ export default function HomePage() {
                 key={tok.label}
                 onClick={() => { setAddress(tok.address); setError(""); }}
                 className="px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all duration-200"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--cg-text-muted)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(129,140,248,0.12)"; (e.currentTarget as HTMLElement).style.color = "#818CF8"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; (e.currentTarget as HTMLElement).style.color = "var(--cg-text-muted)"; }}
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "var(--cg-text-muted)",
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(129,140,248,0.12)";
+                  (e.currentTarget as HTMLElement).style.color = "#818CF8";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(129,140,248,0.3)";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(129,140,248,0.2)";
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--cg-text-muted)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)";
+                  (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                  (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                }}
               >
                 ${tok.label}
               </button>
             ))}
           </div>
 
-          {/* Stats row */}
-          <div className="animate-slide-up grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 w-full max-w-3xl" style={{ animationDelay: "0.32s" }}>
-            {t.stats.map(s => (
-              <div key={s.label} className="stat-card">
-                <div className="text-3xl md:text-4xl font-black tabular-nums gradient-text mb-1">{s.value}</div>
-                <div className="text-sm font-bold mb-0.5" style={{ color: "var(--cg-text-muted)" }}>{s.label}</div>
-                <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>{s.sub}</div>
-              </div>
+          {/* Stats row — animated on scroll */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-20 w-full max-w-3xl">
+            {t.stats.map((s, i) => (
+              <AnimatedStatCard key={s.label} value={s.value} label={s.label} sub={s.sub} delay={i * 0.1} />
             ))}
           </div>
         </div>
@@ -256,18 +341,18 @@ export default function HomePage() {
               <div
                 key={f.title}
                 className="card-3d p-7 animate-slide-up"
-                style={{ animationDelay: `${i * 0.06}s`, borderTop: `2px solid ${color}30` }}
+                style={{ animationDelay: `${i * 0.06}s`, borderTop: `2px solid ${color}40` }}
               >
                 <div className="flex items-start justify-between mb-5">
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                    style={{ background: `${color}12`, border: `1px solid ${color}20` }}
+                    style={{ background: `${color}12`, border: `1px solid ${color}25` }}
                   >
                     {f.emoji}
                   </div>
                   <span
                     className="metric-badge"
-                    style={{ background: `${color}12`, color, border: `1px solid ${color}20` }}
+                    style={{ background: `${color}12`, color, border: `1px solid ${color}25` }}
                   >
                     {f.tag}
                   </span>
@@ -293,7 +378,7 @@ export default function HomePage() {
           <div className="glow-orb" style={{ width: 300, height: 300, top: "-30%", right: "-10%", background: "rgba(129,140,248,0.15)" }} />
           <div className="glow-orb" style={{ width: 200, height: 200, bottom: "-20%", left: "5%", background: "rgba(244,114,182,0.1)" }} />
           <div className="relative z-10">
-            <div className="text-5xl mb-6">🤖</div>
+            <div className="text-5xl mb-6 animate-float" style={{ animationDuration: "3s" }}>🤖</div>
             <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-4" style={{ color: "var(--cg-text)" }}>
               {t.home.cta_title}
             </h2>

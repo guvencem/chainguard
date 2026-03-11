@@ -3,6 +3,8 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { LangProvider } from "@/components/LangProvider";
 import { LangToggle } from "@/components/LangToggle";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -23,14 +25,12 @@ export const metadata: Metadata = {
   description:
     "Solana tokenlarını 9 metrikle gerçek zamanlı analiz edin. Wash trading, cüzdan kümeleme, Sybil attack ve manipülasyon tespiti.",
   keywords: [
-    // English
     "solana token scanner",
     "rug pull checker",
     "solana token safety",
     "crypto risk analysis",
     "wash trading detection",
     "pump.fun token checker",
-    // Turkish
     "solana token risk analizi",
     "memecoin dolandırıcılık",
     "rug pull tespit",
@@ -68,18 +68,13 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: WEB_URL,
-    languages: {
-      "tr": WEB_URL,
-      "en": WEB_URL,
-    },
+    languages: { "tr": WEB_URL, "en": WEB_URL },
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   const schemaOrg = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -89,11 +84,7 @@ export default function RootLayout({
     "url": WEB_URL,
     "description": "Solana tokenlarını 9 metrikle gerçek zamanlı analiz eden risk değerlendirme platformu.",
     "inLanguage": ["tr", "en"],
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD",
-    },
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "featureList": [
       "Wash Trading Tespiti",
       "Cüzdan Kümeleme Analizi",
@@ -107,6 +98,12 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <head>
+        {/* ── Anti-flash: theme applied before React hydration ── */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('cg_theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
+          }}
+        />
         <link rel="alternate" hrefLang="tr" href={WEB_URL} />
         <link rel="alternate" hrefLang="en" href={WEB_URL} />
         <link rel="alternate" hrefLang="x-default" href={WEB_URL} />
@@ -115,31 +112,32 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaOrg) }}
         />
       </head>
-      <body
-        className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`}
-      >
-        {/* Subtle radial accent glow at top */}
+      <body className={`${inter.variable} ${jetbrains.variable} antialiased min-h-screen grid-bg`}>
+        {/* Hero gradient */}
         <div
           className="fixed inset-0 -z-10 pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse 100% 50% at 50% -10%, rgba(99,102,241,0.15) 0%, rgba(236,72,153,0.07) 45%, transparent 70%)",
-          }}
+          style={{ background: "var(--cg-hero-gradient)" }}
         />
-        <LangProvider>
-          {/* Language toggle — fixed top-right, above all content */}
-          <div
-            style={{
-              position: "fixed",
-              top: "14px",
-              right: "16px",
-              zIndex: 100,
-            }}
-          >
-            <LangToggle />
-          </div>
-          {children}
-        </LangProvider>
+        <ThemeProvider>
+          <LangProvider>
+            {/* Controls — fixed top-right */}
+            <div
+              style={{
+                position: "fixed",
+                top: "14px",
+                right: "16px",
+                zIndex: 100,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <ThemeToggle />
+              <LangToggle />
+            </div>
+            {children}
+          </LangProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

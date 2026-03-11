@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://web-production-b704c.up.railway.app";
 
@@ -18,7 +19,6 @@ interface TrendingToken {
 }
 
 function getRiskColor(score: number): string {
-  if (score < 20) return "#34D399";
   if (score < 40) return "#34D399";
   if (score < 60) return "#FBBF24";
   if (score < 80) return "#FB923C";
@@ -30,6 +30,13 @@ function getRiskLabel(level: string): string {
     SAFE: "Güvenli", LOW: "Düşük", MEDIUM: "Orta", HIGH: "Yüksek", CRITICAL: "Kritik",
   };
   return map[level] || level;
+}
+
+function getRiskEmoji(score: number): string {
+  if (score < 40) return "✅";
+  if (score < 60) return "⚠️";
+  if (score < 80) return "🚨";
+  return "💀";
 }
 
 function formatUSD(n: number): string {
@@ -67,30 +74,60 @@ function ExternalLinkIcon({ size = 12 }: { size?: number }) {
   );
 }
 
+function RefreshIcon({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 7" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 17" />
+      <path d="M17 4l4 3-3 3" />
+      <path d="M7 20l-4-3 3-3" />
+    </svg>
+  );
+}
+
+const listVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, scale: 0.97 },
+  show: {
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: "spring" as const, stiffness: 300, damping: 24 },
+  },
+};
+
 export default function TrendingPage() {
   const router = useRouter();
   const [tokens, setTokens] = useState<TrendingToken[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/v1/trending`)
-      .then(r => r.json())
-      .then(data => {
-        setTokens(data.tokens || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Trending verisi alınamadı.");
-        setLoading(false);
-      });
-  }, []);
+  const fetchTokens = async (showRefreshing = false) => {
+    if (showRefreshing) setRefreshing(true);
+    try {
+      const r = await fetch(`${API_URL}/api/v1/trending`);
+      const data = await r.json();
+      setTokens(data.tokens || []);
+      setLastUpdate(new Date());
+      setError("");
+    } catch {
+      setError("Trending verisi alınamadı.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { fetchTokens(); }, []);
 
   const isEmpty = !loading && !error && tokens.length === 0;
 
   return (
     <main className="min-h-screen grid-bg">
-      {/* Background orb */}
       <div
         className="fixed inset-0 pointer-events-none -z-10"
         style={{ background: "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(99,102,241,0.12) 0%, transparent 70%)" }}
@@ -114,26 +151,62 @@ export default function TrendingPage() {
           </div>
           <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>Taranoid</span>
         </div>
+        {/* Spacer for fixed theme+lang toggle */}
+        <div style={{ width: 84 }} />
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-12">
+
         {/* Header */}
         <div className="mb-10 animate-slide-up">
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center"
-              style={{ background: "rgba(251,191,36,0.12)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)" }}
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-2xl flex items-center justify-center"
+                style={{ background: "rgba(251,191,36,0.12)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)" }}
+              >
+                <FireIcon size={18} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black tracking-tight" style={{ color: "var(--cg-text)" }}>
+                  Trending Tokenlar
+                </h1>
+                <p className="text-sm flex items-center gap-2" style={{ color: "var(--cg-text-muted)" }}>
+                  <span
+                    style={{
+                      display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                      background: "#34D399", boxShadow: "0 0 6px #34D399",
+                      animation: "pulse-ring 1.5s ease-out infinite",
+                    }}
+                  />
+                  En çok sorgulanan tokenlar — gerçek zamanlı risk verileriyle
+                  {lastUpdate && (
+                    <span style={{ color: "var(--cg-text-dim)", fontSize: 11 }}>
+                      · {lastUpdate.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Refresh button */}
+            <button
+              onClick={() => fetchTokens(true)}
+              disabled={refreshing}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "7px 14px", borderRadius: 10, border: "1px solid var(--cg-border-strong)",
+                background: "var(--cg-surface)", color: "var(--cg-text-muted)",
+                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.2s ease",
+                opacity: refreshing ? 0.5 : 1,
+              }}
             >
-              <FireIcon size={18} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black tracking-tight" style={{ color: "var(--cg-text)" }}>
-                Trending Tokenlar
-              </h1>
-              <p className="text-sm" style={{ color: "var(--cg-text-muted)" }}>
-                En çok sorgulanan tokenlar — gerçek zamanlı risk verileriyle
-              </p>
-            </div>
+              <span style={{ animation: refreshing ? "spin-slow 0.8s linear infinite" : "none", display: "flex" }}>
+                <RefreshIcon />
+              </span>
+              Yenile
+            </button>
           </div>
         </div>
 
@@ -141,7 +214,7 @@ export default function TrendingPage() {
         {loading && (
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="shimmer h-20 rounded-2xl" />
+              <div key={i} className="shimmer rounded-2xl" style={{ height: 88 }} />
             ))}
           </div>
         )}
@@ -151,7 +224,7 @@ export default function TrendingPage() {
           <div className="card-flat p-8 text-center">
             <p className="text-4xl mb-4">⚠️</p>
             <p className="font-semibold mb-2" style={{ color: "var(--cg-text)" }}>{error}</p>
-            <button onClick={() => window.location.reload()} className="cta-button px-6 py-2.5 text-sm mt-4">
+            <button onClick={() => fetchTokens()} className="cta-button px-6 py-2.5 text-sm mt-4">
               Tekrar Dene
             </button>
           </div>
@@ -173,7 +246,7 @@ export default function TrendingPage() {
 
         {/* Token list */}
         {!loading && !error && tokens.length > 0 && (
-          <div className="space-y-3">
+          <>
             {/* Table header */}
             <div
               className="hidden md:grid grid-cols-12 gap-4 px-5 py-2 text-[10px] font-bold uppercase tracking-widest"
@@ -187,107 +260,132 @@ export default function TrendingPage() {
               <div className="col-span-1 text-right">Sorgu</div>
             </div>
 
-            {tokens.map((token, i) => {
-              const color = getRiskColor(token.total_score);
-              const riskLabel = getRiskLabel(token.risk_level);
-              const shortAddr = `${token.token_address.slice(0, 6)}...${token.token_address.slice(-4)}`;
+            <motion.div
+              className="space-y-3"
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+            >
+              {tokens.map((token, i) => {
+                const color = getRiskColor(token.total_score);
+                const riskLabel = getRiskLabel(token.risk_level);
+                const shortAddr = `${token.token_address.slice(0, 6)}...${token.token_address.slice(-4)}`;
+                const isHighRisk = token.total_score >= 70;
 
-              return (
-                <div
-                  key={token.token_address}
-                  className="card-flat animate-slide-up cursor-pointer group"
-                  style={{ animationDelay: `${i * 0.04}s` }}
-                  onClick={() => router.push(`/token/${token.token_address}`)}
-                >
-                  <div className="grid grid-cols-12 gap-4 items-center p-5">
-                    {/* Rank */}
-                    <div className="col-span-1">
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black"
-                        style={{ background: `${color}12`, color }}
-                      >
-                        {i + 1}
-                      </div>
-                    </div>
-
-                    {/* Token info */}
-                    <div className="col-span-5 md:col-span-4 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-sm truncate" style={{ color: "var(--cg-text)" }}>
-                          {token.name || shortAddr}
-                        </span>
-                        {token.symbol && (
-                          <span
-                            className="px-2 py-0.5 rounded-md text-xs font-mono font-bold flex-shrink-0"
-                            style={{ background: "rgba(255,255,255,0.06)", color: "var(--cg-text-dim)" }}
-                          >
-                            ${token.symbol}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono" style={{ color: "var(--cg-text-dim)" }}>{shortAddr}</span>
-                        <a
-                          href={`https://solscan.io/token/${token.token_address}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ color: "var(--cg-accent)" }}
+                return (
+                  <motion.div
+                    key={token.token_address}
+                    variants={itemVariants}
+                    className="card-flat cursor-pointer group"
+                    style={{
+                      borderLeft: `3px solid ${color}60`,
+                      boxShadow: isHighRisk ? `0 0 0 1px ${color}15, var(--cg-shadow-sm)` : "var(--cg-shadow-sm)",
+                    }}
+                    onClick={() => router.push(`/token/${token.token_address}`)}
+                    whileHover={{ y: -3, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+                  >
+                    <div className="grid grid-cols-12 gap-4 items-center p-5">
+                      {/* Rank */}
+                      <div className="col-span-1">
+                        <div
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black"
+                          style={{ background: `${color}15`, color }}
                         >
-                          <ExternalLinkIcon />
-                        </a>
+                          {i + 1}
+                        </div>
+                      </div>
+
+                      {/* Token info */}
+                      <div className="col-span-5 md:col-span-4 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xl">{getRiskEmoji(token.total_score)}</span>
+                          <span className="font-bold text-sm truncate" style={{ color: "var(--cg-text)" }}>
+                            {token.name || shortAddr}
+                          </span>
+                          {token.symbol && (
+                            <span
+                              className="px-2 py-0.5 rounded-md text-xs font-mono font-bold flex-shrink-0"
+                              style={{ background: "rgba(255,255,255,0.06)", color: "var(--cg-text-dim)" }}
+                            >
+                              ${token.symbol}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono" style={{ color: "var(--cg-text-dim)" }}>{shortAddr}</span>
+                          <a
+                            href={`https://solscan.io/token/${token.token_address}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ color: "var(--cg-accent)" }}
+                          >
+                            <ExternalLinkIcon />
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* Score */}
+                      <div className="col-span-3 md:col-span-2 flex flex-col items-end gap-1">
+                        <span
+                          className="text-xl font-black tabular-nums"
+                          style={{
+                            color,
+                            textShadow: `0 0 16px ${color}60`,
+                            animation: isHighRisk ? "neon-pulse 2s ease-in-out infinite" : "none",
+                          }}
+                        >
+                          {token.total_score.toFixed(0)}
+                        </span>
+                        <span
+                          className="metric-badge"
+                          style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}
+                        >
+                          {riskLabel}
+                        </span>
+                      </div>
+
+                      {/* Volume */}
+                      <div className="hidden md:flex col-span-2 flex-col items-end">
+                        <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
+                          {token.volume_24h_usd > 0 ? formatUSD(token.volume_24h_usd) : "—"}
+                        </span>
+                        <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>hacim</span>
+                      </div>
+
+                      {/* MCap */}
+                      <div className="hidden md:flex col-span-2 flex-col items-end">
+                        <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
+                          {token.mcap_usd > 0 ? formatUSD(token.mcap_usd) : "—"}
+                        </span>
+                        <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>mcap</span>
+                      </div>
+
+                      {/* Query count */}
+                      <div className="hidden md:flex col-span-1 flex-col items-end">
+                        <span className="text-sm font-bold" style={{ color: "var(--cg-text-muted)" }}>
+                          {token.query_count}x
+                        </span>
                       </div>
                     </div>
 
-                    {/* Score */}
-                    <div className="col-span-3 md:col-span-2 flex flex-col items-end gap-1">
-                      <span className="text-xl font-black tabular-nums" style={{ color, textShadow: `0 0 16px ${color}40` }}>
-                        {token.total_score.toFixed(0)}
-                      </span>
-                      <span
-                        className="metric-badge"
-                        style={{ background: `${color}12`, color, border: `1px solid ${color}20` }}
-                      >
-                        {riskLabel}
-                      </span>
+                    {/* Score bar */}
+                    <div className="score-bar mx-5 mb-4" style={{ height: "3px" }}>
+                      <div
+                        className="score-bar-fill"
+                        style={{
+                          width: `${token.total_score}%`,
+                          background: `linear-gradient(90deg, ${color}60, ${color})`,
+                          boxShadow: `0 0 8px ${color}50`,
+                        }}
+                      />
                     </div>
-
-                    {/* Volume */}
-                    <div className="hidden md:flex col-span-2 flex-col items-end">
-                      <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
-                        {token.volume_24h_usd > 0 ? formatUSD(token.volume_24h_usd) : "—"}
-                      </span>
-                      <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>hacim</span>
-                    </div>
-
-                    {/* MCap */}
-                    <div className="hidden md:flex col-span-2 flex-col items-end">
-                      <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
-                        {token.mcap_usd > 0 ? formatUSD(token.mcap_usd) : "—"}
-                      </span>
-                      <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>mcap</span>
-                    </div>
-
-                    {/* Query count */}
-                    <div className="hidden md:flex col-span-1 flex-col items-end">
-                      <span className="text-sm font-bold" style={{ color: "var(--cg-text-muted)" }}>
-                        {token.query_count}x
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Score bar at bottom */}
-                  <div className="score-bar mx-5 mb-4" style={{ height: "3px" }}>
-                    <div
-                      className="score-bar-fill"
-                      style={{ width: `${token.total_score}%`, background: `linear-gradient(90deg, ${color}60, ${color})` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </>
         )}
 
         <footer className="text-center py-12">

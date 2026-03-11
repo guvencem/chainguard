@@ -8,6 +8,8 @@ import HolderChart from "@/components/HolderChart";
 import PriceChart from "@/components/PriceChart";
 import ClusterGraph from "@/components/ClusterGraph";
 import AffiliateBanner from "@/components/AffiliateBanner";
+import AnimatedCounter from "@/components/AnimatedCounter";
+import ShareButtons from "@/components/ShareButtons";
 import { api, TokenAnalysis, ClustersData, APIError } from "@/lib/api";
 
 // ── SVG Icon Library ──
@@ -170,6 +172,7 @@ export default function TokenPage() {
   const [clustersData, setClustersData] = useState<ClustersData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showWinFlash, setShowWinFlash] = useState(false);
 
   useEffect(() => {
     if (!address) return;
@@ -179,6 +182,11 @@ export default function TokenPage() {
       try {
         const result = await api.analyzeToken(address);
         setData(result);
+        // Win flash for safe tokens
+        if (result.score.total < 30) {
+          setShowWinFlash(true);
+          setTimeout(() => setShowWinFlash(false), 2000);
+        }
         // Küme detaylarını paralel olarak çek (analiz tamamlandıktan sonra cache'de olur)
         api.getClusters(address).then((cd) => {
           if (cd) setClustersData(cd);
@@ -256,14 +264,29 @@ export default function TokenPage() {
             </div>
           </div>
           <p
-            className="text-base font-semibold mb-2"
+            className="text-base font-semibold mb-2 animate-border-glow"
             style={{ color: "var(--cg-text)" }}
           >
             Token analiz ediliyor
           </p>
           <p className="text-sm" style={{ color: "var(--cg-text-dim)" }}>
-            9 metrik hesaplanıyor...
+            ⚡ 9 metrik hesaplanıyor...
           </p>
+          <div className="flex items-center gap-1.5 mt-4">
+            {[...Array(9)].map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "var(--cg-accent)",
+                  opacity: 0.3,
+                  animation: `pulse-ring 1.5s ease-out ${i * 0.15}s infinite`,
+                }}
+              />
+            ))}
+          </div>
         </div>
       </main>
     );
@@ -315,6 +338,8 @@ export default function TokenPage() {
 
   return (
     <main className="min-h-screen p-4 md:p-8 max-w-6xl mx-auto">
+      {/* Win flash overlay — dopamine hit for safe tokens */}
+      {showWinFlash && <div className="win-flash-overlay" />}
       <Navbar />
 
       {/* Token Header */}
@@ -713,12 +738,17 @@ export default function TokenPage() {
               >
                 Toplam Skor
               </span>
-              <span
-                className="text-2xl font-bold tabular-nums"
-                style={{ color: score.color }}
-              >
-                {Math.round(score.total)}
-              </span>
+              <AnimatedCounter
+                value={Math.round(score.total)}
+                duration={1600}
+                className="text-2xl font-bold tabular-nums score-pop"
+                style={{
+                  color: score.color,
+                  textShadow: `0 0 20px ${score.color}60`,
+                  display: "inline-block",
+                  animation: "score-pop 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards",
+                }}
+              />
             </div>
           </div>
         </div>
@@ -818,36 +848,32 @@ export default function TokenPage() {
         <AffiliateBanner tokenAddress={address} score={score.total} />
       </div>
 
-      {/* Share */}
-      <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
-          Bu analizi paylaş:
-        </span>
-        <a
-          href={`https://t.me/share/url?url=${encodeURIComponent(`https://taranoid-beryl.vercel.app/token/${address}`)}&text=${encodeURIComponent(`${token?.symbol ? `$${token.symbol}` : "Token"} risk skoru: ${Math.round(score.total)}/100 — Taranoid analizi`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
-          style={{ background: "rgba(33,150,243,0.1)", color: "#29B6F6", border: "1px solid rgba(33,150,243,0.2)", padding: "6px 14px" }}
-        >
-          Telegram'da Paylaş
-        </a>
-        <a
-          href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`$${token?.symbol || "Token"} risk skoru: ${Math.round(score.total)}/100 ${score.total >= 60 ? "⚠️ Yüksek risk!" : "✅ Düşük risk"} — Taranoid analizi:`)}&url=${encodeURIComponent(`https://taranoid-beryl.vercel.app/token/${address}`)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="metric-badge hover:opacity-80 transition-opacity flex items-center gap-1.5"
-          style={{ background: "rgba(0,0,0,0.2)", color: "var(--cg-text-muted)", border: "1px solid rgba(255,255,255,0.08)", padding: "6px 14px" }}
-        >
-          X'te Paylaş
-        </a>
-        <a
-          href={`/learn`}
-          className="metric-badge hover:opacity-80 transition-opacity"
-          style={{ background: "rgba(99,102,241,0.1)", color: "#818CF8", border: "1px solid rgba(99,102,241,0.2)", padding: "6px 14px" }}
-        >
-          Metrikleri Öğren
-        </a>
+      {/* Share — dopamine paylaşım butonları */}
+      <div
+        className="mb-8 p-5 rounded-2xl animate-slide-up"
+        style={{
+          background: "rgba(129,140,248,0.04)",
+          border: "1px solid rgba(129,140,248,0.12)",
+        }}
+      >
+        <ShareButtons
+          tokenAddress={address}
+          tokenSymbol={token?.symbol}
+          score={score.total}
+        />
+        <div className="flex justify-center mt-4">
+          <a
+            href="/learn"
+            style={{
+              fontSize: 12, fontWeight: 600, color: "var(--cg-text-dim)",
+              textDecoration: "none", transition: "color 0.2s",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = "var(--cg-accent)")}
+            onMouseLeave={e => (e.currentTarget.style.color = "var(--cg-text-dim)")}
+          >
+            📚 Metrikleri Öğren
+          </a>
+        </div>
       </div>
 
       {/* Footer */}
