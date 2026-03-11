@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://web-production-b704c.up.railway.app";
 
@@ -44,15 +45,6 @@ function formatUSD(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`;
   return `$${n.toFixed(0)}`;
-}
-
-function ShieldIcon({ size = 14 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round">
-      <path d="M12 3L4 6.5v5c0 5.25 3.5 10.15 8 11.5 4.5-1.35 8-6.25 8-11.5v-5L12 3z" />
-      <path d="M9 12l2 2 4-4" strokeLinecap="round" />
-    </svg>
-  );
 }
 
 function FireIcon({ size = 16 }: { size?: number }) {
@@ -127,104 +119,102 @@ export default function TrendingPage() {
   const isEmpty = !loading && !error && tokens.length === 0;
 
   return (
-    <main className="min-h-screen grid-bg">
-      <div
-        className="fixed inset-0 pointer-events-none -z-10"
-        style={{ background: "radial-gradient(ellipse 80% 40% at 50% -10%, rgba(99,102,241,0.12) 0%, transparent 70%)" }}
-      />
+    <main className="min-h-screen grid-bg relative overflow-x-hidden pt-16">
+      <div className="mesh-bg opacity-30" />
+      <Navbar />
 
-      {/* Navbar */}
-      <nav className="nav-glass sticky top-0 z-50 px-6 md:px-10 h-16 flex items-center justify-between">
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 text-sm font-medium transition-all hover:opacity-80"
-          style={{ color: "var(--cg-text-muted)" }}
+      <div className="max-w-5xl mx-auto px-4 py-8 relative z-10 w-full mb-12">
+
+        {/* Header Widget */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bento-card p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8"
         >
-          ← Ana Sayfa
-        </button>
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #6366F1, #EC4899)", boxShadow: "0 0 16px rgba(99,102,241,0.4)", color: "white" }}
-          >
-            <ShieldIcon />
-          </div>
-          <span className="font-black text-sm" style={{ color: "var(--cg-text)" }}>Taranoid</span>
-        </div>
-        {/* Spacer for fixed theme+lang toggle */}
-        <div style={{ width: 84 }} />
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-4 py-12">
-
-        {/* Header */}
-        <div className="mb-10 animate-slide-up">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                style={{ background: "rgba(251,191,36,0.12)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)" }}
-              >
-                <FireIcon size={18} />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight" style={{ color: "var(--cg-text)" }}>
-                  Trending Tokenlar
-                </h1>
-                <p className="text-sm flex items-center gap-2" style={{ color: "var(--cg-text-muted)" }}>
-                  <span
-                    style={{
-                      display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-                      background: "#34D399", boxShadow: "0 0 6px #34D399",
-                      animation: "pulse-ring 1.5s ease-out infinite",
-                    }}
-                  />
-                  En çok sorgulanan tokenlar — gerçek zamanlı risk verileriyle
-                  {lastUpdate && (
-                    <span style={{ color: "var(--cg-text-dim)", fontSize: 11 }}>
-                      · {lastUpdate.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(251,191,36,0.2)]"
+              style={{ background: "rgba(251,191,36,0.1)", color: "#FBBF24", border: "1px solid rgba(251,191,36,0.2)" }}
+            >
+              <FireIcon size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--cg-text)", textShadow: "0 0 20px rgba(255,255,255,0.2)" }}>
+                Trending Aramalar
+              </h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span
+                  style={{
+                    display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                    background: "#34D399", boxShadow: "0 0 10px #34D399",
+                    animation: "pulse-ring 1.5s ease-out infinite",
+                  }}
+                />
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: "var(--cg-text-dim)" }}>
+                  En çok sorgulananlar
+                </span>
+                {lastUpdate && (
+                  <>
+                    <span className="text-xs" style={{ color: "var(--cg-border-strong)" }}>·</span>
+                    <span className="text-xs font-mono font-bold" style={{ color: "var(--cg-text-muted)" }}>
+                      {lastUpdate.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
-                  )}
-                </p>
+                  </>
+                )}
               </div>
             </div>
-
-            {/* Refresh button */}
-            <button
-              onClick={() => fetchTokens(true)}
-              disabled={refreshing}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "7px 14px", borderRadius: 10, border: "1px solid var(--cg-border-strong)",
-                background: "var(--cg-surface)", color: "var(--cg-text-muted)",
-                fontSize: 12, fontWeight: 600, cursor: "pointer",
-                transition: "all 0.2s ease",
-                opacity: refreshing ? 0.5 : 1,
-              }}
-            >
-              <span style={{ animation: refreshing ? "spin-slow 0.8s linear infinite" : "none", display: "flex" }}>
-                <RefreshIcon />
-              </span>
-              Yenile
-            </button>
           </div>
-        </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={() => fetchTokens(true)}
+            disabled={refreshing}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300"
+            style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "var(--cg-text)",
+              opacity: refreshing ? 0.5 : 1,
+              transform: refreshing ? "scale(0.98)" : "none",
+            }}
+            onMouseEnter={e => {
+              if(!refreshing) {
+                 e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+              }
+            }}
+            onMouseLeave={e => {
+              if(!refreshing) {
+                 e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                 e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+              }
+            }}
+          >
+            <span style={{ animation: refreshing ? "spin-slow 0.8s linear infinite" : "none", display: "flex" }}>
+              <RefreshIcon />
+            </span>
+            {refreshing ? "Güncelleniyor..." : "Sistemi Yenile"}
+          </button>
+        </motion.div>
 
         {/* Loading */}
         {loading && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="shimmer rounded-2xl" style={{ height: 88 }} />
+              <div key={i} className="bento-card relative overflow-hidden" style={{ height: 100 }}>
+                <div className="absolute inset-0 bg-white/5 animate-pulse" />
+              </div>
             ))}
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="card-flat p-8 text-center">
-            <p className="text-4xl mb-4">⚠️</p>
-            <p className="font-semibold mb-2" style={{ color: "var(--cg-text)" }}>{error}</p>
-            <button onClick={() => fetchTokens()} className="cta-button px-6 py-2.5 text-sm mt-4">
+          <div className="bento-card p-12 text-center flex flex-col items-center">
+             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-red-500/10 text-red-500 border border-red-500/20">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <p className="text-lg font-bold mb-4" style={{ color: "var(--cg-text)" }}>{error}</p>
+            <button onClick={() => fetchTokens()} className="cta-button px-8 py-3 text-sm rounded-xl">
               Tekrar Dene
             </button>
           </div>
@@ -232,36 +222,35 @@ export default function TrendingPage() {
 
         {/* Empty state */}
         {isEmpty && (
-          <div className="card-flat p-12 text-center animate-slide-up">
-            <p className="text-5xl mb-5">📊</p>
-            <h2 className="text-xl font-bold mb-3" style={{ color: "var(--cg-text)" }}>Henüz Veri Yok</h2>
-            <p className="text-sm mb-6 max-w-sm mx-auto" style={{ color: "var(--cg-text-muted)" }}>
-              Token analiz ettikçe burada listelenecek. İlk analizi başlatmak için ana sayfaya dön.
+          <div className="bento-card p-16 text-center flex flex-col items-center justify-center animate-slide-up">
+            <span className="text-6xl mb-6 mix-blend-screen opacity-80">📊</span>
+            <h2 className="text-2xl font-black mb-3 tracking-tight" style={{ color: "var(--cg-text)" }}>Sistem Boş</h2>
+            <p className="text-sm md:text-base font-medium mb-8 max-w-sm mx-auto" style={{ color: "var(--cg-text-muted)" }}>
+              Motor aktif, ancak henüz token taraması yapılmadı. İlk analizi başlatın.
             </p>
-            <button onClick={() => router.push("/")} className="cta-button px-6 py-3 text-sm">
-              Token Analiz Et
+            <button onClick={() => router.push("/")} className="cta-button px-10 py-4 text-base rounded-[1.25rem]">
+              Ana Sayfaya Dön
             </button>
           </div>
         )}
 
         {/* Token list */}
         {!loading && !error && tokens.length > 0 && (
-          <>
-            {/* Table header */}
+          <div className="flex flex-col gap-4">
+            {/* Table layout header for larger screens */}
             <div
-              className="hidden md:grid grid-cols-12 gap-4 px-5 py-2 text-[10px] font-bold uppercase tracking-widest"
+              className="hidden md:grid grid-cols-12 gap-4 px-6 md:px-8 py-3 text-[10px] font-black uppercase tracking-widest bg-black/20 rounded-xl border border-white/5 backdrop-blur-md"
               style={{ color: "var(--cg-text-dim)" }}
             >
               <div className="col-span-1">#</div>
-              <div className="col-span-4">Token</div>
-              <div className="col-span-2 text-right">Risk Skoru</div>
-              <div className="col-span-2 text-right">Hacim 24s</div>
-              <div className="col-span-2 text-right">Market Cap</div>
-              <div className="col-span-1 text-right">Sorgu</div>
+              <div className="col-span-4 lg:col-span-5">Hedef Varlık</div>
+              <div className="col-span-3 lg:col-span-2 text-right">Risk Analizi</div>
+              <div className="col-span-2 text-right">Hacim (24s)</div>
+              <div className="col-span-2 text-right">Sorgu Yükü</div>
             </div>
 
             <motion.div
-              className="space-y-3"
+              className="space-y-4"
               variants={listVariants}
               initial="hidden"
               animate="show"
@@ -276,43 +265,52 @@ export default function TrendingPage() {
                   <motion.div
                     key={token.token_address}
                     variants={itemVariants}
-                    className="card-flat cursor-pointer group"
-                    style={{
-                      borderLeft: `3px solid ${color}60`,
-                      boxShadow: isHighRisk ? `0 0 0 1px ${color}15, var(--cg-shadow-sm)` : "var(--cg-shadow-sm)",
-                    }}
+                    className="bento-card relative overflow-hidden group cursor-pointer transition-all duration-300 hover:scale-[1.01]"
                     onClick={() => router.push(`/token/${token.token_address}`)}
-                    whileHover={{ y: -3, transition: { type: "spring", stiffness: 400, damping: 25 } }}
                   >
-                    <div className="grid grid-cols-12 gap-4 items-center p-5">
+                    {/* Left accent border */}
+                     <div 
+                      className="absolute left-0 top-0 bottom-0 w-1.5 transition-colors duration-300"
+                      style={{ background: `${color}80` }}
+                    />
+
+                    {/* Background glow if high risk */}
+                    {isHighRisk && (
+                      <div 
+                        className="absolute inset-0 opacity-10 pointer-events-none"
+                        style={{ background: `radial-gradient(circle at right, ${color}, transparent 60%)`, mixBlendMode: 'screen' }}
+                      />
+                    )}
+
+                    <div className="relative z-10 grid grid-cols-12 gap-4 items-center p-5 pl-7">
                       {/* Rank */}
-                      <div className="col-span-1">
+                      <div className="col-span-2 md:col-span-1">
                         <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black"
-                          style={{ background: `${color}15`, color }}
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black transition-transform duration-300 group-hover:scale-110"
+                          style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
                         >
                           {i + 1}
                         </div>
                       </div>
 
                       {/* Token info */}
-                      <div className="col-span-5 md:col-span-4 min-w-0">
+                      <div className="col-span-10 md:col-span-4 lg:col-span-5 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xl">{getRiskEmoji(token.total_score)}</span>
-                          <span className="font-bold text-sm truncate" style={{ color: "var(--cg-text)" }}>
+                          <span className="text-xl" style={{ filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.2))' }}>{getRiskEmoji(token.total_score)}</span>
+                          <span className="font-black text-base truncate tracking-tight transition-colors duration-300 group-hover:text-white" style={{ color: "var(--cg-text)" }}>
                             {token.name || shortAddr}
                           </span>
                           {token.symbol && (
                             <span
-                              className="px-2 py-0.5 rounded-md text-xs font-mono font-bold flex-shrink-0"
-                              style={{ background: "rgba(255,255,255,0.06)", color: "var(--cg-text-dim)" }}
+                              className="px-2 py-0.5 rounded-lg text-xs font-mono font-bold flex-shrink-0"
+                              style={{ background: "rgba(255,255,255,0.06)", color: "var(--cg-text-dim)", border: "1px solid rgba(255,255,255,0.1)" }}
                             >
                               ${token.symbol}
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono" style={{ color: "var(--cg-text-dim)" }}>{shortAddr}</span>
+                          <span className="text-xs font-mono opacity-60" style={{ color: "var(--cg-text-muted)" }}>{shortAddr}</span>
                           <a
                             href={`https://solscan.io/token/${token.token_address}`}
                             target="_blank"
@@ -321,78 +319,56 @@ export default function TrendingPage() {
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                             style={{ color: "var(--cg-accent)" }}
                           >
-                            <ExternalLinkIcon />
+                            <ExternalLinkIcon size={14}/>
                           </a>
                         </div>
                       </div>
 
                       {/* Score */}
-                      <div className="col-span-3 md:col-span-2 flex flex-col items-end gap-1">
-                        <span
-                          className="text-xl font-black tabular-nums"
-                          style={{
-                            color,
-                            textShadow: `0 0 16px ${color}60`,
-                            animation: isHighRisk ? "neon-pulse 2s ease-in-out infinite" : "none",
-                          }}
-                        >
-                          {token.total_score.toFixed(0)}
-                        </span>
-                        <span
-                          className="metric-badge"
-                          style={{ background: `${color}15`, color, border: `1px solid ${color}25` }}
-                        >
-                          {riskLabel}
-                        </span>
+                      <div className="col-span-12 md:col-span-3 lg:col-span-2 flex items-center justify-between md:flex-col md:items-end md:justify-center gap-1 mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-white/5">
+                        <span className="md:hidden text-[10px] font-bold uppercase tracking-widest text-white/40">Risk Skoru</span>
+                        <div className="flex flex-row md:flex-col items-center md:items-end gap-3 md:gap-1">
+                          <span
+                            className="text-2xl font-black tabular-nums transition-transform duration-300 group-hover:scale-110"
+                            style={{
+                              color,
+                              textShadow: `0 0 20px ${color}60`,
+                              animation: isHighRisk ? "neon-pulse 2s ease-in-out infinite" : "none",
+                            }}
+                          >
+                            {token.total_score.toFixed(0)}
+                          </span>
+                          <span
+                            className="px-2 py-0.5 rounded-md text-[10px] uppercase font-black tracking-widest"
+                            style={{ background: `${color}15`, color, border: `1px solid ${color}30` }}
+                          >
+                            {riskLabel}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Volume */}
-                      <div className="hidden md:flex col-span-2 flex-col items-end">
-                        <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
+                      <div className="hidden md:flex col-span-2 flex-col items-end justify-center">
+                        <span className="text-sm font-black font-mono" style={{ color: "var(--cg-text)" }}>
                           {token.volume_24h_usd > 0 ? formatUSD(token.volume_24h_usd) : "—"}
                         </span>
-                        <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>hacim</span>
-                      </div>
-
-                      {/* MCap */}
-                      <div className="hidden md:flex col-span-2 flex-col items-end">
-                        <span className="text-sm font-bold font-mono" style={{ color: "var(--cg-text)" }}>
-                          {token.mcap_usd > 0 ? formatUSD(token.mcap_usd) : "—"}
-                        </span>
-                        <span className="text-xs" style={{ color: "var(--cg-text-dim)" }}>mcap</span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60" style={{ color: "var(--cg-text-dim)" }}>hacim</span>
                       </div>
 
                       {/* Query count */}
-                      <div className="hidden md:flex col-span-1 flex-col items-end">
-                        <span className="text-sm font-bold" style={{ color: "var(--cg-text-muted)" }}>
-                          {token.query_count}x
+                      <div className="hidden md:flex col-span-2 flex-col items-end justify-center">
+                        <span className="text-sm font-black font-mono transition-transform duration-300 group-hover:translate-x-[-2px]" style={{ color: "var(--cg-text-muted)" }}>
+                          {token.query_count} Kez
                         </span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-60" style={{ color: "var(--cg-text-dim)" }}>sorgulandı</span>
                       </div>
-                    </div>
-
-                    {/* Score bar */}
-                    <div className="score-bar mx-5 mb-4" style={{ height: "3px" }}>
-                      <div
-                        className="score-bar-fill"
-                        style={{
-                          width: `${token.total_score}%`,
-                          background: `linear-gradient(90deg, ${color}60, ${color})`,
-                          boxShadow: `0 0 8px ${color}50`,
-                        }}
-                      />
                     </div>
                   </motion.div>
                 );
               })}
             </motion.div>
-          </>
+          </div>
         )}
-
-        <footer className="text-center py-12">
-          <p className="text-xs" style={{ color: "var(--cg-text-dim)" }}>
-            Risk skorları yatırım tavsiyesi değildir. DYOR.
-          </p>
-        </footer>
       </div>
     </main>
   );

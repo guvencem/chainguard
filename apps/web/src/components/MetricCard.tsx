@@ -22,10 +22,10 @@ function getScoreColor(score: number): string {
 }
 
 function getScoreTag(score: number): string {
-  if (score < 20) return "Güvenli";
-  if (score < 40) return "Düþük";
+  if (score < 20) return "GÃ¼venli";
+  if (score < 40) return "DÃ¼ÅŸÃ¼k";
   if (score < 60) return "Orta";
-  if (score < 80) return "Yüksek";
+  if (score < 80) return "YÃ¼ksek";
   return "Kritik";
 }
 

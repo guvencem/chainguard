@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { LangProvider } from "@/components/LangProvider";
-import { LangToggle } from "@/components/LangToggle";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -120,21 +118,6 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <LangProvider>
-            {/* Controls — fixed top-right */}
-            <div
-              style={{
-                position: "fixed",
-                top: "14px",
-                right: "16px",
-                zIndex: 100,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <ThemeToggle />
-              <LangToggle />
-            </div>
             {children}
           </LangProvider>
         </ThemeProvider>

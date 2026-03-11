@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LangProvider";
 import LiveTicker from "@/components/LiveTicker";
+import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 
 function ShieldIcon({ size = 16 }: { size?: number }) {
@@ -49,7 +50,7 @@ const EXAMPLE_TOKENS = [
 ];
 
 const FOOTER_HREFS = [
-  "https://t.me/taranoid8_bot",
+  "https://t.me/taranoid_bot",
   "/learn",
   "/keys",
   "/about",
@@ -126,51 +127,7 @@ export default function HomePage() {
       <div className={`search-backdrop ${searchFocused ? "is-active" : ""}`} />
 
       {/* ── Navbar ── */}
-      <nav className="nav-glass fixed top-0 left-0 right-0 z-50 px-6 md:px-10 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-lg"
-            style={{
-              background: "var(--cg-gradient-brand)",
-              boxShadow: "0 0 20px rgba(99,102,241,0.5)",
-              color: "white",
-            }}
-          >
-            <ShieldIcon size={14} />
-          </div>
-          <span className="font-black text-lg tracking-tight" style={{ color: "var(--cg-text)" }}>Taranoid</span>
-        </div>
-
-        <div className="hidden md:flex items-center gap-8">
-          {[
-            [t.nav.how, "#how"],
-            [t.nav.trending, "/trending"],
-            [t.nav.learn, "/learn"],
-            [t.nav.api, "/keys"],
-            [t.nav.telegram, "https://t.me/taranoid8_bot"],
-          ].map(([label, href]) => (
-            <a
-              key={label}
-              href={href}
-              className="text-sm font-semibold transition-all duration-200"
-              style={{ color: "var(--cg-text-muted)" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "var(--cg-text)")}
-              onMouseLeave={e => (e.currentTarget.style.color = "var(--cg-text-muted)")}
-            >
-              {label}
-            </a>
-          ))}
-        </div>
-
-        <a
-          href="https://t.me/taranoid8_bot"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cta-button px-5 py-2 text-xs flex items-center gap-2"
-        >
-          <span>🤖</span> {t.nav.telegram}
-        </a>
-      </nav>
+      <Navbar />
 
       {/* ── Live Ticker ── */}
       <div className="w-full relative z-40 bg-black/10 backdrop-blur-md border-b border-white/5">
@@ -179,7 +136,7 @@ export default function HomePage() {
 
       {/* ── Main Hero Section ── */}
       <section className="relative w-full flex flex-col items-center justify-center px-4 pt-20 pb-24 md:pt-32 md:pb-36 min-h-[85vh]">
-        <div className="relative z-10 flex flex-col items-center text-center w-full max-w-5xl mx-auto">
+        <div className="relative flex flex-col items-center text-center w-full max-w-5xl mx-auto">
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -228,7 +185,7 @@ export default function HomePage() {
           <div className={`hero-search-wrapper w-full max-w-3xl ${searchFocused ? "is-focused" : ""}`}>
             <form onSubmit={handleSearch} className="w-full relative group">
               <div
-                className="relative p-2 rounded-[2rem] transition-all duration-300 backdrop-blur-2xl"
+                className="relative p-2 rounded-[2rem] transition-all duration-300 backdrop-blur-2xl flex items-center"
                 style={{
                   background: searchFocused ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.03)",
                   border: `1px solid ${searchFocused ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.12)"}`,
@@ -237,7 +194,7 @@ export default function HomePage() {
                     : "0 10px 40px rgba(0,0,0,0.3)",
                 }}
               >
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-300"
+                <div className="pl-4 pr-3 pointer-events-none transition-colors duration-300"
                   style={{ color: searchFocused ? "var(--cg-accent)" : "var(--cg-text-dim)" }}>
                   <SearchIcon size={24} />
                 </div>
@@ -249,8 +206,8 @@ export default function HomePage() {
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setSearchFocused(false)}
                   placeholder={t.home.placeholder}
-                  className="w-full bg-transparent pl-16 pr-44 py-5 text-lg md:text-xl font-mono outline-none"
-                  style={{ color: "var(--cg-text)", caretColor: "#818CF8" }}
+                  className="flex-1 w-full bg-transparent min-w-[100px] text-base md:text-xl font-mono outline-none placeholder:text-sm md:placeholder:text-lg"
+                  style={{ color: "var(--cg-text)", caretColor: "#3B82F6" }}
                   autoComplete="off"
                   spellCheck={false}
                   disabled={isLoading}
@@ -259,7 +216,7 @@ export default function HomePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="cta-button absolute right-2.5 top-1/2 -translate-y-1/2 px-8 py-4 text-base flex items-center gap-2 rounded-2xl"
+                  className="cta-button shrink-0 px-4 md:px-8 py-3 md:py-4 text-sm md:text-base flex items-center gap-1.5 md:gap-2 rounded-2xl ml-2"
                 >
                   {isLoading ? (
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
@@ -267,7 +224,7 @@ export default function HomePage() {
                       <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
                   ) : (
-                    <><ZapIcon size={16} /> {t.home.btn_analyze} <ArrowRightIcon size={18} /></>
+                    <><ZapIcon size={16} /> <span className="hidden sm:inline-block">{t.home.btn_analyze}</span> <ArrowRightIcon size={18} /></>
                   )}
                 </button>
               </div>
@@ -403,7 +360,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <a
-                href="https://t.me/taranoid8_bot"
+                href="https://t.me/taranoid_bot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="cta-button px-10 py-5 text-lg flex items-center gap-3 rounded-[1.25rem]"
