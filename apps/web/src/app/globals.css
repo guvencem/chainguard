@@ -417,35 +417,170 @@ body {
 /* ══════════════════════════════════════════════════════
    SCROLLBAR
 ══════════════════════════════════════════════════════ */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
 
 /* ══════════════════════════════════════════════════════
-   GLOW ORB
+   PREMIUM MESH GRADIENTS & ORBS
 ══════════════════════════════════════════════════════ */
 .glow-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
+  filter: blur(100px);
   pointer-events: none;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+[data-theme="light"] .glow-orb {
+  mix-blend-mode: multiply;
+  opacity: 0.4;
+}
+
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--cg-bg);
+  overflow: hidden;
+  pointer-events: none;
+}
+.mesh-bg::before,
+.mesh-bg::after {
+  content: '';
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  filter: blur(120px) saturate(1.5);
+  opacity: 0.15;
+  animation: mesh-rotate 30s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.mesh-bg::before {
+  background: radial-gradient(circle at 20% 40%, var(--cg-accent) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, var(--cg-accent-2) 0%, transparent 50%);
+}
+.mesh-bg::after {
+  background: radial-gradient(circle at 60% 80%, var(--cg-green) 0%, transparent 50%),
+              radial-gradient(circle at 10% 90%, var(--cg-yellow) 0%, transparent 40%);
+  animation-delay: -15s;
+}
+[data-theme="light"] .mesh-bg::before,
+[data-theme="light"] .mesh-bg::after {
+  opacity: 0.1;
+  filter: blur(100px) saturate(2);
+}
+
+@keyframes mesh-rotate {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(5deg) translateY(20px); }
+  100% { transform: scale(1) rotate(-5deg) translateX(-20px); }
 }
 
 /* ══════════════════════════════════════════════════════
-   NAV GLASS
+   DEEP GLASSMORPHISM (NAV & BENTO)
 ══════════════════════════════════════════════════════ */
 .nav-glass {
-  background: rgba(6,8,15,0.75);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(6, 8, 15, 0.55);
+  backdrop-filter: blur(32px) saturate(180%);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 [data-theme="light"] .nav-glass {
-  background: rgba(247,248,253,0.88);
-  border-bottom-color: rgba(0,0,0,0.08);
+  background: rgba(247, 248, 253, 0.65);
+  border-bottom-color: rgba(0,0,0,0.05);
+}
+
+/* ══════════════════════════════════════════════════════
+   BENTO BOX SYSTEM
+══════════════════════════════════════════════════════ */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+.bento-card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 24px;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 
+    0 1px 0 rgba(255,255,255,0.02) inset,
+    0 -1px 0 rgba(0,0,0,0.2) inset,
+    0 4px 24px rgba(0,0,0,0.2);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease, border-color 0.4s ease;
+}
+.bento-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent 40%, rgba(255,255,255,0.02));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+.bento-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 1px 0 rgba(255,255,255,0.05) inset,
+    0 16px 40px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(99,102,241,0.15) inset;
+  background: rgba(255,255,255,0.03);
+}
+[data-theme="light"] .bento-card {
+  background: rgba(255,255,255,0.7);
+  border-color: rgba(0,0,0,0.05);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+}
+[data-theme="light"] .bento-card::before {
+  background: linear-gradient(135deg, rgba(0,0,0,0.05), transparent 40%, rgba(0,0,0,0.01));
+}
+[data-theme="light"] .bento-card:hover {
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(99,102,241,0.1) inset;
+}
+
+/* ══════════════════════════════════════════════════════
+   HERO SEARCH OVERLAY FOCUS
+══════════════════════════════════════════════════════ */
+.hero-search-wrapper {
+  position: relative;
+  z-index: 30;
+  transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.hero-search-wrapper.is-focused {
+  transform: scale(1.02);
+  z-index: 60;
+}
+.search-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.search-backdrop.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+[data-theme="light"] .search-backdrop {
+  background: rgba(255,255,255,0.5);
 }
 
 /* ══════════════════════════════════════════════════════
